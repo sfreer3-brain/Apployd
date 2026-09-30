@@ -1,7 +1,7 @@
 /* Service worker di Bussola: rende l'app disponibile offline.
    OGNI VOLTA che cambiano index.html, manifest o icone, alzare VERSIONE:
    i telefoni scaricano la nuova versione al successivo avvio con rete. */
-const VERSIONE = "bussola-v1";
+const VERSIONE = "bussola-v2";
 const FILE = ["./", "./index.html", "./manifest.webmanifest", "./icona-192.png", "./icona-512.png", "./icona-maskable-512.png"];
 
 self.addEventListener("install", e => {
