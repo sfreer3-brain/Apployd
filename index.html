@@ -142,6 +142,15 @@ body.interno #barra .separa{display:none}
 .stato-file:empty{display:none}
 .gruppo-opz{flex-basis:100%;font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--testo-2);margin:10px 0 2px}
 .gruppo-opz:first-child{margin-top:0}
+.comp{font-size:12px;font-weight:500;opacity:.75;margin-left:4px;white-space:nowrap}
+.elenco-spunte{display:flex;flex-direction:column;gap:6px}
+.spunta{display:flex;gap:12px;align-items:flex-start;text-align:left;width:100%;border:1px solid var(--bordo);border-radius:10px;background:#fbfcfd;padding:10px 12px;min-height:52px}
+.spunta .casella{width:24px;height:24px;border-radius:6px;border:1.5px solid var(--bordo);flex:none;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;margin-top:1px}
+.spunta[aria-pressed=true]{border-color:var(--blu);background:var(--blu-chiaro)}
+.spunta[aria-pressed=true] .casella{background:var(--blu);border-color:var(--blu)}
+.testo-spunta b{display:block;font-size:15.5px;font-weight:600}
+.testo-spunta small{display:block;color:var(--testo-2);font-size:13.5px;margin-top:2px}
+.elenco-spunte .gruppo-opz{margin-top:10px}
 .consigliata{font-size:11px;font-weight:600;background:var(--verde-chiaro);color:var(--verde);border-radius:6px;padding:2px 6px;margin-left:4px;white-space:nowrap}
 .pill[aria-pressed=true] .consigliata{background:rgba(255,255,255,.2);color:#fff}
 .scelte.due .pill{white-space:nowrap}
@@ -191,6 +200,8 @@ dd.grave{color:var(--rosso);font-weight:700}
   .passi-lato button.ora{background:var(--blu-chiaro);color:var(--blu);font-weight:600}
   .passi-lato button.ora .n{background:var(--blu);border-color:var(--blu);color:#fff}
   .passi-lato button:not(:disabled):not(.ora):hover{background:var(--fondo)}
+  .elenco-spunte{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px}
+  .elenco-spunte .gruppo-opz{grid-column:1 / -1}
   .elenco.albero{display:grid;grid-template-columns:1fr 1fr;gap:10px}
   .griglia-2{grid-template-columns:1fr 1fr 1fr}
   #campi{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}
@@ -233,6 +244,8 @@ dd.grave{color:var(--rosso);font-weight:700}
 const AGENZIA = {
   nome: "Lloyd Varesino",
   app: "Bussola",
+  versione: "0.3",       // scritta da ricomponi.py (file VERSIONE)
+  dataBuild: "30/09/2026",
   giorniConservazioneBozze: 7   // le bozze non inviate si cancellano da sole dopo N giorni
 };
 
@@ -652,38 +665,87 @@ const COPERTURE_IMMOBILE = [
   { v: "altro",      t: "Altro" }
 ];
 
-/* Casa: sezioni del prodotto (DIP aggiuntivo "Nuova Protezione Casa") */
-const SEZIONI_CASA = [
-  { v: "incendio", t: "Incendio e altri danni alla casa" }, { v: "furto", t: "Furto" },
-  { v: "arte", t: "Opere d'arte e strumenti musicali" }, { v: "rc", t: "Responsabilità civile verso terzi" },
-  { v: "tutela", t: "Tutela legale" }, { v: "digitale", t: "Vita digitale" }, { v: "assistenza", t: "Assistenza h24" },
-  { v: "vivoCasa", t: "Vivo Casa! (elettrodomestici, check-up)" }, { v: "confido", t: "Confido (cani e gatti)" },
-  { v: "green", t: "Green (fotovoltaico e colonnina di ricarica)" }
+/* =====================================================================
+   CASA: questionario INTERNO dell'agenzia, neutro rispetto alle compagnie.
+   Le garanzie sono l'unione di quelle viste nei DIP aggiuntivi (AXA Nuova
+   Protezione Casa, Unipol, Helvetia), con nomi nostri e una spiegazione da
+   dire al cliente. Il commerciale non vede compagnie: costruisce la copertura
+   sui bisogni del cliente. Il backoffice riceve nel PDF, a parte, quali
+   compagnie offrono ciascuna garanzia (indicativo, dai DIP).
+   ===================================================================== */
+const NOME_COMP = { AXA: "AXA", UNI: "Unipol", HEL: "Helvetia" };
+
+const CARATTERISTICHE_CASA = [
+  { v: "cane", t: "Cane" }, { v: "gatto", t: "Gatto" }, { v: "figli", t: "Figli a carico" }, { v: "colf", t: "Colf, badante o baby sitter" },
+  { v: "dipendente", t: "Il cliente è lavoratore dipendente" }, { v: "bici", t: "Si usa la bicicletta" },
+  { v: "pannelli", t: "Pannelli solari o fotovoltaici" }, { v: "colonnina", t: "Colonnina di ricarica auto" },
+  { v: "giardino", t: "Giardino con alberi" }, { v: "cassaforte", t: "Cassaforte" }, { v: "allarme", t: "Impianto d'allarme" },
+  { v: "arte", t: "Opere d'arte, antiquariato, strumenti musicali di valore" }, { v: "lavori", t: "Lavori di manutenzione in programma" }
 ];
+const ha = (r, x) => (r.caratteristiche || []).includes(x);
 const sezC = (r, x) => (r.coperture || []).includes(x);
-const GARANZIE_CASA = [
-  { v: "elettrico", t: "Fenomeno elettrico", g: "Incendio", sez: r => sezC(r, "incendio"), se: r => true },
-  { v: "elettricoCons", t: "Danni conseguenti a fenomeno elettrico", g: "Incendio", sez: r => sezC(r, "incendio"), se: r => false },
-  { v: "acqua", t: "Fuoriuscita di acqua condotta", g: "Incendio", sez: r => sezC(r, "incendio"), se: r => true },
-  { v: "atmosferici", t: "Eventi atmosferici", g: "Incendio", sez: r => sezC(r, "incendio"), se: r => r.immTipo !== "appartamento" },
-  { v: "piovana", t: "Acqua piovana", g: "Incendio", sez: r => sezC(r, "incendio"), se: r => r.immTipo !== "appartamento" },
-  { v: "terremoto", t: "Terremoto", g: "Incendio", sez: r => sezC(r, "incendio"), se: r => false },
-  { v: "alluvione", t: "Alluvione", g: "Incendio", sez: r => sezC(r, "incendio"), se: r => false },
-  { v: "canoni", t: "Perdita dei canoni di locazione", g: "Incendio", sez: r => sezC(r, "incendio"), se: r => r.uso === "affitto" },
-  { v: "gioielli", t: "Gioielli e valori in cassaforte", g: "Furto", sez: r => sezC(r, "furto"), se: r => r.cassaforte === "si" },
-  { v: "guastiLadri", t: "Guasti causati dai ladri", g: "Furto", sez: r => sezC(r, "furto"), se: r => true },
-  { v: "lavori", t: "Committenza lavori di manutenzione", g: "Responsabilità civile", sez: r => sezC(r, "rc"), se: r => r.lavori === "si" },
-  { v: "bici", t: "Uso di biciclette nel tempo libero", g: "Responsabilità civile", sez: r => sezC(r, "rc"), se: r => r.bici === "si" }
+
+/* n = come spiegarlo al cliente; comp = compagnie che la offrono (solo per il backoffice) */
+const SEZIONI_CASA = [
+  { v: "incendio", t: "Danni alla casa e al contenuto", n: "Incendio, fulmine, esplosione e danni alle cose di casa", comp: ["AXA", "UNI", "HEL"] },
+  { v: "furto", t: "Furto e rapina", n: "Quello che viene rubato in casa, e i danni fatti dai ladri", comp: ["AXA", "UNI", "HEL"] },
+  { v: "rc", t: "Responsabilità civile della famiglia", n: "Danni involontari causati ad altri da lei, dai familiari o dalla casa", comp: ["AXA", "UNI", "HEL"] },
+  { v: "tutela", t: "Tutela legale", n: "Avvocato e spese legali nelle controversie della vita privata", comp: ["AXA", "UNI", "HEL"] },
+  { v: "assistenza", t: "Assistenza h24", n: "Idraulico, elettricista, fabbro quando serve, a qualsiasi ora", comp: ["AXA", "UNI", "HEL"] },
+  { v: "animali", t: "Animali domestici", n: "Danni causati dal cane o dal gatto e spese veterinarie", comp: ["AXA", "HEL"] },
+  { v: "digitale", t: "Protezione digitale", n: "Furto d'identità, frodi online, cyberbullismo", comp: ["AXA", "UNI", "HEL"] },
+  { v: "arte", t: "Opere d'arte e strumenti musicali", n: "Quadri, antiquariato, strumenti di valore", comp: ["AXA"] },
+  { v: "green", t: "Pannelli solari e colonnina di ricarica", n: "Danni e furto dell'impianto fotovoltaico e della colonnina", comp: ["AXA", "UNI"] },
+  { v: "persona", t: "Protezione della persona e della famiglia", n: "Aiuti economici in caso di infortunio, perdita del lavoro, imprevisti", comp: ["UNI"] }
 ];
-const SUGGERISCI_SEZIONI_CASA = r => [
-  r.animali && r.animali !== "no" ? "confido" : null,
-  r.fotovCasa === "si" || r.colonnina === "si" ? "green" : null,
-  r.arte === "si" ? "arte" : null
+const SUGGERISCI_SEZIONI_CASA = r => ["incendio", "rc",
+  ha(r, "cane") || ha(r, "gatto") ? "animali" : null,
+  ha(r, "pannelli") || ha(r, "colonnina") ? "green" : null,
+  ha(r, "arte") ? "arte" : null,
+  ha(r, "cassaforte") || ha(r, "allarme") ? "furto" : null,
+  ha(r, "figli") ? "persona" : null
 ].filter(Boolean);
+
+const G = (v, t, n, g, sez, comp, se) => ({ v, t, n, g, sez: r => sezC(r, sez), comp, se });
+const nonAppartamento = r => r.immTipo !== "appartamento";
+const GC = { inc: "Danni alla casa", fur: "Furto", rc: "Responsabilità civile", tut: "Tutela legale", ass: "Assistenza", ani: "Animali", per: "Persona e famiglia" };
+const GARANZIE_CASA = [
+  G("elettrico", "Fenomeno elettrico", "Elettrodomestici e impianti bruciati da sbalzi di corrente o fulmini", GC.inc, "incendio", ["AXA", "UNI"], r => true),
+  G("elettricoCons", "Danni conseguenti al fenomeno elettrico", "Es. il cibo perso se si guasta il frigorifero", GC.inc, "incendio", ["AXA"], r => false),
+  G("acqua", "Acqua condotta", "Danni da un tubo rotto, a casa sua o dei vicini", GC.inc, "incendio", ["AXA", "UNI"], r => true),
+  G("ricercaGuasto", "Ricerca del guasto", "Le spese per rompere e rifare muri e pavimenti per trovare la perdita", GC.inc, "incendio", ["UNI"], r => true),
+  G("perditeOcculte", "Perdite occulte d'acqua", "La bolletta dell'acqua in più per una perdita nascosta", GC.inc, "incendio", ["UNI"], r => false),
+  G("atmosferici", "Eventi atmosferici", "Vento, grandine, tempeste su tetto, finestre, persiane", GC.inc, "incendio", ["AXA", "UNI"], nonAppartamento),
+  G("piovana", "Acqua piovana", "Infiltrazioni di pioggia dal tetto o dalle pareti", GC.inc, "incendio", ["AXA"], nonAppartamento),
+  G("vetri", "Vetri e cristalli", "Rottura di vetrate, specchi, piani in cristallo", GC.inc, "incendio", ["UNI"], r => false),
+  G("alberi", "Caduta di alberi", "Un albero che cade sulla casa o sulla recinzione", GC.inc, "incendio", ["UNI"], r => ha(r, "giardino")),
+  G("canoni", "Perdita dei canoni di affitto", "Gli affitti persi se la casa data in locazione diventa inagibile", GC.inc, "incendio", ["AXA"], r => r.uso === "affitto"),
+  G("terremoto", "Terremoto", "", GC.inc, "incendio", ["AXA", "UNI"], r => false),
+  G("alluvione", "Alluvione e allagamento", "", GC.inc, "incendio", ["AXA", "UNI"], r => false),
+  G("guastiLadri", "Guasti causati dai ladri", "Porte, finestre e serrature da riparare dopo un furto", GC.fur, "furto", ["AXA"], r => true),
+  G("gioielli", "Gioielli e valori", "Gioielli e denaro, in cassaforte o in casa", GC.fur, "furto", ["AXA", "UNI"], r => ha(r, "cassaforte")),
+  G("scippo", "Scippo e rapina fuori casa", "Borsa o portafoglio rubati per strada", GC.fur, "furto", ["UNI", "HEL"], r => false),
+  G("furtoSociopol", "Furto durante disordini", "Saccheggi durante scioperi o tumulti", GC.fur, "furto", ["UNI"], r => false),
+  G("rcFabb", "RC della proprietà della casa", "Danni ad altri causati dalla casa: una tegola che cade, un'infiltrazione al vicino", GC.rc, "rc", ["AXA", "UNI", "HEL"], r => r.titoloCasa !== "inquilino"),
+  G("domestici", "Collaboratori domestici", "Infortuni e danni che riguardano colf e badanti", GC.rc, "rc", ["UNI"], r => ha(r, "colf")),
+  G("lavori", "Lavori in casa", "Danni ad altri durante lavori di manutenzione commissionati dal cliente", GC.rc, "rc", ["AXA"], r => ha(r, "lavori")),
+  G("bici", "Bicicletta", "Danni causati ad altri andando in bici", GC.rc, "rc", ["AXA"], r => ha(r, "bici")),
+  G("locata", "Casa data in affitto", "La responsabilità del proprietario verso l'inquilino e i terzi", GC.rc, "rc", ["UNI"], r => r.uso === "affitto"),
+  G("bb", "B&B e affittacamere", "La responsabilità verso gli ospiti", GC.rc, "rc", ["UNI"], r => r.uso === "bb"),
+  G("stage", "Stage e tirocini", "Danni causati dai figli durante stage e tirocini", GC.rc, "rc", ["UNI"], r => false),
+  G("tutelaLavoro", "Tutela anche sul lavoro", "Controversie con il datore di lavoro", GC.tut, "tutela", ["HEL"], r => ha(r, "dipendente")),
+  G("separazione", "Separazione e divorzio", "Spese legali in caso di separazione", GC.tut, "tutela", ["UNI"], r => false),
+  G("elettrodomestici", "Estensione di garanzia elettrodomestici", "Riparazione di elettrodomestici e TV oltre la garanzia del produttore", GC.ass, "assistenza", ["AXA", "HEL"], r => false),
+  G("veterinario", "Spese veterinarie", "Cure, interventi e ricoveri per malattia o infortunio dell'animale", GC.ani, "animali", ["AXA", "HEL"], r => ha(r, "cane") || ha(r, "gatto")),
+  G("smarrimento", "Smarrimento dell'animale", "Spese di ricerca se l'animale si perde", GC.ani, "animali", ["HEL"], r => false),
+  G("imprevisti", "Spese impreviste dopo un danno", "Un contributo per le spese extra dopo un sinistro in casa", GC.per, "persona", ["UNI"], r => false),
+  G("infortunioLavoro", "Infortunio o perdita del lavoro", "Un indennizzo se si fa male o perde l'impiego", GC.per, "persona", ["UNI"], r => ha(r, "dipendente")),
+  G("sostegnoFigli", "Sostegno ai figli", "Un aiuto ai figli in caso di morte o invalidità del genitore", GC.per, "persona", ["UNI"], r => ha(r, "figli"))
+];
 
 function questionarioImmobile(tipo) {
   const casa = tipo === "casa";
-  const proprietario = r => casa || r.titolo === "proprieta";
+  const proprietario = r => casa ? r.titoloCasa !== "inquilino" : r.titolo === "proprieta";
   return {
     titolo: casa ? "Casa" : "Ufficio",
     passi: [
@@ -701,37 +763,38 @@ function questionarioImmobile(tipo) {
         { id: "anno", tipo: "testo", obbl: true, dom: "Anno di costruzione o ultima ristrutturazione", tastiera: "numeric",
           avviso: v => /^\d{4}$/.test(v) && (Number(v) < 1800 || Number(v) > new Date().getFullYear()) ? { livello: "ambra", testo: "Anno poco plausibile: ricontrolla." } : null },
         { id: "titolo", tipo: "scelta", obbl: true, se: () => !casa, dom: "L'immobile è", opzioni: [{ v: "proprieta", t: "Di proprietà" }, { v: "affitto", t: "In affitto" }] },
+        { id: "titoloCasa", tipo: "scelta", obbl: true, se: () => casa, dom: "Il cliente è", opzioni: [{ v: "proprietario", t: "Proprietario" }, { v: "inquilino", t: "Inquilino" }] },
         { id: "uso", tipo: "scelta", obbl: true, se: () => casa, dom: "Destinazione d'uso",
-          opzioni: [{ v: "principale", t: "Abitazione principale" }, { v: "seconda", t: "Seconda casa" }, { v: "affitto", t: "Data in affitto" }, { v: "vuota", t: "Vuota o non utilizzata" }, { v: "altro", t: "Altro" }],
+          opzioni: [{ v: "principale", t: "Abitazione principale" }, { v: "seconda", t: "Seconda casa" }, { v: "affitto", t: "Data in affitto" }, { v: "bb", t: "B&B o affittacamere" }, { v: "vuota", t: "Vuota o non utilizzata" }, { v: "altro", t: "Altro" }],
           avvisoSe: v => v === "vuota" ? { livello: "ambra", testo: "Per le case vuote molte compagnie limitano furto e acqua condotta: segnalalo al backoffice." } : null },
         { id: "usoAltro", tipo: "testo", obbl: true, se: r => casa && r.uso === "altro", dom: "Specifica l'uso" },
-        { id: "animali", tipo: "scelta", obbl: true, se: () => casa, dom: "Ci sono animali in casa?", opzioni: [{ v: "no", t: "No" }, { v: "cane", t: "Cane" }, { v: "gatto", t: "Gatto" }, { v: "entrambi", t: "Cani e gatti" }] },
-        { id: "fotovCasa", tipo: "sino", obbl: true, se: () => casa, dom: "Ci sono pannelli solari o fotovoltaici?" },
-        { id: "colonnina", tipo: "sino", obbl: true, se: () => casa, dom: "C'è una colonnina di ricarica per auto elettrica o ibrida?" },
-        { id: "cassaforte", tipo: "sino", se: () => casa, dom: "C'è una cassaforte?" },
-        { id: "arte", tipo: "sino", se: () => casa, dom: "Ci sono opere d'arte, oggetti d'antiquariato o strumenti musicali di valore?" },
-        { id: "bici", tipo: "sino", se: () => casa, dom: "In famiglia si usa la bicicletta?" },
-        { id: "lavori", tipo: "sino", se: () => casa, dom: "Sono previsti lavori di manutenzione o ristrutturazione?" },
+        { id: "caratteristiche", tipo: "multipla", se: () => casa, dom: "Barra quello che c'è (lascia vuoto se niente)", opzioni: CARATTERISTICHE_CASA,
+          aiuto: "Una sola domanda: da qui l'app ricava le sezioni e le garanzie da consigliare." },
         { id: "attivitaUff", tipo: "testo", obbl: true, largo: true, se: () => !casa, dom: "Attività svolta" },
         { id: "dipendenti", tipo: "testo", obbl: true, se: () => !casa, dom: "Numero di dipendenti, compresi i soci che lavorano", tastiera: "numeric" }
       ]},
       { id: "coperture", titolo: "Coperture e valori", sotto: "Cosa vuole assicurare il cliente e per quanto.", campi: [
         casa
-          ? { id: "coperture", tipo: "multipla", obbl: true, dom: "Sezioni da quotare", opzioni: SEZIONI_CASA,
-              suggerito: r => ["incendio"].concat(SUGGERISCI_SEZIONI_CASA(r)),
-              aiuto: "Le sezioni «consigliate» derivano dalle risposte sull'immobile; puoi togliere o aggiungere." }
+          ? { id: "coperture", tipo: "multipla", verticale: true, obbl: true, dom: "Cosa vuole proteggere il cliente?",
+              opzioni: SEZIONI_CASA, suggerito: SUGGERISCI_SEZIONI_CASA,
+              aiuto: "Sotto ogni voce c'è come spiegarla al cliente. Le «consigliate» derivano da quello che ha raccontato della casa." }
           : { id: "coperture", tipo: "multipla", obbl: true, dom: "Coperture desiderate",
               opzioni: COPERTURE_IMMOBILE.filter(o => !o.solo || o.solo === tipo) },
-        { id: "garCasa", tipo: "multipla", se: r => casa && GARANZIE_CASA.some(g => g.sez(r)), dom: "Garanzie aggiuntive",
+        { id: "garCasa", tipo: "multipla", verticale: true, se: r => casa && GARANZIE_CASA.some(g => g.sez(r)), dom: "In più, per le sezioni scelte",
           opzioni: r => GARANZIE_CASA.filter(g => g.sez(r)),
-          suggerito: r => GARANZIE_CASA.filter(g => g.sez(r) && g.se(r)).map(g => g.v) },
+          suggerito: r => GARANZIE_CASA.filter(g => g.sez(r) && g.se(r)).map(g => g.v),
+          avvisoSe: (v, r) => sezC(r, "animali") && !sezC(r, "rc")
+            ? { livello: "ambra", testo: "Per gli animali conviene aggiungere anche la responsabilità civile: i danni causati dal cane o dal gatto rientrano lì (e alcune compagnie la richiedono)." }
+            : sezC(r, "furto") && ha(r, "allarme") ? { livello: "blu", testo: "Casa con allarme: su alcune compagnie dà diritto a uno sconto sul furto." } : null },
         { id: "copAltro", tipo: "testo", obbl: true, largo: true, se: r => (r.coperture || []).includes("altro"), dom: "Altra copertura richiesta" },
-        { id: "valFabbricato", tipo: "euro", obbl: true, se: proprietario, dom: "Valore stimato del fabbricato",
+        { id: "valLocativo", tipo: "euro", obbl: true, se: r => casa && r.titoloCasa === "inquilino" && sezC(r, "incendio"), dom: "Rischio locativo: valore del fabbricato",
+          aiuto: "Copre i danni all'abitazione di cui l'inquilino risponde verso il proprietario." },
+        { id: "valFabbricato", tipo: "euro", obbl: true, se: r => proprietario(r) && (!casa || sezC(r, "incendio")), dom: "Valore stimato del fabbricato",
           aiuto: "Costo per ricostruirlo a nuovo, non il valore di mercato." },
         { id: "valContenuto", tipo: "euro", obbl: true, dom: casa ? "Valore del contenuto" : "Valore del contenuto (arredi, attrezzature, elettronica)" },
-        { id: "valFotov", tipo: "euro", obbl: true, se: r => (r.coperture || []).some(x => x === "fotov" || x === "green"), dom: r => casa && r.colonnina === "si" ? "Valore di fotovoltaico, batterie e colonnina" : "Valore di fotovoltaico e batterie" },
+        { id: "valFotov", tipo: "euro", obbl: true, se: r => (r.coperture || []).some(x => x === "fotov" || x === "green") || false, dom: r => casa && ha(r, "colonnina") ? "Valore di fotovoltaico, batterie e colonnina" : "Valore di fotovoltaico e batterie" },
         { id: "valArte", tipo: "euro", obbl: true, se: r => casa && sezC(r, "arte"), dom: "Opere d'arte e strumenti musicali: valore" },
-        { id: "valGioielli", tipo: "euro", obbl: true, se: r => casa && (r.garCasa || []).includes("gioielli"), dom: "Gioielli e valori in cassaforte: valore" },
+        { id: "valGioielli", tipo: "euro", obbl: true, se: r => casa && (r.garCasa || []).includes("gioielli"), dom: "Gioielli e valori: valore" },
         { id: "valCanone", tipo: "euro", obbl: true, se: r => casa && (r.garCasa || []).includes("canoni"), dom: "Canone di locazione annuo" },
         { id: "valParticolari", tipo: "euro", dom: casa ? "Valori particolari (gioielli, elettronica, ecc.)" : "Valori particolari (informatica, archivi, ecc.)" },
         { id: "valMerce", tipo: "euro", se: () => !casa, dom: "Merce presente in ufficio" },
@@ -793,28 +856,28 @@ const opz = (r, x) => (r.garOpz || []).includes(x);
 
 /* Garanzie opzionali (dal DIP aggiuntivo): "sez" = quando è proponibile, "se" = quando la consigliamo */
 const GARANZIE_OPZ = [
-  { v: "gelo",        t: "Pacchetto incendio: gelo", g: "Sezione A · Incendio", sez: inc, se: r => r.riscaldamento && r.riscaldamento !== "assente" },
-  { v: "elettrico",   t: "Fenomeno elettrico", g: "Sezione A · Incendio", sez: inc, se: r => true },
-  { v: "refrig",      t: "Merci in refrigerazione", g: "Sezione A · Incendio", sez: inc, se: r => r.refrigerate === "si" },
-  { v: "aumento",     t: "Merci in aumento", g: "Sezione A · Incendio", sez: inc, se: r => r.stagionali === "si" },
-  { v: "veicoliRip",  t: "Veicoli / natanti in riparazione o manutenzione", g: "Sezione A · Incendio", sez: inc, se: r => at(r, "veicoliClienti") },
-  { v: "lastre",      t: "Lastre e insegne in aumento", g: "Sezione A · Incendio", sez: inc, se: r => ar(r, "insegne") },
-  { v: "arredo",      t: "Arredamento e giochi all'aperto", g: "Sezione A · Incendio", sez: inc, se: r => ar(r, "arredoAperto") },
-  { v: "fotov",       t: "Pannelli solari / fotovoltaici", g: "Sezione A · Incendio", sez: r => inc(r) || cat(r), se: r => r.fotovoltaico && r.fotovoltaico !== "no" },
-  { v: "atmFotov",    t: "Eventi atmosferici sui pannelli", g: "Sezione A · Incendio", sez: inc, se: r => r.fotovoltaico && r.fotovoltaico !== "no" },
-  { v: "grandine",    t: "Grandine sui fragili in aumento", g: "Sezione A · Incendio", sez: inc, se: r => ar(r, "fragili") || r.lucernari === "molti" },
-  { v: "bagnamento",  t: "Integrazione danni da bagnamento / allagamento", g: "Sezione A · Incendio", sez: inc, se: r => r.interrati === "si" || r.bancali === "no" },
-  { v: "atmAperti",   t: "Eventi atmosferici a fabbricati aperti, tettoie, tende", g: "Sezione A · Incendio", sez: inc, se: r => ar(r, "aperti", "tettoie", "tende", "tenso") },
-  { v: "stazioni",    t: "Furto: stazioni di servizio / autolavaggi", g: "Sezione C · Furto e rapina", sez: fur, se: r => at(r, "stazione") },
-  { v: "furtoVeicoli",t: "Furto veicoli / natanti all'aperto", g: "Sezione C · Furto e rapina", sez: fur, se: r => r.veicoli === "si" || at(r, "veicoliClienti") },
-  { v: "attrezzi",    t: "Furto di attrezzi e merci trasportate", g: "Sezione C · Furto e rapina", sez: fur, se: r => at(r, "trasporto") || at(r, "posa") },
-  { v: "lavoriTerzi", t: "Lavori presso terzi", g: "Sezione F · Responsabilità civile", sez: rc, se: r => at(r, "posa") || at(r, "installazione") },
-  { v: "postuma",     t: "RC postuma (installazione, montaggio, riparazione)", g: "Sezione F · Responsabilità civile", sez: rc, se: r => at(r, "installazione") },
-  { v: "A900",        t: "Subappalto senza limiti (A900)", g: "Sezione F · Responsabilità civile", sez: rc, se: r => at(r, "subappalto") },
-  { v: "E707",        t: "Danni a cose di terzi movimentate (E707)", g: "Sezione F · Responsabilità civile", sez: rc, se: r => at(r, "movimentazione") },
-  { v: "E708",        t: "Smercio fuori dai locali (E708)", g: "Sezione F · Responsabilità civile", sez: rc, se: r => at(r, "fuoriLocali") },
-  { v: "E444",        t: "Cose portate dai clienti (E444)", g: "Sezione F · Responsabilità civile", sez: rc, se: r => at(r, "beniClienti") },
-  { v: "E445",        t: "Cose consegnate dai clienti – lavanderie (E445)", g: "Sezione F · Responsabilità civile", sez: rc, se: r => at(r, "lavanderia") }
+  { v: "gelo",        t: "Pacchetto incendio: gelo", g: "Incendio", sez: inc, se: r => r.riscaldamento && r.riscaldamento !== "assente" },
+  { v: "elettrico",   t: "Fenomeno elettrico", g: "Incendio", sez: inc, se: r => true },
+  { v: "refrig",      t: "Merci in refrigerazione", g: "Incendio", sez: inc, se: r => r.refrigerate === "si" },
+  { v: "aumento",     t: "Merci in aumento", g: "Incendio", sez: inc, se: r => r.stagionali === "si" },
+  { v: "veicoliRip",  t: "Veicoli / natanti in riparazione o manutenzione", g: "Incendio", sez: inc, se: r => at(r, "veicoliClienti") },
+  { v: "lastre",      t: "Lastre e insegne in aumento", g: "Incendio", sez: inc, se: r => ar(r, "insegne") },
+  { v: "arredo",      t: "Arredamento e giochi all'aperto", g: "Incendio", sez: inc, se: r => ar(r, "arredoAperto") },
+  { v: "fotov",       t: "Pannelli solari / fotovoltaici", g: "Incendio", sez: r => inc(r) || cat(r), se: r => r.fotovoltaico && r.fotovoltaico !== "no" },
+  { v: "atmFotov",    t: "Eventi atmosferici sui pannelli", g: "Incendio", sez: inc, se: r => r.fotovoltaico && r.fotovoltaico !== "no" },
+  { v: "grandine",    t: "Grandine sui fragili in aumento", g: "Incendio", sez: inc, se: r => ar(r, "fragili") || r.lucernari === "molti" },
+  { v: "bagnamento",  t: "Integrazione danni da bagnamento / allagamento", g: "Incendio", sez: inc, se: r => r.interrati === "si" || r.bancali === "no" },
+  { v: "atmAperti",   t: "Eventi atmosferici a fabbricati aperti, tettoie, tende", g: "Incendio", sez: inc, se: r => ar(r, "aperti", "tettoie", "tende", "tenso") },
+  { v: "stazioni",    t: "Furto: stazioni di servizio / autolavaggi", g: "Furto e rapina", sez: fur, se: r => at(r, "stazione") },
+  { v: "furtoVeicoli",t: "Furto veicoli / natanti all'aperto", g: "Furto e rapina", sez: fur, se: r => r.veicoli === "si" || at(r, "veicoliClienti") },
+  { v: "attrezzi",    t: "Furto di attrezzi e merci trasportate", g: "Furto e rapina", sez: fur, se: r => at(r, "trasporto") || at(r, "posa") },
+  { v: "lavoriTerzi", t: "Lavori presso terzi", g: "Responsabilità civile", sez: rc, se: r => at(r, "posa") || at(r, "installazione") },
+  { v: "postuma",     t: "RC postuma (installazione, montaggio, riparazione)", g: "Responsabilità civile", sez: rc, se: r => at(r, "installazione") },
+  { v: "A900",        t: "Subappalto senza limiti", rif: "AXA A900", g: "Responsabilità civile", sez: rc, se: r => at(r, "subappalto") },
+  { v: "E707",        t: "Danni a cose di terzi movimentate", rif: "AXA E707", g: "Responsabilità civile", sez: rc, se: r => at(r, "movimentazione") },
+  { v: "E708",        t: "Smercio fuori dai locali", rif: "AXA E708", g: "Responsabilità civile", sez: rc, se: r => at(r, "fuoriLocali") },
+  { v: "E444",        t: "Cose portate dai clienti", rif: "AXA E444", g: "Responsabilità civile", sez: rc, se: r => at(r, "beniClienti") },
+  { v: "E445",        t: "Cose consegnate dai clienti – lavanderie", rif: "AXA E445", g: "Responsabilità civile", sez: rc, se: r => at(r, "lavanderia") }
 ];
 
 QUESTIONARI.property = {
@@ -844,9 +907,9 @@ QUESTIONARI.property = {
 
     { id: "garanzie", titolo: "Garanzie e somme", sotto: "Cosa assicurare e per quanto.", campi: [
       { id: "garanzie", tipo: "multipla", obbl: true, dom: "Garanzie richieste",
-        opzioni: [{ v: "incendio", t: "A · Incendio" }, { v: "terremoto", t: "A · Terremoto" }, { v: "alluvione", t: "A · Inondazione e alluvione" }, { v: "terrorismo", t: "A · Atti di terrorismo" },
-                  { v: "indiretti", t: "B · Danni indiretti" }, { v: "furto", t: "C · Furto e rapina" }, { v: "guasti", t: "D · Guasti macchine" },
-                  { v: "informatica", t: "E · Assistenza informatica" }, { v: "rc", t: "F · Responsabilità civile" }, { v: "tutela", t: "G · Tutela legale" }],
+        opzioni: [{ v: "incendio", t: "Incendio" }, { v: "terremoto", t: "Terremoto" }, { v: "alluvione", t: "Inondazione e alluvione" }, { v: "terrorismo", t: "Atti di terrorismo" },
+                  { v: "indiretti", t: "Danni indiretti (fermo attività)" }, { v: "furto", t: "Furto e rapina" }, { v: "guasti", t: "Guasti macchine" },
+                  { v: "informatica", t: "Assistenza informatica" }, { v: "rc", t: "Responsabilità civile" }, { v: "tutela", t: "Tutela legale" }],
         aiuto: "Le domande dei passi successivi compaiono solo per le sezioni scelte." },
       { id: "titoloFabb", tipo: "scelta", obbl: true, dom: "Il fabbricato è", opzioni: [{ v: "proprieta", t: "Di proprietà" }, { v: "affitto", t: "In affitto" }] },
       { id: "sFabbricato", tipo: "euro", obbl: true, se: r => r.titoloFabb === "proprieta" && (inc(r) || cat(r)), dom: "Fabbricato", aiuto: "Valore di ricostruzione a nuovo." },
@@ -1012,6 +1075,7 @@ QUESTIONARI.property.passi.find(p => p.id === "rischio").se = inc;
 QUESTIONARI.property.passi.find(p => p.id === "catastrofali").se = cat;
 DOC_UTILI.commercio = DOC_UTILI.azienda = DOC_UTILI.industria =
   "Planimetria, CPI o SCIA, certificazioni degli impianti, certificato antisismico, polizza in corso, visura camerale";
+GARANZIE_OPZ.forEach(g => { g.comp = g.comp || ["AXA"]; });   /* ricavate dal DIP aggiuntivo AXA: da estendere con le altre compagnie */
 
 /* ---- 23_dati_vita.js ---- */
 /* =====================================================================
@@ -1618,11 +1682,18 @@ function ibanValido(v) {
 function stessoInsieme(a, b) { return Array.isArray(a) && Array.isArray(b) && a.length === b.length && a.every(x => b.includes(x)); }
 function applicaSuggeriti(passo, r) {
   r._sugg = r._sugg || {};
-  for (const c of campiAttivi(passo, r)) {
-    if (!c.suggerito) continue;
-    const nuovo = c.suggerito(r), prec = r._sugg[c.id];
-    if (r[c.id] === undefined || stessoInsieme(r[c.id], prec)) r[c.id] = nuovo.slice();
-    r._sugg[c.id] = nuovo;
+  /* più giri: un suggerimento può far comparire un altro campo suggerito (sezioni → garanzie) */
+  const fatti = new Set();
+  for (let giro = 0; giro < 4; giro++) {
+    let nuoviCampi = false;
+    for (const c of campiAttivi(passo, r)) {
+      if (!c.suggerito || fatti.has(c.id)) continue;
+      fatti.add(c.id); nuoviCampi = true;
+      const nuovo = c.suggerito(r), prec = r._sugg[c.id];
+      if (r[c.id] === undefined || stessoInsieme(r[c.id], prec)) r[c.id] = nuovo.slice();
+      r._sugg[c.id] = nuovo;
+    }
+    if (!nuoviCampi) break;
   }
 }
 
@@ -1642,7 +1713,7 @@ function testoRisposta(c, v, r) {
     case "euro": return euro(v);
     case "data": { const [a, m, g] = String(v).split("-"); return g ? `${g}/${m}/${a}` : v; }
     case "scelta": { const o = (valore(c.opzioni, r) || []).find(x => x.v === v); return o ? o.t : v; }
-    case "multipla": { const o = valore(c.opzioni, r) || []; return v.map(x => { const y = o.find(z => z.v === x) || { t: x }; return (y.g ? y.g.replace(/^Sezione (\w).*$/, "$1") + " · " : "") + y.t; }).join(", "); }
+    case "multipla": { const o = valore(c.opzioni, r) || []; return v.map(x => (o.find(z => z.v === x) || { t: x }).t).join(", "); }
     case "allegato": return v.map(f => f.nome).join(", ");
     default: return String(v);
   }
@@ -1690,6 +1761,16 @@ function costruisciRiepilogo(p) {
     Object.entries(gruppi).forEach(([sez, righe]) => extra.push({ titolo: "Analisi patrimoniale: " + sez.toLowerCase(), righe }));
     sezioni.splice(k, 0, ...extra.filter(x => x.righe.length));
   }
+  /* Nota per il backoffice: per ogni garanzia scelta, quali compagnie la offrono (dai DIP) */
+  const mappa = [];
+  for (const passo of passiVisibili(q, r)) for (const c of campiAttivi(passo, r)) {
+    if (c.tipo !== "multipla" || !Array.isArray(r[c.id])) continue;
+    for (const v of r[c.id]) {
+      const o = (valore(c.opzioni, r) || []).find(x => x.v === v);
+      if (o && (o.comp || o.rif)) mappa.push({ dom: (o.g ? o.g + " · " : "") + o.t, risp: [(o.comp || []).map(x => NOME_COMP[x] || x).join(", "), o.rif].filter(Boolean).join(" — ") });
+    }
+  }
+  if (mappa.length) sezioni.push({ titolo: "Per il backoffice: compagnie che offrono le garanzie scelte (indicativo, dai DIP)", righe: mappa, soloBackoffice: true });
   const allegati = [];
   for (const passo of passiVisibili(q, r)) for (const c of campiAttivi(passo, r))
     if (c.tipo === "allegato" && Array.isArray(r[c.id])) for (const f of r[c.id]) allegati.push({ ...f, voce: valore(c.dom, r) });
@@ -1846,7 +1927,7 @@ function creaPDF(p, commerciale) {
   /* piè di pagina con numerazione */
   pagine.forEach((o, i) => {
     o.push(`0.85 0.89 0.94 RG 0.6 w ${M} ${M - 6} m ${W - M} ${M - 6} l S`);
-    o.push(`BT /F1 8 Tf ${GRIGIO} rg ${M} ${M - 18} Td (${pdfEsc(AGENZIA.nome + " · " + R.cliente)}) Tj ET`);
+    o.push(`BT /F1 8 Tf ${GRIGIO} rg ${M} ${M - 18} Td (${pdfEsc(AGENZIA.nome + " · " + R.cliente + " · " + AGENZIA.app + " " + AGENZIA.versione)}) Tj ET`);
     const n = `Pagina ${i + 1} di ${pagine.length}`;
     o.push(`BT /F1 8 Tf ${GRIGIO} rg ${(W - M - pdfLarghezza(n, false, 8)).toFixed(2)} ${M - 18} Td (${n}) Tj ET`);
   });
@@ -1974,6 +2055,7 @@ function vistaHome() {
       return `<button class="pratica" data-apri="${p.id}"><span class="ico blu" style="width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center">${p.tipo === "sinistro" ? ICONE.sinistro : ICONE.preventivo}</span>
         <div><b>${esc(nome)}</b><small>${esc((percorsoNodo(p.prodotto) || [{ nome: q.titolo }]).map(n => n.nome).join(" › "))} · passo ${Math.min(p.passo + 1, tot)} di ${tot}</small></div>${ICONE.freccia}</button>`;
     }).join("") : `<div class="vuoto">Nessuna pratica in sospeso.<br>Le pratiche inviate vengono cancellate da questo dispositivo.</div>`}
+    <p class="nota-piccola">${esc(AGENZIA.app)} versione ${esc(AGENZIA.versione)} · ${esc(AGENZIA.dataBuild)}</p>
     ${Memoria.disponibile() ? "" : `<div class="avviso ambra" style="margin-top:12px">${ICONE.attenzione}<span>Questo browser non permette di salvare: se chiudi la pagina perdi la pratica in corso.</span></div>`}
   `;
 }
@@ -2104,10 +2186,17 @@ function disegnaCampo(c, r) {
       const sel = Array.isArray(v) ? v : [];
       const consigliate = c.suggerito ? c.suggerito(r) : [];
       let gruppoPrec = null;
-      corpo = `<div class="scelte">${(valore(c.opzioni, r) || []).map(o =>
-        (o.g && o.g !== gruppoPrec ? `<div class="gruppo-opz">${esc(gruppoPrec = o.g)}</div>` : "") +
-        `<button class="pill lunga" data-campo="${c.id}" data-multi="${esc(o.v)}" aria-pressed="${sel.includes(o.v)}">${sel.includes(o.v) ? "✓ " : ""}${esc(o.t)}${
-          consigliate.includes(o.v) ? ' <span class="consigliata">consigliata</span>' : ""}</button>`).join("")}</div>`; break;
+      const etichetta = o => consigliate.includes(o.v) ? ' <span class="consigliata">consigliata</span>' : "";
+      const gruppo = o => o.g && o.g !== gruppoPrec ? `<div class="gruppo-opz">${esc(gruppoPrec = o.g)}</div>` : "";
+      corpo = c.verticale
+        /* elenco a righe: titolo, spiegazione da dire al cliente, spunta */
+        ? `<div class="elenco-spunte">${(valore(c.opzioni, r) || []).map(o => gruppo(o) +
+            `<button class="spunta" data-campo="${c.id}" data-multi="${esc(o.v)}" aria-pressed="${sel.includes(o.v)}">
+              <span class="casella">${sel.includes(o.v) ? "✓" : ""}</span>
+              <span class="testo-spunta"><b>${esc(o.t)}${etichetta(o)}</b>${o.n ? `<small>${esc(o.n)}</small>` : ""}</span></button>`).join("")}</div>`
+        : `<div class="scelte">${(valore(c.opzioni, r) || []).map(o => gruppo(o) +
+            `<button class="pill lunga" data-campo="${c.id}" data-multi="${esc(o.v)}" aria-pressed="${sel.includes(o.v)}">${sel.includes(o.v) ? "✓ " : ""}${esc(o.t)}${o.n ? ` <span class="comp">${esc(o.n)}</span>` : ""}${etichetta(o)}</button>`).join("")}</div>`;
+      break;
     }
   }
   const daCF = r._auto && r._auto[c.id] !== undefined && r._auto[c.id] === v;
@@ -2210,7 +2299,7 @@ function vistaRiepilogo() {
     ${R.segnalazioni.length ? `<div class="campo"><div class="dom">Da verificare (${R.segnalazioni.length})</div>
       ${R.segnalazioni.map(a => `<div class="avviso ${a.livello}">${ICONE.attenzione}<span>${esc(a.testo)}</span></div>`).join("")}</div>` : ""}
     <div class="riepilogo">
-    ${R.sezioni.map(sz => { const k = indicePasso(sz.titolo.replace(/^Analisi patrimoniale.*$/, "Analisi patrimoniale"));
+    ${R.sezioni.filter(sz => !sz.soloBackoffice).map(sz => { const k = indicePasso(sz.titolo.replace(/^Analisi patrimoniale.*$/, "Analisi patrimoniale"));
       return `<div class="campo sezione-riep"><div class="riga-titolo"><div class="dom">${esc(sz.titolo)}</div>
         ${k >= 0 ? `<button class="btn piccolo" data-vai-passo="${k}">Modifica</button>` : ""}</div>
         <dl>${sz.righe.map(x => `<dt>${esc(x.dom)}</dt><dd class="${x.grave ? "grave" : ""}">${esc(x.risp)}</dd>`).join("")}</dl></div>`; }).join("")}
