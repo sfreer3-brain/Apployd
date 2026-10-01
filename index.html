@@ -195,6 +195,22 @@ dd.grave{color:var(--rosso);font-weight:700}
 .dis-campo input{width:100%;min-height:48px;border:1px solid var(--bordo);border-radius:10px;padding:8px 12px;background:#fbfcfd;font-size:16px}
 .btn.link{color:var(--blu);text-decoration:none;display:inline-flex}
 @media (min-width: 900px){ .dis-griglia{grid-template-columns:1fr 1fr} }
+.messaggio{white-space:pre-wrap;background:#fbfcfd;border:1px solid var(--bordo);border-radius:10px;padding:12px;font-size:15px;line-height:1.45}
+.bottoni-msg{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.perche{font-size:13.5px;color:var(--testo-2);background:var(--fondo);border-radius:8px;padding:6px 10px;margin:-4px 0 10px}
+.nuova-esigenza{width:100%;margin-bottom:14px}
+.promemoria input{width:100%;min-height:48px;border:1px solid var(--bordo);border-radius:10px;padding:8px 12px;background:#fbfcfd;font-size:16px;margin-top:6px}
+.promemoria.scaduto{border-color:var(--rosso)}
+.pill-mini{font-size:12px;font-weight:600;border-radius:6px;padding:3px 8px;background:var(--ambra-chiaro);color:#6b3f00;white-space:nowrap}
+.promemoria.scaduto .pill-mini{background:var(--rosso-chiaro);color:#7a1d20}
+.interruttore{display:flex;gap:12px;align-items:center;width:100%;text-align:left;border:1px solid var(--bordo);border-radius:12px;background:var(--carta);padding:12px 14px;margin-top:18px}
+.interruttore b{display:block;font-size:15px}
+.interruttore small{display:block;color:var(--testo-2);font-size:13px}
+.levetta{width:44px;height:26px;border-radius:13px;background:#c9d3e0;position:relative;flex:none;transition:background .15s}
+.levetta::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .15s}
+.interruttore[aria-pressed=true] .levetta{background:var(--blu)}
+.interruttore[aria-pressed=true] .levetta::after{left:21px}
+body.esperto .campo > .aiuto, body.esperto .perche, body.esperto .testo-spunta small, body.esperto .elenco .voce small{display:none}
 .nota-piccola{color:var(--testo-2);font-size:13px;text-align:center;margin-top:18px}
 /* ---------- passi laterali (solo schermi larghi) ---------- */
 .layout-q{display:block}
@@ -269,7 +285,7 @@ dd.grave{color:var(--rosso);font-weight:700}
 const AGENZIA = {
   nome: "Lloyd Varesino",
   app: "Bussola",
-  versione: "0.8",       // scritta da ricomponi.py (file VERSIONE)
+  versione: "0.9",       // scritta da ricomponi.py (file VERSIONE)
   dataBuild: "01/10/2026",
   giorniConservazioneBozze: 7   // le bozze non inviate si cancellano da sole dopo N giorni
 };
@@ -297,7 +313,9 @@ const ALBERO = [
       { id: "casa",      nome: "Casa", questionario: "casa" },
       { id: "pf-inf",    nome: "Infortuni", nota: "Anche malattia", questionario: "infortuni" },
       { id: "salute",    nome: "Salute", questionario: null },
-      { id: "tcm",       nome: "Caso morte", questionario: null },
+      { id: "tcm",       nome: "Caso morte (TCM)", invio: "vita", questionario: null },
+      { id: "ltc",       nome: "Non autosufficienza (LTC)", invio: "vita", questionario: null },
+      { id: "ci",        nome: "Malattie gravi (critical illness)", invio: "vita", questionario: null },
       { id: "pet",       nome: "Pet", nota: "Cani e gatti", questionario: null },
       { id: "viaggio",   nome: "Viaggio", questionario: null } ] },
     { id: "pf-vita", nome: "Vita investimento", invio: "vita", figli: [
@@ -310,9 +328,9 @@ const ALBERO = [
       { id: "azienda",   nome: "Azienda", nota: "Incendio, furto, catastrofali", questionario: "property" },
       { id: "industria", nome: "Industria", nota: "Incendio, furto, catastrofali", questionario: "property" },
       { id: "edile",     nome: "Impresa edile", nota: "RC, CAR, postuma", figli: [
-        { id: "edile-rc",  nome: "RC", nota: "Responsabilità civile verso terzi e prestatori", questionario: null },
-        { id: "car",       nome: "CAR", nota: "Tutti i rischi del cantiere", questionario: null },
-        { id: "postuma",   nome: "Postuma", nota: "Decennale postuma", questionario: null } ] },
+        { id: "edile-rc",  nome: "RC edile", nota: "Impresa che esegue i lavori o committente", questionario: "edileRc" },
+        { id: "car",       nome: "CAR", nota: "Tutti i rischi del cantiere", questionario: "car", preset: { coperturaEd: "car" } },
+        { id: "postuma",   nome: "Postuma", nota: "Decennale postuma", questionario: "car", preset: { coperturaEd: "postuma" } } ] },
       { id: "az-inf",    nome: "Infortuni", nota: "Titolari, soci, dipendenti", questionario: "infortuni" },
       { id: "welfare",   nome: "Welfare", questionario: null },
       { id: "ufficio",   nome: "Ufficio", questionario: "ufficio" },
@@ -536,6 +554,9 @@ const DOC_UTILI = {
   po: r => r.poChi === "ente" ? "Elenco dei dipendenti da assicurare, polizza in corso" : r.poChi === "progetto" ? "Delibera d'incarico, bando, relazione sul progetto" : "Atto di nomina o incarico, polizza in corso",
   sanita: r => r.tipoSan === "casacura" ? "Proposta DUAL case di cura compilata, ultimo bilancio, polizza RC sanitaria in corso, statistica sinistri" : "Polizza RC sanitaria in corso, autorizzazione o accreditamento, elenco delle sedi, ultimo bilancio",
   infortuni: r => r._segmento === "az" ? "Elenco degli assicurati con data di nascita e mansione, polizza in corso" : "Polizza in corso, questionario sanitario della compagnia se già compilato",
+  car: "Contratto di appalto, relazione geotecnica e geologica, computo metrico, planimetria del cantiere, titolo edilizio, cronoprogramma",
+  "edile-rc": "Visura camerale, polizza RC in corso, statistica sinistri, attestazione SOA",
+  postuma: "Contratto di appalto, relazione geotecnica, computo metrico, planimetria del cantiere, titolo edilizio",
   casa: "Polizza in corso, planimetria o visura catastale, foto dell'immobile",
   ufficio: "Polizza in corso, visura camerale, planimetria, contratto d'affitto"
 };
@@ -2010,7 +2031,7 @@ const sportRischio = r => (r.sport || []).some(x => SPORT_RISCHIO.includes(x)) |
 const GI = { inf: "Infortuni", mal: "Malattia", srv: "Servizi" };
 const I = (v, t, n, g, comp, se) => ({ v, t, n, g, comp, se });
 const GARANZIE_INF = [
-  I("morte", "Morte da infortunio", "Un capitale ai beneficiari se l'infortunio è mortale", GI.inf, ["AXA", "UNI", "HEL"]),
+  I("morte", "Morte da infortunio", "Un capitale ai beneficiari se l'infortunio è mortale. Per il caso morte proponi la TCM.", GI.inf, ["AXA", "UNI", "HEL"]),
   I("ip", "Invalidità permanente da infortunio", "Un capitale in proporzione all'invalidità che resta dopo l'infortunio", GI.inf, ["AXA", "UNI", "HEL"]),
   I("ipGrave", "Capitale in più per invalidità grave", "Un ulteriore capitale se l'invalidità è pari o superiore al 60%", GI.inf, ["AXA", "HEL"]),
   I("rendita", "Rendita vitalizia per invalidità grave", "Un assegno mensile per tutta la vita se l'invalidità è pari o superiore al 60%", GI.inf, ["AXA"]),
@@ -2035,8 +2056,9 @@ const GARANZIE_INF = [
   I("assistenza", "Assistenza 24 ore su 24", "Consulenza medica al telefono e servizi in caso di emergenza", GI.srv, ["HEL"]),
   I("tutela", "Tutela legale", "Le spese legali per controversie legate a un infortunio", GI.srv, ["HEL"])
 ];
-const SUGGERISCI_INF = r => ["morte", "ip", "spese"]
-  .concat(r.lavoro === "autonomo" ? ["itemp"] : [])
+/* Consigliate dall'agenzia: invalidità, rendita per invalidità grave, spese di cura; sport solo se a rischio.
+   Il caso morte si propone con la TCM (ramo vita). */
+const SUGGERISCI_INF = r => ["ip", "rendita", "spese"]
   .concat(sportRischio(r) ? ["sportRischio"] : [])
   .concat(azInf(r) && (r.assicuratiAz || []).includes("dipendenti") ? ["respContraente"] : []);
 
@@ -2080,13 +2102,15 @@ QUESTIONARI.infortuni = {
         aiuto: "Un riferimento: quanto servirebbe alla famiglia per alcuni anni di reddito e per i debiti in corso." },
       { id: "capIP", tipo: "euro", obbl: true, se: r => garInf(r, "ip"), dom: "Capitale per invalidità permanente",
         aiuto: "Di solito più alto di quello per morte: con un'invalidità grave le spese aumentano." },
-      { id: "franchigiaIP", tipo: "scelta", se: r => garInf(r, "ip"), dom: "Franchigia sull'invalidità",
-        aiuto: "Senza franchigia si paga anche un'invalidità piccola, ma il premio sale.",
-        opzioni: [{ v: "standard", t: "Come da proposta della compagnia" }, { v: "nessuna", t: "Senza franchigia, se possibile" }] },
+      { id: "tabellaInail", tipo: "sino", obbl: true, se: r => garInf(r, "ip"), dom: "Si vuole la tabella INAIL per calcolare l'invalidità permanente?" },
+      { id: "franchigiaIP", tipo: "scelta", verticale: true, obbl: true, se: r => garInf(r, "ip"), dom: "Franchigia sull'invalidità permanente",
+        suggerito: () => "3", aiuto: "Senza franchigia si paga anche un'invalidità piccola, ma il premio sale.",
+        opzioni: [{ v: "3", t: "3%", n: "consigliata" }, { v: "modulare", t: "Modulare" }, { v: "zero", t: "0 sul primo scaglione", n: "il primo scaglione cambia da compagnia a compagnia" }] },
       { id: "capRendita", tipo: "euro", se: r => garInf(r, "rendita", "renditaMal"), dom: "Rendita mensile desiderata" },
       { id: "diariaImporto", tipo: "euro", obbl: true, se: r => garInf(r, ...DIARIE), dom: "Importo della diaria al giorno" },
       { id: "itempImporto", tipo: "euro", obbl: true, se: r => garInf(r, "itemp", "itempMal"), dom: "Inabilità temporanea: importo al giorno" },
-      { id: "speseMax", tipo: "euro", obbl: true, se: r => garInf(r, "spese"), dom: "Massimo rimborso per spese di cura" },
+      { id: "speseMax", tipo: "scelta", obbl: true, se: r => garInf(r, "spese"), dom: "Massimo rimborso per spese di cura",
+        opzioni: [5000, 10000, 15000, 20000, 25000].map(n => ({ v: String(n), t: euro(n) })) },
       { id: "capIPMal", tipo: "euro", obbl: true, se: r => garInf(r, "ipMal", "ipMalGrave"), dom: "Capitale per invalidità da malattia" },
       { id: "capMorteIctus", tipo: "euro", obbl: true, se: r => garInf(r, "morteIctus"), dom: "Capitale per morte da ictus, infarto o tumore" },
       { id: "capGraveMal", tipo: "euro", se: r => garInf(r, "capitaleConv"), dom: "Capitale per grave malattia" },
@@ -2123,6 +2147,396 @@ QUESTIONARI.infortuni = {
         aiuto: "Serve il consenso esplicito: le risposte qui sopra riguardano la salute.",
         avvisoNo: { livello: "ambra", testo: "Senza consenso ai dati sanitari la compagnia non può valutare la richiesta: fallo firmare prima dell'invio." } }
     ]},
+    PASSO_CHIUSURA
+  ]
+};
+
+/* ---- 28_dati_edile.js ---- */
+/* =====================================================================
+   IMPRESA EDILE — questionari fedeli agli originali delle compagnie.
+   - CAR e Decennale postuma: questionario Helvetia "Ristrutturazioni
+     integrali / ampliamenti e sopraelevazioni" (parti I–IV, allegato 1).
+   - RC impresa edile: unione di Helvetia "RCT/O aziende edili" e
+     AXA Mod. 3623 (RCT/RCO, A23 malattie professionali); per chi
+     commissiona i lavori, AXA Mod. 3623 "RC del Committente".
+   Per ogni prodotto: documenti richiesti dalla compagnia e messaggio
+   pronto per chiederli al cliente.
+   ===================================================================== */
+
+/* ---------- documenti e messaggio per il cliente ---------- */
+const DOC_EDILE = {
+  car: [
+    { v: "appalto", t: "Contratto di appalto" },
+    { v: "geotecnica", t: "Relazione geotecnica" },
+    { v: "geologica", t: "Relazione geologica" },
+    { v: "cme", t: "Computo metrico estimativo (CME)" },
+    { v: "planimetria", t: "Planimetria dell'area di cantiere e delle zone circostanti" },
+    { v: "titolo", t: "Titolo edilizio (permesso di costruire)" },
+    { v: "crono", t: "Cronoprogramma dei lavori" }
+  ],
+  impresa: [
+    { v: "visura", t: "Visura camerale aggiornata" },
+    { v: "polizza", t: "Polizza RC in corso" },
+    { v: "statistica", t: "Statistica sinistri degli ultimi 5 anni rilasciata dalla compagnia attuale" },
+    { v: "soa", t: "Attestazione SOA", se: r => r.soa === "si" },
+    { v: "iso", t: "Certificazione ISO 9001", se: r => r.iso9001 === "si" },
+    { v: "cantieri", t: "Elenco dei cantieri aperti" }
+  ],
+  committente: [
+    { v: "visura", t: "Visura camerale aggiornata" },
+    { v: "appalto", t: "Contratto di appalto", se: r => r.rccDurata === "singolo" },
+    { v: "titolo", t: "Titolo edilizio (permesso di costruire)", se: r => r.rccDurata === "singolo" },
+    { v: "crono", t: "Cronoprogramma dei lavori", se: r => r.rccDurata === "singolo" },
+    { v: "polizzaApp", t: "Polizza RC dell'impresa appaltatrice" },
+    { v: "polizza", t: "Polizza RC del committente in corso" }
+  ]
+};
+const DOC_POSTUMA_DOPO = ["Certificato di ultimazione lavori", "Certificato di agibilità rilasciato dal Comune", "Certificato di collaudo statico delle strutture",
+  "Capitolato speciale d'appalto allegato al preliminare di vendita (se ci sono le estensioni)", "Esito finale (report) del controllore tecnico, se la compagnia lo chiede"];
+
+const listaDocEdile = r => {
+  const k = r._prodotto === "edile-rc" ? (r.ruoloRC === "committente" ? "committente" : "impresa") : "car";
+  return DOC_EDILE[k].filter(d => !d.se || d.se(r));
+};
+const docMancanti = r => listaDocEdile(r).filter(d => !(r.docConsegnati || []).includes(d.v));
+
+/* Testo pronto da mandare al cliente (email, WhatsApp…) con i documenti che mancano */
+function messaggioDocumenti(r, profilo) {
+  const m = docMancanti(r);
+  const prodotto = r._prodotto === "edile-rc" ? (r.ruoloRC === "committente" ? "la responsabilità civile del committente" : "la responsabilità civile dell'impresa")
+    : r.coperturaEd === "postuma" ? "la polizza decennale postuma" : r.coperturaEd === "entrambe" ? "le polizze CAR e decennale postuma" : "la polizza CAR (tutti i rischi del cantiere)";
+  const saluto = r.referente ? `Gentile ${r.referente}` : r.nome ? `Gentile ${r.nome}` : "Buongiorno";
+  const firma = [profilo && profilo.nome, AGENZIA.nome, profilo && profilo.tel].filter(Boolean).join("\n");
+  if (!m.length) return `${saluto},\nabbiamo tutto il necessario per il preventivo per ${prodotto}. Vi aggiorniamo appena abbiamo le quotazioni.\n\nCordiali saluti\n${firma}`;
+  const cantiere = r.luogoOpere ? ` (cantiere di ${r.luogoOpere})` : "";
+  return `${saluto},\nper preparare il preventivo per ${prodotto}${cantiere} le compagnie ci chiedono questi documenti:\n\n${m.map(d => "- " + d.t).join("\n")}\n\nPuò inviarceli rispondendo a questo messaggio, anche in PDF o in foto leggibili. Se qualcosa non è ancora disponibile, ci dica quando pensa di averlo.\n\nGrazie e cordiali saluti\n${firma}`;
+}
+
+const PASSO_DOC_EDILE = { id: "documentiEdile", titolo: "Documenti", sotto: "Quelli che la compagnia chiede sempre. Per quelli che mancano c'è il messaggio pronto per il cliente.", campi: [
+  { id: "docConsegnati", tipo: "multipla", verticale: true, dom: "Documenti che il cliente ha già consegnato",
+    opzioni: r => listaDocEdile(r).map(d => ({ v: d.v, t: d.t })),
+    avvisoSe: (v, r) => { const m = docMancanti(r); return m.length ? { livello: "ambra", testo: "Documenti ancora da avere: " + m.map(d => d.t.toLowerCase()).join(", ") + "." } : null; } },
+  { id: "msgDocumenti", tipo: "messaggio", dom: "Messaggio per il cliente", testo: r => messaggioDocumenti(r, Memoria.leggi("bussola.profilo", {})),
+    aiuto: "Copialo o condividilo con l'app che preferisci. Il testo si aggiorna con i documenti spuntati qui sopra." },
+  { id: "docPostumaDopo", tipo: "info", se: r => r._prodotto !== "edile-rc" && r.coperturaEd !== "car", dom: "Per attivare la decennale postuma, a fine lavori, serviranno",
+    elenco: DOC_POSTUMA_DOPO },
+  { id: "notaQuestionario", tipo: "info", dom: "Questionario della compagnia", elenco: ["Il backoffice compila il questionario della compagnia con questi dati: il cliente dovrà solo controllarlo e firmarlo."] }
+]};
+
+/* =====================================================================
+   CAR E DECENNALE POSTUMA (Helvetia, ristrutturazioni)
+   ===================================================================== */
+const car = r => ["car", "entrambe"].includes(r.coperturaEd);
+const postuma = r => ["postuma", "entrambe"].includes(r.coperturaEd);
+const sn = (id, dom, se, extra) => Object.assign({ id, tipo: "sino", dom, se }, extra || {});
+const scelte = arr => arr.map(t => typeof t === "string" ? { v: t, t } : t);
+const sceltaPT = (id, n, dom, opz, extra) => Object.assign({ id, tipo: "scelta", verticale: true, obbl: true, dom: `${n}) ${dom}`, opzioni: scelte(opz) }, extra || {});
+
+QUESTIONARI.car = {
+  titolo: "CAR e decennale postuma",
+  passi: [
+    { id: "coperturaCar", titolo: "Copertura", sotto: "Questionario per ristrutturazioni integrali, ampliamenti e sopraelevazioni.", campi: [
+      { id: "coperturaEd", tipo: "scelta", verticale: true, obbl: true, dom: "Cosa va assicurato?",
+        opzioni: [{ v: "car", t: "CAR", n: "tutti i rischi del cantiere durante i lavori" }, { v: "postuma", t: "Decennale postuma", n: "danni all'immobile nei 10 anni dopo la fine dei lavori" },
+                  { v: "entrambe", t: "CAR e decennale postuma" }] },
+      { id: "avvisoMinimo", tipo: "info", dom: "Da sapere prima di iniziare", elenco: r => [
+        "La compagnia chiede sempre: contratto di appalto, relazione geotecnica, computo metrico estimativo, planimetria dell'area di cantiere, titolo edilizio.",
+        "I campi con * nel questionario originale qui sono obbligatori."].concat(postuma(r) ? ["Per le ristrutturazioni la decennale postuma non si può fare se non ci sono opere strutturali interamente nuove, soggette a collaudo statico (legge 1086/1971)."] : []) }
+    ]},
+    PASSO_CLIENTE,
+    { id: "datiGenerali", titolo: "Dati generali", sotto: "Parte I: soggetti, luogo e opere.", campi: [
+      { id: "committente", tipo: "testo", obbl: true, largo: true, dom: "1b) Committente" },
+      { id: "sedeCommittente", tipo: "testo", obbl: true, largo: true, dom: "Sede del committente (via, numero, CAP, provincia)" },
+      { id: "appaltatore", tipo: "testo", obbl: true, largo: true, dom: "1c) Appaltatore / esecutore dei lavori" },
+      { id: "subappaltatori", tipo: "testo", obbl: true, largo: true, dom: "1d) Subappaltatori", aiuto: "Se non ce ne sono, scrivi «nessuno»." },
+      { id: "progettisti", tipo: "testo", largo: true, dom: "1e) Progettisti" },
+      { id: "assicuratoCar", tipo: "testo", largo: true, dom: "1f) Assicurato" },
+      { id: "luogoOpere", tipo: "testo", obbl: true, largo: true, dom: "2) Luogo di esecuzione delle opere (indirizzo, numero, città)" },
+      { id: "descrOpere", tipo: "nota", obbl: true, dom: "3) Descrizione delle opere" },
+      { id: "dataTitolo", tipo: "data", obbl: true, dom: "Data di rilascio del titolo edilizio (permesso di costruire)" },
+      { id: "ambito210", tipo: "info", dom: "Attenzione", elenco: ["Accertarsi di essere in ambito 210 (come richiesto dal questionario della compagnia)."] },
+      { id: "agibilita", tipo: "sino", obbl: true, dom: "Presenza del certificato di agibilità sull'edificio preesistente" },
+      { id: "tipoRistr", tipo: "scelta", verticale: true, obbl: true, dom: "Tipologia di ristrutturazione",
+        opzioni: [{ v: "integrale", t: "Ristrutturazione integrale", n: "le preesistenze, dopo i lavori e il nuovo collaudo statico, non si distinguono più dalle parti nuove e ne diventano parte integrante" },
+                  { v: "ampliamento", t: "Ampliamenti e sopraelevazioni", n: "le preesistenze restano strutturalmente distinte e distinguibili dalle parti nuove" }] },
+      { id: "costrDal", tipo: "data", obbl: true, se: car, dom: "4) Durata, costruzione delle opere: dalle ore 24 del" },
+      { id: "costrAl", tipo: "data", obbl: true, se: car, dom: "alle ore 24 del", verifica: (v, r) => r.costrDal && v < r.costrDal ? "La fine è prima dell'inizio" : null },
+      { id: "manutAl", tipo: "data", obbl: true, se: car, dom: "Manutenzione: dalle ore 24 della fine lavori fino alle ore 24 del" }
+    ]},
+    { id: "sezioniCar", titolo: "CAR: somme e massimali", sotto: "Sezione I danni alle cose, Sezione II responsabilità civile verso terzi.", se: car, campi: [
+      { id: "p1Opere", tipo: "euro", obbl: true, dom: "Partita 1: opere e impianti permanenti e temporanei, compresi materiali e impianti forniti dal committente" },
+      { id: "p2Preesistenti", tipo: "euro", obbl: true, dom: "Partita 2: opere e impianti preesistenti" },
+      { id: "p3Demolizione", tipo: "euro", dom: "Partita 3: costi di demolizione e di sgombero" },
+      { id: "p4Macchinari", tipo: "euro", dom: "Partita 4: macchinario e attrezzature di cantiere, compresi i baraccamenti, di proprietà dell'assicurato o di cui debba rispondere",
+        aiuto: "Estensione facoltativa: se la chiedi, compila l'elenco qui sotto (allegato 1).",
+        figli: { quando: v => Number(v) > 0, campi: [{ id: "elencoMacchinari", tipo: "nota", obbl: true, dom: "Allegato 1: per ogni macchinario numero, descrizione (tipo, marca, matricola o targa), anno di costruzione, somma assicurata a valore di rimpiazzo a nuovo" }] } },
+      { id: "rctCarAggregato", tipo: "euro", dom: "Sezione II: massimale per tutti i sinistri durante la polizza" },
+      { id: "rctCarSinistro", tipo: "euro", dom: "con il limite per ogni sinistro di" },
+      { id: "altreAssCar", tipo: "sino", obbl: true, dom: "9) Per tutta la durata della CAR esistono altre coperture sugli stessi rischi (danni alle cose, RC verso terzi)?",
+        figli: { quando: "si", campi: [
+          { id: "altreAssCarPol", tipo: "testo", largo: true, dom: "Numero di polizza, compagnia e scadenza" },
+          { id: "altreAssCarMass", tipo: "testo", dom: "Massimali" } ] } }
+    ]},
+    { id: "estensioniCar", titolo: "CAR: estensioni", sotto: "Parte II: estensioni di garanzia richieste.", se: car, campi: [
+      sn("estErrori", "10) Errori di progettazione e calcolo"),
+      sn("estStraordinari", "Maggiori costi per lavoro straordinario, notturno, festivo e trasporto a grande velocità"),
+      sn("estManutEstesa", "Manutenzione estesa"),
+      sn("estRcIncrociata", "Pluralità di assicurati, responsabilità civile incrociata"),
+      sn("estFranamento", "Rimozione, franamento e cedimento del terreno"),
+      sn("estCavi", "Cavi e condutture sotterranee"),
+      sn("estScioperi", "11) Scioperi, sommosse, tumulti popolari"),
+      sn("estTerrorismo", "Atti di terrorismo o sabotaggio organizzato")
+    ]},
+    { id: "lavoriRistr", titolo: "Lavori di ristrutturazione", sotto: "In caso di ristrutturazioni e ampliamenti.", campi: [
+      { id: "partiRistr", tipo: "nota", dom: "13) Quali parti vengono ristrutturate?" },
+      { id: "lavoriEseguiti", tipo: "nota", obbl: true, dom: "Quali lavori vengono eseguiti?" },
+      { id: "impStrutturali", tipo: "euro", obbl: true, dom: "14) Importo dei lavori: opere strutturali" },
+      { id: "impFiniture", tipo: "euro", obbl: true, dom: "Importo dei lavori: opere di finitura e impiantistica" },
+      { id: "strutturePortanti", tipo: "sino", obbl: true, dom: "15) Sono interessate strutture portanti?",
+        figli: { quando: "si", campi: [{ id: "strutturePortantiQuali", tipo: "testo", largo: true, dom: "Quali" }] } },
+      { id: "opereNuoveStrutt", tipo: "sino", obbl: true, se: postuma, dom: "Sono previste opere strutturali realizzate interamente a nuovo, soggette a collaudo statico (legge 1086/1971)?",
+        avvisoNo: { livello: "rosso", testo: "Senza opere strutturali interamente nuove la decennale postuma per ristrutturazioni non si può fare." } },
+      { id: "necessari", tipo: "multipla", obbl: true, dom: "16) Si rendono necessari",
+        opzioni: scelte([{ v: "sottopassaggi", t: "Sottopassaggi" }, { v: "sottomurazioni", t: "Sottomurazioni" }, { v: "demolizioni", t: "Demolizioni" }, { v: "altro", t: "Altro" }, { v: "nessuno", t: "Nessuno di questi" }]) },
+      { id: "necessariAltro", tipo: "testo", obbl: true, se: r => (r.necessari || []).includes("altro"), dom: "Altro: cosa" },
+      { id: "necessariMetodo", tipo: "testo", largo: true, obbl: true, se: r => (r.necessari || []).some(x => x !== "nessuno"), dom: "Misura e metodo" },
+      { id: "numEdifici", tipo: "testo", obbl: true, tastiera: "numeric", dom: "17) Numero di edifici da ristrutturare" },
+      { id: "numUnita", tipo: "testo", tastiera: "numeric", dom: "Numero di unità immobiliari" },
+      { id: "altreIndicazioni", tipo: "nota", dom: "18) Altre indicazioni" }
+    ]},
+    { id: "sezioniPostuma", titolo: "Postuma: somme e massimali", sotto: "Parte III: decennale postuma, compila tutte le partite.", se: postuma, campi: [
+      { id: "pp1Immobile", tipo: "euro", obbl: true, dom: "Partita 1: immobile",
+        aiuto: r => r.tipoRistr === "integrale"
+          ? "Ristrutturazione integrale: valore di ricostruzione a nuovo, compresa la preesistenza, da una stima scritta di un professionista incaricato o del controllore tecnico."
+          : "Ampliamenti e sopraelevazioni: valore di ricostruzione; deve corrispondere alla partita 1 della CAR." },
+      { id: "pp2Demolizione", tipo: "euro", obbl: true, dom: "Partita 2: spese di demolizione e sgombero" },
+      { id: "pp3Involucro", tipo: "euro", obbl: true, dom: "Partita 3: involucro", aiuto: "Muri di tamponamento verticali esterni (esclusi fissi e infissi), facciate vetrate continue, facciate ventilate, rivestimenti a cappotto." },
+      { id: "pp4Impermeab", tipo: "euro", obbl: true, dom: "Partita 4: impermeabilizzazione delle coperture", aiuto: "Sistemi di impermeabilizzazione continui a più strati funzionali." },
+      { id: "pp5Pavimenti", tipo: "euro", obbl: true, dom: "Partita 5: pavimentazioni e rivestimenti interni", aiuto: "In cotto, ceramica, pietra o legno, compresi strati di posa e incollaggio." },
+      { id: "pp6Intonaci", tipo: "euro", obbl: true, dom: "Partita 6: intonaci e rivestimenti esterni", aiuto: "Intonaci perimetrali o rivestimenti esterni in cotto, ceramica o pietra, compresi strati di posa e incollaggio." },
+      { id: "rctPostAggregato", tipo: "euro", obbl: true, dom: "Sezione B, RC verso terzi: massimale per tutti i sinistri durante la polizza" },
+      { id: "rctPostSinistro", tipo: "euro", obbl: true, dom: "con il limite per ogni sinistro di", aiuto: "Minimo 500.000 €.",
+        verifica: v => Number(v) < 500000 ? "Il minimo è 500.000 €" : null }
+    ]},
+    { id: "datiTecnici", titolo: "Dati tecnici", sotto: "Parte IV: terreno e tipologia dell'edificio (tutti obbligatori).", campi: [
+      sceltaPT("orografia", 1, "Orografia del terreno", ["Area urbana densamente urbanizzata", "Area urbana mediamente urbanizzata", "Area extraurbana / rurale poco urbanizzata"]),
+      sceltaPT("stratigrafia", 2, "Geologia: stratigrafia", ["Terreno non stratificato", "Terreno stratificato"]),
+      sceltaPT("geoTipo", 3, "Geologia: tipologia", ["Roccia o suoli compatti granulari (ciottoli, ghiaie, sabbie grosse)", "Suolo fine (sabbie fini, limi, argille e simili)", "Altro"]),
+      sceltaPT("consolidamenti", 4, "Consolidamenti delle fondazioni", ["Nessun consolidamento", "Consolidamento di una parte limitata (< 5-10%)", "Consolidamento di una parte rilevante (< 25-30%)", "Consolidamento di una parte molto rilevante (oltre 25-30%)"]),
+      sceltaPT("falda", 5, "Falda", ["Non interessa le fondazioni", "Interessa le fondazioni"]),
+      sceltaPT("tipoEdilizia", 6, "Tipologia edilizia abitativa", ["Casa singola, unità immobiliare indipendente", "Case a schiera", "Case plurifamiliari, case di appartamenti"]),
+      sceltaPT("pianiFuori", 7, "Piani fuori terra", ["Da 1 a 4", "Da 4 a 9", "Oltre 9"]),
+      sceltaPT("pianiInterrati", 8, "Piani interrati", ["Nessuno", "1 o 2", "3 o più"]),
+      sceltaPT("fondazioni", 9, "Tipologia delle fondazioni", ["Dirette: plinti", "Dirette: travi rovesce", "Dirette: platea", "Indirette: su pali"]),
+      sceltaPT("struttura", 10, "Tipologia della struttura", ["Intelaiata (travi e pilastri)", "In muratura (muratura portante)", "A pannelli portanti", "Altro"]),
+      sceltaPT("matStruttura", 11, "Materiali della struttura portante", ["Calcestruzzo armato", "Laterizi / blocchi lapidei", "Legno lamellare", "Acciaio", "Calcestruzzo precompresso", "Altri"]),
+      { id: "elemParticolari", tipo: "multipla", dom: "12) Elementi particolari", opzioni: scelte(["Tensostrutture", "Strutture mobili / geometria variabile", "Strutture a guscio / cupole", "Giardini pensili"]) },
+      sceltaPT("tetto", 13, "Tetto", ["A falde", "Piano"]),
+      sceltaPT("matTetto", 14, "Materiale della struttura del tetto", ["Calcestruzzo armato", "Legno", "Legno lamellare", "Acciaio", "Calcestruzzo precompresso", "Altro"]),
+      sceltaPT("copertura", 15, "Copertura", ["Discontinua (tegole, lastre, pannelli, lamiere…)", "Continua (manto impermeabilizzante)"])
+    ]},
+    { id: "datiPostuma", titolo: "Postuma: partite 3-6", sotto: "Involucro, impermeabilizzazioni, pavimenti, rivestimenti esterni.", se: postuma, campi: [
+      { id: "involucro", tipo: "multipla", obbl: true, dom: "16) Tipologie di involucro presenti", opzioni: scelte(["Muri di tamponamento", "Cappotto termico", "Facciata vetrata", "Facciata ventilata"]) },
+      sceltaPT("tamponamento", "16A", "Muri di tamponamento", ["Tradizionali in laterizi / blocchetti", "Pannelli prefabbricati solo in materiali cementizi", "Pannelli prefabbricati anche con materiali non cementizi"], { se: r => (r.involucro || []).includes("Muri di tamponamento") }),
+      { id: "impTamponamento", tipo: "euro", obbl: true, se: r => (r.involucro || []).includes("Muri di tamponamento"), dom: "Importo relativo ai muri di tamponamento" },
+      sceltaPT("cappotto", "16B", "Cappotto termico", ["Materiali sintetici (polistirene espanso o estruso, PVC)", "Materiali naturali e minerali (fibra di legno o vetro, sughero, lana di roccia)", "Altri materiali", "Cappotto interno", "Cappotto orizzontale"], { se: r => (r.involucro || []).includes("Cappotto termico") }),
+      { id: "impCappotto", tipo: "euro", obbl: true, se: r => (r.involucro || []).includes("Cappotto termico"), dom: "Importo relativo al cappotto termico" },
+      sceltaPT("facciataVetrata", "16C", "Facciata vetrata", ["A montanti e traversi", "A cellule o a moduli", "Strutturale", "A fissaggio puntuale o planare", "A doppia pelle"], { se: r => (r.involucro || []).includes("Facciata vetrata") }),
+      { id: "impVetrata", tipo: "euro", obbl: true, se: r => (r.involucro || []).includes("Facciata vetrata"), dom: "Importo relativo alla facciata vetrata" },
+      sceltaPT("facciataVentilata", "16D", "Facciata ventilata", ["In legno", "In cotto", "In pietra", "In alluminio", "In gres", "In policarbonato"], { se: r => (r.involucro || []).includes("Facciata ventilata") }),
+      { id: "impVentilata", tipo: "euro", obbl: true, se: r => (r.involucro || []).includes("Facciata ventilata"), dom: "Importo relativo alla facciata ventilata" },
+      { id: "impermeabilizzatore", tipo: "testo", largo: true, dom: "19) Impermeabilizzatore: nome, sede, codice fiscale o P. IVA" },
+      sceltaPT("polizzaImperm", 20, "L'appaltatore ha una polizza decennale specifica sulle impermeabilizzazioni (valida per tutta la decennale)?", ["Dato non disponibile", "Polizza non presente", "Polizza presente"]),
+      { id: "polizzaImpermEstremi", tipo: "testo", largo: true, obbl: true, se: r => r.polizzaImperm === "Polizza presente", dom: "Estremi della polizza" },
+      sceltaPT("matImperm", 21, "Materiale impermeabilizzante", ["Guaina bituminosa", "Guaina in PVC", "Materiali spalmabili", "Altro"]),
+      sceltaPT("protezioneCop", 22, "Protezione della copertura", ["Nessuna protezione", "Ghiaia o altro materiale sciolto (non giardini pensili)", "Giardini pensili", "Pavimentazione calpestabile", "Pavimentazione carrabile", "Altro / dato non disponibile"]),
+      sceltaPT("unitaPav", 23, "Numero di unità immobiliari", ["Meno di 15", "Da 15 a 30", "Più di 30"]),
+      sceltaPT("pavimenti", 24, "Pavimentazioni interne", ["Gres, ceramica, cotto", "Pietra naturale, marmi, graniti", "A mosaico", "Legno", "Altro"]),
+      { id: "pavimentiAltro", tipo: "testo", obbl: true, se: r => r.pavimenti === "Altro", dom: "Pavimentazioni: altro" },
+      sceltaPT("rivestInterni", 25, "Rivestimenti interni", ["Gres, ceramica, cotto", "Pietra naturale, marmi, graniti", "A mosaico", "Legno", "Altro"]),
+      { id: "rivestInterniAltro", tipo: "testo", obbl: true, se: r => r.rivestInterni === "Altro", dom: "Rivestimenti interni: altro" },
+      sceltaPT("pianoPosa", 26, "Piano di posa", ["Direttamente su massetto", "Su supporti (pavimenti galleggianti)"]),
+      sceltaPT("riscPavimento", 27, "Elementi particolari", ["Senza riscaldamento a pavimento", "Con riscaldamento a pavimento", "Altro"]),
+      { id: "riscPavimentoAltro", tipo: "testo", obbl: true, se: r => r.riscPavimento === "Altro", dom: "Elementi particolari: altro" },
+      sceltaPT("rivestEsterni", 28, "Intonaci e rivestimenti esterni", ["Intonaco", "Piastrelle e lastrame", "Lastre di materiale lapideo", "Rivestimenti metallici o in fibrocemento", "Rivestimenti in legno", "Nessun rivestimento"]),
+      sceltaPT("posaEsterni", 29, "Tipologia di posa", ["Mediante imbottitura (staffe e malta)", "Mediante incollaggio"], { se: r => r.rivestEsterni && r.rivestEsterni !== "Nessun rivestimento" }),
+      { id: "altreInfoEsterni", tipo: "nota", se: r => r.rivestEsterni && r.rivestEsterni !== "Nessun rivestimento", dom: "30) Altre informazioni sui rivestimenti esterni" }
+    ]},
+    PASSO_DOC_EDILE,
+    PASSO_CHIUSURA
+  ]
+};
+
+/* =====================================================================
+   RC IMPRESA EDILE (RCT/RCO) e RC DEL COMMITTENTE
+   ===================================================================== */
+const impresa = r => r.ruoloRC === "impresa";
+const committ = r => r.ruoloRC === "committente";
+const OPERE_EDILI = [
+  ["edifici", "Costruzione e manutenzione di edifici, con strutture portanti (41200X)"],
+  ["prefabbricati", "Edifici realizzati prevalentemente con prefabbricati, anche bioedilizia (41200W)"],
+  ["carpenteria", "Solo carpenteria edile, senza strutture portanti (41200Y)"],
+  ["pavimentazione", "Solo pavimentazione e impermeabilizzazione di fabbricati, terrazze, cortili (43990Y)"],
+  ["demolizione", "Solo demolizione (43110U)"],
+  ["movimentoTerra", "Solo movimento terra: scavo, sterro, reinterro (43120U)"],
+  ["restauro", "Restauro e manutenzione di immobili di interesse storico"],
+  ["strade", "Strade e autostrade senza ponti, viadotti, gallerie (42110U)"],
+  ["stradePonti", "Strade e autostrade con ponti, viadotti, gallerie (42110V)"],
+  ["manutStrade", "Manutenzione di strade, autostrade, ferrovie aperte al traffico (42110W)"],
+  ["ferrovie", "Ferrovie, metropolitane, tramvie, funivie senza gallerie e ponti (42120U)"],
+  ["ferrovieGallerie", "Ferrovie, metropolitane, tramvie, funivie con gallerie e ponti (42120V)"],
+  ["piste", "Piste aeroportuali e opere complementari"],
+  ["bacini", "Bacini idrici, canali, argini, dighe, condotte forzate, bonifiche (42210U)"],
+  ["condotte", "Acquedotti, oleodotti, gasdotti, fognature, pozzi (42210V)"],
+  ["idroelettrici", "Impianti idroelettrici (42220U)"],
+  ["elettrici", "Centrali ed elettrodotti, linee elettriche e telefoniche, stazioni di trasformazione (42220V)"],
+  ["marittime", "Opere marittime, lagunari, lacuali e fluviali, dragaggi (42910U)"],
+  ["sottosuolo", "Opere nel sottosuolo"],
+  ["palificazione", "Solo palificazione, pali e diaframmi (43990S)"],
+  ["fune", "Edilizia in fune (43990Z)"],
+  ["ponteggi", "Posa di ponteggi e impalcature, anche noleggio (43990T)"],
+  ["impiantiTecn", "Impianti tecnologici"],
+  ["ambientale", "Bonifica e protezione ambientale, ingegneria naturalistica"],
+  ["altro", "Altro"]];
+const percOpere = r => (r.opereSvolte || []).reduce((s, k) => s + (Number(r["perc_" + k]) || 0), 0);
+
+QUESTIONARI.edileRc = {
+  titolo: "RC impresa edile",
+  passi: [
+    { id: "ruolo", titolo: "Tipo di copertura", sotto: "Da qui dipendono le domande successive.", campi: [
+      { id: "ruoloRC", tipo: "scelta", verticale: true, obbl: true, dom: "Chi chiede la polizza?",
+        opzioni: [{ v: "impresa", t: "L'impresa che esegue i lavori", n: "RC verso terzi (RCT) e verso i dipendenti (RCO)" },
+                  { v: "committente", t: "Chi commissiona i lavori", n: "RC del committente, per un singolo lavoro o in modo continuativo" }] }
+    ]},
+    PASSO_CLIENTE,
+    { id: "impresaEd", titolo: "Impresa", sotto: "Struttura e attività.", se: impresa, campi: [
+      { id: "dataCostituzione", tipo: "data", dom: "Data di costituzione" },
+      { id: "anzianita", tipo: "testo", obbl: true, tastiera: "numeric", dom: "Anzianità dell'impresa (anni)", aiuto: "Se ci sono state trasformazioni societarie, conta dall'inizio effettivo dell'attività." },
+      { id: "sitoWeb", tipo: "testo", dom: "Sito internet" },
+      { id: "descrAttivita", tipo: "nota", obbl: true, dom: "Descrizione dell'attività" },
+      { id: "durataRC", tipo: "scelta", obbl: true, dom: "La copertura riguarda", opzioni: [{ v: "singolo", t: "Un singolo lavoro" }, { v: "continuativa", t: "L'attività continuativa" }] },
+      { id: "luoghiAttivita", tipo: "multipla", obbl: true, dom: "Dove lavora", opzioni: scelte(["Italia", "Unione europea", "USA e Canada", "Resto del mondo"]),
+        avviso: v => v.includes("USA e Canada") ? { livello: "ambra", testo: "Lavori in USA o Canada: la compagnia valuta a parte." } : null },
+      { id: "respSicurezza", tipo: "scelta", obbl: true, dom: "Responsabile della sicurezza", opzioni: [{ v: "interno", t: "Interno" }, { v: "esterno", t: "Esterno" }] },
+      sn("iso9001", "Ha la certificazione di qualità UNI EN ISO 9001?", null, { obbl: true }),
+      sn("soa", "Ha l'attestato di qualificazione SOA?", null, { obbl: true, figli: { quando: "si", campi: [
+        { id: "soaDal", tipo: "data", dom: "Validità: dal" }, { id: "soaAl", tipo: "data", dom: "al" },
+        { id: "soaCategorie", tipo: "nota", obbl: true, dom: "Categorie e classifiche" } ] } }),
+      { id: "codiciInail", tipo: "nota", dom: "Codici INAIL: classificazione e tasso applicato (con eventuale riduzione o aumento e motivo)" },
+      sn("esplosivi", "Le attività comportano o possono comportare l'uso di esplosivi?", null, { obbl: true,
+        avvisoSe: v => v === "si" ? { livello: "ambra", testo: "Uso di esplosivi: rischio aggravato, la compagnia valuta a parte." } : null })
+    ]},
+    { id: "opereEd", titolo: "Opere svolte", sotto: "Ultimi 3 anni, in percentuale sul fatturato (dati indicativi).", se: impresa, campi: [
+      { id: "opereSvolte", tipo: "multipla", verticale: true, obbl: true, dom: "Tipologie di opere svolte", opzioni: OPERE_EDILI.map(([v, t]) => ({ v, t })) },
+      ...OPERE_EDILI.map(([v, t]) => ({ id: "perc_" + v, tipo: "testo", tastiera: "numeric", obbl: true, corto: true, se: r => (r.opereSvolte || []).includes(v), dom: "% · " + t })),
+      { id: "opereAltro", tipo: "testo", obbl: true, largo: true, se: r => (r.opereSvolte || []).includes("altro"), dom: "Altro: specificare" },
+      { id: "sommaPerc", tipo: "info", se: r => (r.opereSvolte || []).length > 0, dom: "Totale", elenco: r => [`${percOpere(r)}%` + (percOpere(r) !== 100 && percOpere(r) > 0 ? " (dovrebbe fare 100%)" : "")] }
+    ]},
+    { id: "personaleEd", titolo: "Personale e fatturato", sotto: "Lavoratori, retribuzioni e fatturato.", se: impresa, campi: [
+      { id: "dipOperai", tipo: "testo", tastiera: "numeric", obbl: true, corto: true, dom: "Dipendenti: operai (addetti ad attività manuali)" },
+      { id: "dipImpiegati", tipo: "testo", tastiera: "numeric", obbl: true, corto: true, dom: "Dipendenti: impiegati" },
+      { id: "dipTecnici", tipo: "testo", tastiera: "numeric", corto: true, dom: "Dipendenti: tecnici" },
+      { id: "dipAltro", tipo: "testo", corto: true, dom: "Dipendenti: altro (specificare)" },
+      sn("nonDipendenti", "Ci sono lavoratori non dipendenti (a progetto, distaccati, in somministrazione, occasionali, tirocinanti)?", null, { obbl: true,
+        figli: { quando: "si", campi: [{ id: "nonDipDettaglio", tipo: "nota", obbl: true, dom: "Per tipo (a progetto, distacco, somministrazione, occasionali): numero di operai, impiegati, altro" }] } }),
+      { id: "retribPenultimo", tipo: "euro", dom: "Retribuzioni: penultimo esercizio" },
+      { id: "retribUltimo", tipo: "euro", obbl: true, dom: "Retribuzioni: ultimo esercizio", aiuto: "Imponibile lordo erogato ai lavoratori, più quanto pagato a società terze per la manodopera (al netto di IVA)." },
+      { id: "retribUltimoOperai", tipo: "euro", dom: "di cui per operai" },
+      { id: "retribUltimoImpiegati", tipo: "euro", dom: "di cui per impiegati" },
+      { id: "retribCorrente", tipo: "euro", obbl: true, dom: "Retribuzioni: esercizio corrente (stima)" },
+      { id: "retribCorrOperai", tipo: "euro", dom: "di cui per operai" },
+      { id: "retribCorrImpiegati", tipo: "euro", dom: "di cui per impiegati" },
+      { id: "fattTerzultimo", tipo: "euro", dom: "Fatturato: terzultimo esercizio" },
+      { id: "fattPenultimo", tipo: "euro", obbl: true, dom: "Fatturato: penultimo esercizio" },
+      { id: "fattUltimo", tipo: "euro", obbl: true, dom: "Fatturato: ultimo esercizio", aiuto: "Senza IVA, compreso quanto commissionato ai subappaltatori; escluse attività diverse (es. intermediazione immobiliare)." },
+      { id: "fattCorrente", tipo: "euro", obbl: true, dom: "Fatturato: esercizio corrente (stima)" },
+      sn("esteroRegolare", "Lavora con regolarità all'estero?", null, { obbl: true, figli: { quando: "si", campi: [
+        { id: "esteroPaesi", tipo: "testo", obbl: true, largo: true, dom: "In quali Paesi" },
+        { id: "fattEsteroPen", tipo: "euro", dom: "Fatturato estero: penultimo esercizio" },
+        { id: "fattEsteroUlt", tipo: "euro", dom: "Fatturato estero: ultimo esercizio" },
+        { id: "fattEsteroCorr", tipo: "euro", dom: "Fatturato estero: esercizio corrente (stima)" } ] } })
+    ]},
+    { id: "cantieriEd", titolo: "Cantieri, subappalto, committenti", sotto: "Come lavora l'impresa.", se: impresa, campi: [
+      { id: "numCantieri", tipo: "testo", obbl: true, tastiera: "numeric", dom: "Numero di cantieri aperti" },
+      { id: "cantieriPrincipali", tipo: "nota", obbl: true, dom: "Ubicazione dei 3 cantieri principali, e se vicino ci sono insediamenti (quali)" },
+      { id: "cantieriEstero", tipo: "nota", se: r => r.esteroRegolare === "si", dom: "Cantieri all'estero: Stato, ubicazione, insediamenti vicini" },
+      sn("sorveglianza", "C'è un servizio di sorveglianza del cantiere?", null, { obbl: true }),
+      { id: "delimitazione", tipo: "scelta", obbl: true, dom: "Delimitazione dell'area di cantiere", opzioni: [{ v: "cartelli", t: "Semplici cartelli" }, { v: "recinzioni", t: "Recinzioni fisse" }, { v: "altro", t: "Altro" }],
+        figli: { quando: "altro", campi: [{ id: "delimitazioneAltro", tipo: "testo", obbl: true, dom: "Specificare" }] } },
+      sn("attrezzatureProprie", "L'impresa è proprietaria delle attrezzature e dei macchinari per eseguire i lavori?", null, { obbl: true }),
+      sn("subappalto", "Ricorre a subappaltatori?", null, { obbl: true, figli: { quando: "si", campi: [
+        { id: "subPerc", tipo: "testo", tastiera: "numeric", obbl: true, dom: "Percentuale media ceduta in subappalto sul valore delle opere (%)" },
+        { id: "subFasi", tipo: "testo", largo: true, obbl: true, dom: "Per quali fasi dei lavori" },
+        sn("subCopertura", "Chiede e mette a contratto un'adeguata copertura assicurativa ai subappaltatori?", null, { obbl: true }),
+        sn("subRicorrenti", "Si avvale di subappaltatori ricorrenti?", null, { obbl: true, figli: { quando: "si", campi: [{ id: "subRicorrentiQuali", tipo: "nota", obbl: true, dom: "Quali e per quali attività" }] } }) ] } }),
+      { id: "committPubblici", tipo: "testo", tastiera: "numeric", corto: true, dom: "Committenti nell'ultimo triennio: Stato ed enti pubblici (% del fatturato)" },
+      { id: "committPrivati", tipo: "testo", tastiera: "numeric", corto: true, dom: "Committenti: privati (% del fatturato)" },
+      { id: "ati", tipo: "nota", dom: "Partecipazione ad associazioni temporanee di imprese (ATI)" },
+      { id: "consorzi", tipo: "nota", dom: "Partecipazione a consorzi" }
+    ]},
+    { id: "committenteEd", titolo: "Lavori commissionati", sotto: "RC del committente.", se: committ, campi: [
+      { id: "descrCommissionata", tipo: "nota", obbl: true, dom: "Descrizione dell'attività commissionata in modo prevalente (per un singolo lavoro: la tipologia)" },
+      { id: "rccDurata", tipo: "scelta", obbl: true, dom: "La copertura riguarda", opzioni: [{ v: "singolo", t: "Un singolo lavoro" }, { v: "continuativa", t: "L'attività continuativa" }] },
+      { id: "rccInizio", tipo: "data", obbl: true, se: r => r.rccDurata === "singolo", dom: "Data presunta di inizio dei lavori" },
+      { id: "rccFine", tipo: "data", obbl: true, se: r => r.rccDurata === "singolo", dom: "Data presunta di fine dei lavori", verifica: (v, r) => r.rccInizio && v < r.rccInizio ? "La fine è prima dell'inizio" : null },
+      { id: "luogoOpere", tipo: "testo", obbl: true, largo: true, se: r => r.rccDurata === "singolo", dom: "Ubicazione del cantiere" },
+      { id: "rccValore", tipo: "euro", obbl: true, se: r => r.rccDurata === "singolo", dom: "Valore dell'appalto" },
+      { id: "rccImprese", tipo: "nota", obbl: r => r.rccDurata === "singolo", dom: "Imprese appaltatrici incaricate dei lavori",
+        aiuto: r => r.rccDurata === "continuativa" ? "Indicale solo se il cliente si affida sempre alle stesse." : "" },
+      sn("esplosiviRcc", "Le attività comportano o possono comportare l'uso di esplosivi?", null, { obbl: true }),
+      { id: "rccFattPenultimo", tipo: "euro", dom: "Valore delle opere commissionate: penultimo esercizio" },
+      { id: "rccFattUltimo", tipo: "euro", obbl: r => r.rccDurata === "continuativa", dom: "Valore delle opere commissionate: ultimo esercizio" },
+      { id: "rccFattCorrente", tipo: "euro", obbl: r => r.rccDurata === "continuativa", dom: "Valore delle opere commissionate: esercizio corrente (stima)" },
+      { id: "rccEstero", tipo: "euro", dom: "di cui all'estero (ultimo esercizio)" }
+    ]},
+    { id: "precedentiEd", titolo: "Precedenti", sotto: "Assicurazioni e sinistri degli ultimi 5 anni.", campi: [
+      sn("paesiSanzioni", "Ha rapporti d'affari con soggetti di Paesi sotto embargo o sanzioni internazionali (ONU, UE, Regno Unito, USA: es. Iran, Corea del Nord, Cuba, Siria)?", null, { obbl: true,
+        avvisoSe: v => v === "si" ? { livello: "rosso", testo: "Rapporti con Paesi sanzionati: la compagnia potrebbe non assumere il rischio." } : null,
+        figli: { quando: "si", campi: [{ id: "paesiSanzioniQuali", tipo: "testo", obbl: true, dom: "Quali Paesi" }] } }),
+      sn("assicuratoOra", "È assicurato ora per questi rischi di responsabilità civile?", null, { obbl: true, figli: { quando: "si", campi: [
+        { id: "assOraCompagnia", tipo: "testo", obbl: true, dom: "Con quale compagnia" },
+        { id: "assOraScadenza", tipo: "data", dom: "Scadenza del contratto" },
+        sn("assOraDisdetta", "Ha inviato disdetta per la scadenza?") ] } }),
+      sn("assicuratoPrima", "È stato assicurato in passato per questi rischi?", null, { obbl: true, figli: { quando: "si", campi: [
+        { id: "assPrimaCompagnia", tipo: "testo", dom: "Con quale compagnia" },
+        { id: "assPrimaMotivi", tipo: "testo", largo: true, dom: "Motivi dell'interruzione e altre informazioni" } ] } }),
+      sn("disdettaSinistro", "Una compagnia gli ha mai disdetto una polizza RC per sinistri?", null, { obbl: true,
+        avvisoSe: v => v === "si" ? { livello: "ambra", testo: "Disdetta per sinistri in passato: la compagnia lo valuterà." } : null,
+        figli: { quando: "si", campi: [{ id: "disdettaSinistroDett", tipo: "testo", obbl: true, dom: "Anno e compagnia" }] } }),
+      sn("sinistri5", "Negli ultimi 5 anni ci sono stati sinistri o richieste di risarcimento?", null, { obbl: true, figli: { quando: "si", campi: [
+        { id: "sinNumTerzi", tipo: "testo", tastiera: "numeric", dom: r => committ(r) ? "Numero di richieste" : "Numero di richieste da terzi (RCT)" },
+        { id: "sinImpTerzi", tipo: "euro", dom: "Ammontare delle richieste" },
+        { id: "sinNumDip", tipo: "testo", tastiera: "numeric", se: impresa, dom: "Numero di richieste da lavoratori (RCO)" },
+        { id: "sinImpDip", tipo: "euro", se: impresa, dom: "Ammontare delle richieste dei lavoratori" },
+        { id: "sinDettaglio", tipo: "nota", obbl: true, dom: "Per ciascun sinistro: anno, tipo di danno, garanzia, importo richiesto e pagato, stato (liquidato, riservato, senza seguito)" },
+        { id: "sinRicorrente", tipo: "nota", dom: "Tipologia di sinistro ricorrente" },
+        { id: "sinOltre5000", tipo: "nota", dom: "Descrizione dei fatti per le richieste oltre 5.000 €" },
+        { id: "sinRivalsa", tipo: "testo", se: impresa, largo: true, dom: "Per i danni alle persone (RCO): c'è stata rivalsa INAIL, INPS o di altri enti? Quale" } ] } }),
+      sn("sanzioniSicurezza", "È mai stato sanzionato per infrazioni alle norme sulla sicurezza (D.Lgs. 81/2008 o 626/94)?", null, { obbl: true,
+        avvisoSe: v => v === "si" ? { livello: "ambra", testo: "Sanzioni sulla sicurezza: la compagnia lo valuterà." } : null })
+    ]},
+    { id: "garanzieEd", titolo: "Garanzie richieste", sotto: "Massimali e franchigie.", campi: [
+      { id: "rctSinistro", tipo: "euro", obbl: true, dom: r => committ(r) ? "RC del committente: massimale per sinistro" : "RCT: massimale per sinistro" },
+      { id: "rctPersona", tipo: "euro", dom: "per persona" },
+      { id: "rctCose", tipo: "euro", dom: "per danni a cose o animali" },
+      { id: "rcoSinistro", tipo: "euro", obbl: true, se: impresa, dom: "RCO: massimale per sinistro" },
+      { id: "rcoPersona", tipo: "euro", se: impresa, dom: "RCO: per persona" },
+      sn("franchigiaCose", "Vuole una franchigia per ogni sinistro con danni a cose?", null, { obbl: true, figli: { quando: "si", campi: [
+        { id: "franchigiaCoseImp", tipo: "scelta", obbl: true, dom: "Importo", opzioni: [500, 750, 1000, 1500, 2000, 2500, 5000, 10000].map(n => ({ v: String(n), t: euro(n) })).concat({ v: "altro", t: "Altro" }),
+          figli: { quando: "altro", campi: [{ id: "franchigiaCoseAltro", tipo: "euro", obbl: true, dom: "Altro importo" }] } } ] } }),
+      sn("franchigiaPersone", "RCO: vuole una franchigia per ogni sinistro con danni alle persone?", impresa, { obbl: true, figli: { quando: "si", campi: [
+        { id: "franchigiaPersImp", tipo: "scelta", obbl: true, dom: "Importo", opzioni: [0, 2500, 5000, 10000].map(n => ({ v: String(n), t: euro(n) })).concat({ v: "altro", t: "Altro" }),
+          figli: { quando: "altro", campi: [{ id: "franchigiaPersAltro", tipo: "euro", obbl: true, dom: "Altro importo" }] } } ] } }),
+      sn("malattieProf", "Estensione alle malattie professionali (RCO)?", impresa, { obbl: true, figli: { quando: "si", campi: [
+        { id: "mpDipendenti", tipo: "nota", dom: "Ultimi 5 anni: richieste di risarcimento per malattie professionali da dipendenti soggetti all'INAIL (circostanze e conseguenze)" },
+        { id: "mpInail", tipo: "nota", dom: "Ultimi 5 anni: richieste dell'INAIL per rivalsa" },
+        sn("mpCircostanze", "È a conoscenza di circostanze che potrebbero portare a richieste per malattie professionali?", null, { obbl: true,
+          figli: { quando: "si", campi: [{ id: "mpCircostanzeDett", tipo: "nota", obbl: true, dom: "Quali" }] } }),
+        sn("mpAltreAss", "Ha avuto o ha altre assicurazioni RCO estese alle malattie professionali?", null, { obbl: true,
+          figli: { quando: "si", campi: [{ id: "mpAltreAssDett", tipo: "testo", largo: true, obbl: true, dom: "Quali e con quale compagnia" }] } }) ] } }),
+      { id: "altriElementi", tipo: "nota", dom: "Altri elementi utili per valutare il rischio" }
+    ]},
+    PASSO_DOC_EDILE,
     PASSO_CHIUSURA
   ]
 };
@@ -2350,6 +2764,64 @@ function applicaSuggeriti(passo, r) {
     if (!nuoviCampi) break;
   }
 }
+
+/* ---------- dati del cliente riusabili per una nuova esigenza (solo in memoria) ---------- */
+const CAMPI_CLIENTE = ["nome", "referente", "piva", "cf", "sesso", "dataNascita", "luogoNascita", "indirizzo", "citta", "email", "tel", "pec", "docTipo", "docNumero", "docScadenza"];
+
+/* ---------- promemoria IBAN: sinistri inviati con l'impegno a consegnare l'IBAN ----------
+   Dati minimi (nome, ramo, data); si cancella quando l'IBAN è consegnato o dopo 30 giorni. */
+const PromemoriaIban = {
+  chiave: "bussola.promemoriaIban",
+  tutti() {
+    const ora = Date.now(), lista = Memoria.leggi(this.chiave, []).filter(x => ora - x.creato < 30 * 864e5);
+    Memoria.scrivi(this.chiave, lista);
+    return lista;
+  },
+  aggiungi(r) {
+    const ramo = (RAMI_SINISTRO.find(x => x.v === r.ramoSin) || {}).t || "";
+    const lista = this.tutti();
+    lista.push({ id: "pi" + Date.now().toString(36), nome: r.nome || "Cliente", ramo, dataSin: r.dataSin || "", creato: Date.now(), scadenza: Date.now() + 3 * 864e5 });
+    Memoria.scrivi(this.chiave, lista);
+  },
+  togli(id) { Memoria.scrivi(this.chiave, this.tutti().filter(x => x.id !== id)); },
+  invia(id) {
+    const p = this.tutti().find(x => x.id === id), campo = document.querySelector(`[data-iban-input="${id}"]`), out = document.querySelector(`[data-iban-esito="${id}"]`);
+    const iban = String(campo && campo.value || "").replace(/\s/g, "").toUpperCase();
+    if (!p || !out) return;
+    if (!ibanValido(iban)) { out.className = "errore"; out.textContent = "IBAN non valido: controlla lettere e cifre."; return; }
+    const data = p.dataSin ? p.dataSin.split("-").reverse().join("/") : "";
+    const oggetto = `IBAN per il sinistro di ${p.nome}${data ? " del " + data : ""}`;
+    const corpo = `Buongiorno,\nper il sinistro di ${p.nome}${p.ramo ? " (" + p.ramo.toLowerCase() + ")" : ""}${data ? " del " + data : ""} il cliente ha comunicato l'IBAN:\n\n${iban}\n\nGrazie`;
+    location.href = `mailto:${DESTINATARI.sinistri.indirizzi.join(",")}?subject=${encodeURIComponent(oggetto)}&body=${encodeURIComponent(corpo)}`;
+    out.className = "aiuto"; out.textContent = "Email preparata. Quando l'hai inviata tocca «Fatto».";
+  },
+  calendario(id) {
+    const p = this.tutti().find(x => x.id === id); if (!p) return;
+    const d = new Date(p.scadenza), g = x => String(x).padStart(2, "0");
+    const giorno = `${d.getFullYear()}${g(d.getMonth() + 1)}${g(d.getDate())}`;
+    const ics = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Bussola//IT", "BEGIN:VEVENT", `UID:${p.id}@bussola`, `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, "").slice(0, 15)}Z`,
+      `DTSTART;VALUE=DATE:${giorno}`, `SUMMARY:IBAN sinistro ${p.nome}`, "DESCRIPTION:Chiedere l'IBAN al cliente e inserirlo in Bussola", "END:VEVENT", "END:VCALENDAR"].join("\r\n");
+    scaricaBlob(new Blob([ics], { type: "text/calendar" }), `IBAN ${p.nome}.ics`.replace(/[\\/:*?"<>|]/g, ""));
+  }
+};
+
+/* ---------- "Perché lo chiediamo": una riga sotto le domande delicate (nascosta in vista esperto).
+   BOZZA da validare in agenzia. ---------- */
+const PERCHE = {
+  fatturato: "Molte polizze calcolano il premio sul fatturato: un dato sbagliato può ridurre l'indennizzo in caso di sinistro.",
+  noRichieste: "Sono dichiarazioni che entrano in polizza: se non sono vere, la compagnia può rifiutare il pagamento (artt. 1892 e 1893 del codice civile).",
+  noCircostanze: "Una circostanza già nota prima della polizza di solito non è coperta: dichiararla evita contestazioni dopo.",
+  docTipo: "La compagnia deve identificare il contraente prima di emettere la polizza.",
+  valFabbricato: "Se il valore assicurato è più basso di quello reale, in caso di danno la compagnia paga in proporzione.",
+  valContenuto: "Se il valore assicurato è più basso di quello reale, in caso di danno la compagnia paga in proporzione.",
+  totAttivo: "Il totale attivo dice alla compagnia quanto è grande la società e quale prodotto si può usare.",
+  iban: "Serve per pagare l'indennizzo: senza IBAN il pagamento al cliente può ritardare.",
+  capIP: "Questa somma è la base dell'indennizzo: per un'invalidità del 10% si riceve circa il 10% della cifra, meno la franchigia.",
+  malAttuali: "Le compagnie valutano lo stato di salute per decidere se e a che prezzo assicurare: una risposta non vera può far perdere l'indennizzo.",
+  retribUltimo: "Il premio della RC verso i dipendenti (RCO) si calcola sulle retribuzioni.",
+  fattUltimo: "Il premio della RC verso terzi dell'impresa si calcola sul fatturato.",
+  p1Opere: "È il valore delle opere da assicurare: se è più basso del vero, in caso di danno la compagnia paga in proporzione."
+};
 
 /* ---- 35_riepilogo_pdf.js ---- */
 /* =====================================================================
@@ -2709,6 +3181,7 @@ function impostaAzioni(html) {
 
 function disegna() {
   const s = Stato.schermo();
+  document.body.classList.toggle("esperto", Memoria.leggi("bussola.esperto", false) === true);
   ({ home: vistaHome, albero: vistaAlbero, questionario: vistaQuestionario, riepilogo: vistaRiepilogo, schede: vistaSchede })[s]();
   misura();
 }
@@ -2722,6 +3195,8 @@ function vistaHome() {
   setTimeout(() => { Stato.messaggio = null; }, 0);
   $("#vista").innerHTML = `
     ${Stato.messaggio ? `<div class="avviso verde" style="margin-bottom:14px">✓ <span>${esc(Stato.messaggio)}</span></div>` : ""}
+    ${Stato.clienteRiuso ? `<button class="btn primario nuova-esigenza" data-az="nuovaEsigenza">Nuova esigenza per ${esc(Stato.clienteRiuso.nome || "lo stesso cliente")}</button>` : ""}
+    ${htmlPromemoriaIban()}
     <div class="saluto"><h2>Cosa devi fare?</h2><p>Scegli un'attività: ti guido passo per passo.</p></div>
     <div class="griglia">
       <button class="tessera grande" data-az="preventivo">
@@ -2743,9 +3218,29 @@ function vistaHome() {
         <div><b>${esc(nome)}</b><small>${esc((percorsoNodo(p.prodotto) || [{ nome: q.titolo }]).map(n => n.nome).join(" › "))} · passo ${Math.min(p.passo + 1, tot)} di ${tot}</small></div>${ICONE.freccia}</button>
         <button class="elimina" data-elimina="${p.id}" aria-label="Elimina la pratica di ${esc(nome)}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button></div>`;
     }).join("") : `<div class="vuoto">Nessuna pratica in sospeso.<br>Le pratiche inviate vengono cancellate da questo dispositivo.</div>`}
+    <button class="interruttore" data-az="esperto" aria-pressed="${Memoria.leggi("bussola.esperto", false) === true}">
+      <span class="levetta"></span><span><b>Vista esperto</b><small>Nasconde spiegazioni, aiuti e «perché lo chiediamo»</small></span></button>
     <p class="nota-piccola">${esc(AGENZIA.app)} versione ${esc(AGENZIA.versione)} · ${esc(AGENZIA.dataBuild)}</p>
     ${Memoria.disponibile() ? "" : `<div class="avviso ambra" style="margin-top:12px">${ICONE.attenzione}<span>Questo browser non permette di salvare: se chiudi la pagina perdi la pratica in corso.</span></div>`}
   `;
+}
+
+/* Promemoria IBAN in home: una scheda per ogni sinistro inviato con l'impegno a consegnare l'IBAN */
+function htmlPromemoriaIban() {
+  const lista = PromemoriaIban.tutti();
+  if (!lista.length) return "";
+  const oggi = Date.now();
+  return `<div class="sezione-titolo">IBAN da consegnare</div>` + lista.map(p => {
+    const scaduto = oggi > p.scadenza, data = p.dataSin ? p.dataSin.split("-").reverse().join("/") : "";
+    return `<div class="campo promemoria ${scaduto ? "scaduto" : ""}">
+      <div class="riga-titolo"><div class="dom">${esc(p.nome)}</div><span class="pill-mini">${scaduto ? "Scaduto il " : "Entro il "}${new Date(p.scadenza).toLocaleDateString("it-IT")}</span></div>
+      <div class="aiuto">Sinistro ${esc((p.ramo || "").toLowerCase())}${data ? " del " + esc(data) : ""}</div>
+      <input type="text" data-iban-input="${p.id}" placeholder="Incolla qui l'IBAN" autocomplete="off" style="text-transform:uppercase">
+      <div data-iban-esito="${p.id}"></div>
+      <div class="bottoni-msg"><button class="btn piccolo primario" data-iban="${p.id}">Verifica e prepara email</button>
+        <button class="btn piccolo" data-iban-ics="${p.id}">Aggiungi al calendario</button>
+        <button class="btn piccolo" data-iban-fatto="${p.id}">Fatto</button></div></div>`;
+  }).join("");
 }
 
 /* ================= ALBERO DEI PRODOTTI ================= */
@@ -2867,6 +3362,15 @@ function disegnaCampo(c, r) {
       return `<div class="campo" data-box="${c.id}"><button class="spunta impegno" data-flag="${c.id}" aria-pressed="${v === true}">
           <span class="casella">${v === true ? "✓" : ""}</span><span class="testo-spunta"><b>${esc(dom)}</b></span></button>
         <div data-avviso="${c.id}">${htmlAvviso(c, r)}</div>${err ? `<div class="errore">${esc(err)}</div>` : ""}</div>`;
+    case "messaggio": {
+      const testo = valore(c.testo, r) || "";
+      const mail = r.email ? `mailto:${encodeURIComponent(r.email)}?subject=${encodeURIComponent("Documenti per il preventivo – " + AGENZIA.nome)}&body=${encodeURIComponent(testo)}` : "";
+      corpo = `<div class="messaggio">${esc(testo)}</div>
+        <div class="bottoni-msg"><button class="btn piccolo" data-copia="${esc(testo)}" data-copia-nome="il messaggio">Copia</button>
+        <button class="btn piccolo" data-condividi-testo="${esc(testo)}">Condividi</button>
+        ${mail ? `<a class="btn piccolo link" href="${mail}">Email al cliente</a>` : ""}</div>
+        <div data-esito-copia class="aiuto" style="min-height:1.2em;margin:6px 0 0"></div>`; break;
+    }
     case "info": {
       corpo = `<ul class="lista-schede">${(valore(c.elenco, r) || []).map(x => `<li>${esc(x)}</li>`).join("")}</ul>`; break;
     }
@@ -2900,7 +3404,9 @@ function disegnaCampo(c, r) {
   const corto = c.corto || !c.largo && ["testo", "email", "tel", "data", "euro"].includes(c.tipo) || (c.tipo === "sino" && !c.figli && !c.aiuto);
   const cls = (c.tipo === "conferma" ? "campo dichiarazione" : "campo") + (corto ? " corto" : "");
   const titolo = c.tipo === "conferma" ? `<div class="testo">${esc(dom)}</div>` : `<label for="f_${c.id}" class="dom">${esc(dom)}${valore(c.obbl, r) || c.tipo === "info" ? "" : ` <span style="font-weight:400;color:var(--testo-2);font-size:14px">(${c.almenoUno ? "basta uno tra P. IVA e C.F." : "facoltativo"})</span>`}</label>`;
-  return `<div class="${cls}" data-box="${c.id}">${titolo}${elenco}${aiuto}${corpo}
+  const perche = c.perche || PERCHE[c.id];
+  const htmlPerche = perche ? `<div class="perche"><b>Perché lo chiediamo:</b> ${esc(perche)}</div>` : "";
+  return `<div class="${cls}" data-box="${c.id}">${titolo}${elenco}${htmlPerche}${aiuto}${corpo}
     <div data-avviso="${c.id}">${htmlAvviso(c, r)}</div>${err ? `<div class="errore">${esc(err)}</div>` : ""}${figli}</div>`;
 }
 
@@ -3090,6 +3596,10 @@ async function azioneInvio(tipo) {
 function chiudiPratica() {
   const p = Stato.pratica, gruppo = p.tipo === "sinistro" ? "sinistri" : invioPer(p.prodotto);
   if (DESTINATARI[gruppo] && DESTINATARI[gruppo].modo === "scegli") avanzaRotazione(gruppo);
+  const r = p.risposte;
+  if (p.tipo === "sinistro" && r.ibanImpegno === true && !ibanValido(r.iban)) PromemoriaIban.aggiungi(r);
+  /* dati anagrafici tenuti solo in memoria, per una nuova esigenza dello stesso cliente */
+  Stato.clienteRiuso = p.tipo === "preventivo" && r.nome ? CAMPI_CLIENTE.reduce((o, k) => (vuoto(r[k]) ? o : Object.assign(o, { [k]: r[k] })), { _segmento: r._segmento }) : null;
   Pratiche.elimina(p.id);
   Stato.pratica = null; Stato.messaggio = `Pratica di ${p.risposte.nome || "cliente"} chiusa e cancellata da questo dispositivo.`;
   Stato.pila = [{ schermo: "home", dati: {} }];
@@ -3238,6 +3748,17 @@ function collegaEventi() {
     if (b.id === "btnHome") return vaiHome();
     if (b.dataset.elimina) return chiediElimina(b);
     if (b.dataset.az === "disdettaPDF") return creaDisdetta();
+    if (b.dataset.az === "esperto") { Memoria.scrivi("bussola.esperto", !(Memoria.leggi("bussola.esperto", false) === true)); return disegna(); }
+    if (b.dataset.az === "nuovaEsigenza") { const seg = Stato.clienteRiuso && Stato.clienteRiuso._segmento; return vai("albero", seg ? { nodo: seg } : {}); }
+    if (b.dataset.condividiTesto !== undefined) {
+      const t = b.dataset.condividiTesto, out = document.querySelector("[data-esito-copia]");
+      if (navigator.share) { navigator.share({ text: t }).catch(() => {}); return; }
+      (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => { if (out) out.textContent = "Condivisione non disponibile qui: messaggio copiato."; }, () => {});
+      return;
+    }
+    if (b.dataset.iban) return PromemoriaIban.invia(b.dataset.iban);
+    if (b.dataset.ibanFatto) { PromemoriaIban.togli(b.dataset.ibanFatto); return disegna(); }
+    if (b.dataset.ibanIcs) return PromemoriaIban.calendario(b.dataset.ibanIcs);
     if (b.dataset.copia) {
       const out = document.querySelector("[data-esito-copia]");
       (navigator.clipboard ? navigator.clipboard.writeText(b.dataset.copia) : Promise.reject()).then(
@@ -3254,6 +3775,8 @@ function collegaEventi() {
       Stato.pratica.prodotto = prod.id;
       Stato.pratica.risposte._segmento = strada[0].id;      // "pf" persona fisica, "az" azienda
       Stato.pratica.risposte._prodotto = prod.id;
+      Object.assign(Stato.pratica.risposte, prod.preset || {});   /* es. CAR o Postuma già scelte dal nodo */
+      if (Stato.clienteRiuso) { const { _segmento, ...dati } = Stato.clienteRiuso; Object.assign(Stato.pratica.risposte, dati); Stato.clienteRiuso = null; }
       Stato.errori = {};
       return vai("questionario");
     }

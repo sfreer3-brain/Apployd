@@ -1,6 +1,6 @@
 # Bussola · Lloyd Varesino
 
-**Versione 0.8** · strumento interno della rete commerciale
+**Versione 0.9** · strumento interno della rete commerciale
 
 Bussola guida il commerciale nella raccolta dei dati per i preventivi, nella denuncia dei sinistri e negli adempimenti di compliance. Alla fine prepara un riepilogo in PDF da inviare al backoffice giusto.
 
@@ -19,6 +19,7 @@ La navigazione segue l'albero dei prodotti dell'agenzia: **Persona fisica / Azie
 | Persona fisica · Rami elementari | **Infortuni** | Infortuni e, a scelta, malattia: garanzie neutre (dai DIP AXA, Unipol, Helvetia) consigliate in base a lavoro e sport, somme assicurate, domande sanitarie quando servono |
 | Persona fisica · Vita investimento | **Piano di accumulo**, **Fondo pensione** | Con l'analisi patrimoniale (Mini Family Office) integrata |
 | Azienda · Rami elementari | **Commercio**, **Azienda**, **Industria** | Sezioni A–G (incendio, danni indiretti, furto, guasti macchine, assistenza informatica, RC, tutela legale), con garanzie aggiuntive consigliate |
+| Azienda · Rami elementari | **Impresa edile: RC, CAR, Postuma** | Fedeli ai questionari delle compagnie (CAR e decennale postuma per ristrutturazioni; RCT/RCO impresa con malattie professionali; RC del committente). Elenco dei documenti richiesti e messaggio pronto per chiedere al cliente quelli mancanti |
 | Azienda · Rami elementari | **Infortuni** | Titolari, soci, amministratori, dipendenti; anche integrativa INAIL |
 | Azienda · Rami elementari | **Ufficio** | |
 | Azienda · Rami elementari | **Cyber risk** | Il prodotto dipende dalla dimensione: professionisti, PMI, Midcorp |
@@ -52,7 +53,7 @@ La Guida contiene anche le coordinate bancarie dell'agenzia (con i tasti per cop
    - **PC Windows:** si scaricano i file e si apre l'email già compilata.
 4. Si tocca **Ho inviato**: la pratica e gli allegati vengono cancellati dal dispositivo.
 
-Le pratiche non inviate si cancellano da sole dopo 7 giorni. Si possono eliminare prima con il cestino accanto alla pratica (due tocchi, per evitare errori) o con «Elimina questa pratica» in fondo al questionario. Il pulsante con la casetta, in alto a destra, riporta alla home: la pratica iniziata resta salvata, quella aperta e lasciata vuota non viene conservata.
+Le pratiche non inviate si cancellano da sole dopo 7 giorni. Si possono eliminare prima con il cestino accanto alla pratica (due tocchi, per evitare errori) o con «Elimina questa pratica» in fondo al questionario. Dopo l'invio, un pulsante permette di aprire una nuova esigenza per lo stesso cliente con i dati già compilati. Il pulsante con la casetta, in alto a destra, riporta alla home: la pratica iniziata resta salvata, quella aperta e lasciata vuota non viene conservata.
 
 ---
 
@@ -123,6 +124,15 @@ Le prove nel browser richiedono Playwright e un server locale avviato dentro `di
 ---
 
 ## Versioni
+
+### 0.9 — 01/10/2026
+- **Impresa edile**: CAR e decennale postuma (ristrutturazioni integrali, ampliamenti e sopraelevazioni) e RC edile (impresa RCT/RCO con malattie professionali, oppure RC del committente), con domande fedeli ai questionari delle compagnie.
+- Per i prodotti edili: elenco dei documenti richiesti, spunta di quelli consegnati e **messaggio pronto per il cliente** con quelli mancanti (copia, condividi, email).
+- **Promemoria IBAN** in home per i sinistri inviati con l'impegno a consegnarlo: scadenza a 3 giorni, verifica dell'IBAN, email al backoffice sinistri, promemoria nel calendario.
+- **Nuova esigenza per lo stesso cliente** dopo l'invio: i dati del cliente sono già compilati.
+- **Vista esperto** (in home): nasconde spiegazioni, aiuti e le righe «Perché lo chiediamo», che compaiono sotto le domande delicate (testi da validare).
+- Infortuni: consigliate invalidità permanente, rendita per invalidità grave, spese di cura (sport solo se a rischio); tabella INAIL; franchigia 3% consigliata, modulare o 0 sul primo scaglione; spese di cura a scaglioni da 5.000 a 25.000 €.
+- Persona fisica: Caso morte (TCM), Non autosufficienza (LTC) e Malattie gravi (critical illness) vanno al backoffice vita.
 
 ### 0.8 — 01/10/2026
 - Nuovo questionario **Infortuni** (persona fisica e azienda), con la sezione malattia facoltativa. Garanzie con nomi dell'agenzia e spiegazione per il cliente, consigliate in base a lavoro e sport; nel PDF la nota per il backoffice con le compagnie (AXA, Unipol, Helvetia).
