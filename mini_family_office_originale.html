@@ -1,0 +1,1892 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="format-detection" content="telephone=no">
+<title>Mini Family Office — Analisi patrimoniale personale</title>
+<style>
+/* ============================================================
+   MINI FAMILY OFFICE — CSS
+   Design system: variabili, card, wizard, semafori, grafici
+   ============================================================ */
+:root{
+  --bg:#f4f6f9;
+  --card:#ffffff;
+  --ink:#1c2733;
+  --ink-soft:#5a6b7d;
+  --line:#e3e8ef;
+  --brand:#1f4e79;
+  --brand-2:#2e7dba;
+  --accent:#0e8a6d;
+  --ok:#2e9e5b;
+  --ok-bg:#e7f6ec;
+  --warn:#d99a06;
+  --warn-bg:#fdf3d9;
+  --bad:#d64545;
+  --bad-bg:#fdeaea;
+  --radius:14px;
+  --shadow:0 2px 10px rgba(20,40,60,.07);
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--font);background:var(--bg);color:var(--ink);line-height:1.55;font-size:16px}
+.wrap{max-width:960px;margin:0 auto;padding:16px}
+header.site{background:linear-gradient(135deg,var(--brand) 0%,var(--brand-2) 100%);color:#fff;padding:34px 16px 30px}
+header.site .wrap{padding:0 16px}
+header.site h1{font-size:1.6rem;letter-spacing:.2px}
+header.site p{opacity:.92;margin-top:6px;max-width:640px;font-size:.98rem}
+.badge{display:inline-block;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.4);border-radius:99px;padding:3px 12px;font-size:.78rem;margin-bottom:10px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:22px;margin:16px 0}
+.card h2{font-size:1.18rem;color:var(--brand);margin-bottom:10px}
+.card h3{font-size:1.02rem;margin:14px 0 6px}
+.muted{color:var(--ink-soft);font-size:.92rem}
+.small{font-size:.85rem}
+ul.clean{margin:8px 0 8px 20px}
+ul.clean li{margin:4px 0}
+/* Bottoni */
+.btn{display:inline-block;border:none;border-radius:10px;padding:12px 22px;font-size:1rem;font-weight:600;cursor:pointer;transition:filter .15s,transform .05s;font-family:inherit}
+.btn:active{transform:translateY(1px)}
+.btn-primary{background:var(--brand);color:#fff}
+.btn-primary:hover{filter:brightness(1.12)}
+.btn-ghost{background:#fff;color:var(--brand);border:1.5px solid var(--brand)}
+.btn-ghost:hover{background:#f0f5fa}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.btn-sm{padding:7px 14px;font-size:.85rem;border-radius:8px}
+/* Wizard */
+#progressBarOuter{background:var(--line);border-radius:99px;height:10px;overflow:hidden;margin:10px 0 4px}
+#progressBarInner{background:linear-gradient(90deg,var(--accent),var(--brand-2));height:100%;width:0%;transition:width .3s;border-radius:99px}
+.progress-meta{display:flex;justify-content:space-between;font-size:.82rem;color:var(--ink-soft)}
+.stepchips{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 2px}
+.stepchip{font-size:.72rem;padding:3px 10px;border-radius:99px;background:#eef2f7;color:var(--ink-soft);border:1px solid var(--line)}
+.stepchip.active{background:var(--brand);color:#fff;border-color:var(--brand)}
+.stepchip.done{background:var(--ok-bg);color:var(--ok);border-color:var(--ok)}
+.q{margin:20px 0;padding:16px;border:1px solid var(--line);border-radius:12px;background:#fbfcfe}
+.q label.qlabel{display:block;font-weight:600;margin-bottom:4px}
+.q .qhelp{font-size:.84rem;color:var(--ink-soft);margin-bottom:10px}
+.q.q-missing{border-color:var(--bad);background:var(--bad-bg)}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;background:#fff;cursor:pointer;transition:border-color .12s,background .12s;font-size:.95rem}
+.opt:hover{border-color:var(--brand-2)}
+.opt.checked{border-color:var(--brand);background:#eef5fb;font-weight:600}
+.opt input{accent-color:var(--brand);width:18px;height:18px;flex-shrink:0}
+select.fsel{width:100%;padding:11px 12px;border:1.5px solid var(--line);border-radius:10px;font-size:.95rem;background:#fff;font-family:inherit;color:var(--ink)}
+.precise{margin-top:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.precise input{padding:9px 10px;border:1.5px solid var(--line);border-radius:8px;width:160px;font-size:.92rem;font-family:inherit}
+.precise span{font-size:.8rem;color:var(--ink-soft)}
+.wiznav{display:flex;justify-content:space-between;gap:10px;margin-top:20px}
+/* Semafori */
+.light{display:inline-block;width:14px;height:14px;border-radius:50%;flex-shrink:0}
+.light.g{background:var(--ok);box-shadow:0 0 0 4px var(--ok-bg)}
+.light.y{background:var(--warn);box-shadow:0 0 0 4px var(--warn-bg)}
+.light.r{background:var(--bad);box-shadow:0 0 0 4px var(--bad-bg)}
+.lights-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px;margin-top:12px}
+.light-card{display:flex;gap:12px;align-items:flex-start;padding:14px;border:1px solid var(--line);border-radius:12px;background:#fff}
+.light-card b{display:block;font-size:.92rem}
+.light-card p{font-size:.82rem;color:var(--ink-soft);margin-top:2px}
+.pill{display:inline-block;border-radius:99px;padding:2px 10px;font-size:.75rem;font-weight:700}
+.pill.g{background:var(--ok-bg);color:var(--ok)}
+.pill.y{background:var(--warn-bg);color:#9a6d00}
+.pill.r{background:var(--bad-bg);color:var(--bad)}
+/* KPI e tabelle */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:12px 0}
+.kpi{background:#f7f9fc;border:1px solid var(--line);border-radius:12px;padding:12px}
+.kpi .v{font-size:1.15rem;font-weight:700;color:var(--brand)}
+.kpi .l{font-size:.76rem;color:var(--ink-soft);margin-top:2px}
+table.t{width:100%;border-collapse:collapse;margin:10px 0;font-size:.9rem}
+table.t th{text-align:left;background:#eef2f7;padding:8px 10px;font-size:.8rem;text-transform:uppercase;letter-spacing:.4px;color:var(--ink-soft)}
+table.t td{padding:8px 10px;border-bottom:1px solid var(--line)}
+table.t tr:last-child td{border-bottom:none}
+table.t td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.trow-tot td{font-weight:700;background:#f7f9fc}
+/* Simulatore */
+.sim-controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin:14px 0}
+.sim-ctl{background:#f7f9fc;border:1px solid var(--line);border-radius:12px;padding:14px}
+.sim-ctl label{font-size:.85rem;font-weight:600;display:flex;justify-content:space-between;margin-bottom:8px}
+.sim-ctl label output{color:var(--brand);font-weight:700}
+input[type=range]{width:100%;accent-color:var(--brand);height:26px}
+.sim-note{font-size:.8rem;color:var(--ink-soft);margin-top:4px}
+/* Allocazioni */
+.alloc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:12px}
+.alloc-card{border:1.5px solid var(--line);border-radius:12px;padding:16px;background:#fff}
+.alloc-card.suggested{border-color:var(--accent);box-shadow:0 0 0 3px rgba(14,138,109,.12)}
+.alloc-card h4{font-size:.98rem;margin-bottom:2px}
+.alloc-card .tag{font-size:.72rem;color:var(--accent);font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+.alloc-row{display:flex;justify-content:space-between;font-size:.85rem;padding:5px 0;border-bottom:1px dashed var(--line)}
+.alloc-row:last-child{border-bottom:none}
+.alloc-row b{font-variant-numeric:tabular-nums}
+/* Report semplice */
+.simple-block{border-left:4px solid var(--brand-2);background:#f7fafd;border-radius:0 10px 10px 0;padding:12px 16px;margin:10px 0}
+.simple-block h4{font-size:.95rem;margin-bottom:4px;color:var(--brand)}
+.simple-block p, .simple-block li{font-size:.92rem}
+/* Tips */
+.tip{border:1px solid var(--line);border-radius:12px;padding:14px;margin:10px 0;background:#fff}
+.tip b{font-size:.92rem}
+.tip p{font-size:.87rem;margin-top:3px}
+.tip .src{font-size:.76rem;color:var(--ink-soft);font-style:italic;margin-top:5px}
+/* Riepilogo */
+.rec-row{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--line);font-size:.9rem}
+.rec-row:last-child{border-bottom:none}
+.rec-row .rl{color:var(--ink-soft)}
+.rec-row .rv{font-weight:600;text-align:right}
+.rec-row a{color:var(--brand-2);font-size:.78rem;margin-left:8px;cursor:pointer;text-decoration:underline}
+/* Grafici */
+.chart-box{margin:14px 0;overflow-x:auto}
+.chart-box svg{max-width:100%;height:auto;display:block;margin:0 auto}
+.chart-title{font-size:.88rem;font-weight:700;color:var(--ink-soft);margin:14px 0 4px;text-transform:uppercase;letter-spacing:.4px}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:.8rem;color:var(--ink-soft);margin-top:6px;justify-content:center}
+.legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+/* Alert */
+.alert{border-radius:10px;padding:12px 14px;margin:10px 0;font-size:.9rem;display:flex;gap:10px;align-items:flex-start}
+.alert.warn{background:var(--warn-bg);border:1px solid #ecd08e;color:#7a5800}
+.alert.bad{background:var(--bad-bg);border:1px solid #efb6b6;color:#8f2626}
+.alert.ok{background:var(--ok-bg);border:1px solid #a9dcbd;color:#1d6b3d}
+.alert.info{background:#e8f1fa;border:1px solid #bcd6ec;color:#274e6e}
+/* Nav risultati */
+.resnav{position:sticky;top:0;z-index:20;background:rgba(244,246,249,.95);backdrop-filter:blur(4px);padding:8px 0;display:flex;gap:6px;flex-wrap:wrap;border-bottom:1px solid var(--line)}
+.resnav a{font-size:.78rem;padding:6px 12px;border-radius:99px;background:#fff;border:1px solid var(--line);color:var(--ink-soft);text-decoration:none;font-weight:600}
+.resnav a:hover{border-color:var(--brand);color:var(--brand)}
+footer.site{padding:26px 16px 40px;color:var(--ink-soft);font-size:.8rem;text-align:center}
+/* ============ Gamification (facoltativa) ============ */
+.game-box{display:flex;gap:12px;align-items:flex-start;background:#f2f7f4;border:1.5px dashed var(--accent);border-radius:12px;padding:14px;margin-top:16px}
+.game-box p{font-size:.88rem}
+.gswitch{position:relative;display:inline-block;width:46px;height:26px;flex-shrink:0}
+.gswitch input{opacity:0;width:0;height:0}
+.gslider{position:absolute;cursor:pointer;inset:0;background:#c4ccd6;border-radius:99px;transition:.2s}
+.gslider:before{content:"";position:absolute;height:20px;width:20px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.2s}
+.gswitch input:checked + .gslider{background:var(--accent)}
+.gswitch input:checked + .gslider:before{transform:translateX(20px)}
+#xpWrap{margin:10px 0 2px}
+#xpBarOuter{background:var(--line);border-radius:99px;height:8px;overflow:hidden}
+#xpBar{background:linear-gradient(90deg,#e6a817,#0e8a6d);height:100%;width:0%;transition:width .4s;border-radius:99px}
+.xp-label{display:flex;justify-content:space-between;font-size:.76rem;color:var(--ink-soft);margin-top:3px}
+.xp-label b{color:var(--accent)}
+.badge-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-top:12px}
+.badge-card{border:1.5px solid var(--accent);border-radius:12px;padding:14px;background:#f4faf7;text-align:center}
+.badge-card .bic{font-size:1.9rem}
+.badge-card b{display:block;font-size:.9rem;margin:4px 0 2px}
+.badge-card p{font-size:.76rem;color:var(--ink-soft)}
+.badge-card.locked{border-color:var(--line);background:#f7f8fa;filter:grayscale(1);opacity:.65}
+.badge-card.locked .bic{opacity:.5}
+.mission{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--line);border-left:4px solid var(--warn);border-radius:10px;padding:12px 14px;margin:10px 0;background:#fff}
+.mission .mic{font-size:1.4rem}
+.mission b{font-size:.92rem}
+.mission p{font-size:.84rem;color:var(--ink-soft);margin-top:2px}
+.mission .mpts{margin-left:auto;flex-shrink:0;background:var(--warn-bg);color:#9a6d00;border-radius:99px;padding:3px 10px;font-size:.75rem;font-weight:700;white-space:nowrap}
+.toast-wrap{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:99;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}
+.toast{background:var(--ink);color:#fff;padding:9px 18px;border-radius:99px;font-size:.85rem;box-shadow:0 4px 14px rgba(0,0,0,.25);animation:toastIn .25s ease-out, toastOut .4s ease-in 2.4s forwards}
+@keyframes toastIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes toastOut{to{opacity:0;transform:translateY(10px)}}
+.confetti{position:fixed;top:-14px;width:9px;height:14px;z-index:98;pointer-events:none;border-radius:2px;animation:confFall linear forwards}
+@keyframes confFall{to{transform:translateY(105vh) rotate(720deg)}}
+@media print{.toast-wrap,.confetti{display:none!important}}
+@media (max-width:640px){
+  body{font-size:15px}
+  .card{padding:16px}
+  header.site h1{font-size:1.3rem}
+  .wiznav{flex-direction:column-reverse}
+  .wiznav .btn{width:100%}
+}
+@media print{
+  header.site,.resnav,.wiznav,.btn,#simControls{display:none!important}
+  body{background:#fff}
+  .card{box-shadow:none;border-color:#ccc;break-inside:avoid}
+}
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap">
+    <span class="badge">Strumento educativo · v1.0 · I dati restano nel tuo browser</span>
+    <h1>🏛️ Mini Family Office personale</h1>
+    <p>Una prima analisi guidata di patrimonio, cash flow, rischio, debiti e protezioni — con report semplificato e avanzato. Non è consulenza finanziaria: è un punto di partenza per capire dove sei.</p>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- ============ 1. INTRODUZIONE E DISCLAIMER ============ -->
+  <section id="intro" class="card">
+    <!-- Avviso mostrato solo se il JavaScript risulta bloccato (es. anteprima Quick Look su iPhone) -->
+    <div id="jsWarn" class="alert bad">⚠️ <div><b>JavaScript non attivo: l'app non può funzionare in questa modalità.</b><br>
+    Su iPhone/iPad l'anteprima dell'app File blocca il codice. Soluzioni: apri il file con un'app gratuita come <b>Documents (Readdle)</b>, oppure pubblica la pagina online (es. Netlify Drop, GitHub Pages) e aprila in <b>Safari</b>. Su computer basta il doppio clic.</div></div>
+    <h2>Come funziona</h2>
+    <p>Si parte da una <b>pagina di orientamento</b> (età, orizzonte, obiettivo, coppia, livello di approfondimento) che dimensiona il resto del questionario su tre percorsi: <b>Light</b> (~15 domande, analisi più imprecisa), <b>Standard</b> (~25–30) o <b>Approfondito</b> (fino a ~38, <b>consigliato</b>: include fiscalità, fase di utilizzo del capitale e analisi di coppia più ricca). Al termine otterrai:</p>
+    <ul class="clean">
+      <li>una <b>fotografia del tuo patrimonio</b> e del tuo equilibrio finanziario;</li>
+      <li>una <b>valutazione a semaforo</b> delle aree chiave (liquidità, debiti, protezioni, rischio…);</li>
+      <li>un <b>report semplificato</b> in linguaggio chiaro e un <b>report avanzato</b> con tabelle, indicatori e grafici;</li>
+      <li>un <b>simulatore prudente</b> per esplorare l'effetto di risparmio, orizzonte e allocazione;</li>
+      <li><b>3 proposte di allocazione indicative</b> coerenti con il tuo profilo;</li>
+      <li>principi guida ispirati alla letteratura finanziaria.</li>
+    </ul>
+    <h3>⚠️ Disclaimer</h3>
+    <p class="muted">Questo strumento è <b>educativo e orientativo</b>. Non costituisce consulenza finanziaria, assicurativa, fiscale o legale personalizzata. Le simulazioni si basano su ipotesi semplificate e rendimenti attesi prudenti: <b>non sono previsioni né garanzia di risultati futuri</b>. Per qualsiasi decisione reale confrontati con consulenti abilitati (consulente finanziario, intermediario assicurativo, commercialista, avvocato).</p>
+    <h3>🔒 Privacy</h3>
+    <p class="muted">Tutti i calcoli avvengono <b>localmente nel tuo browser</b>. Nessun dato viene salvato su server, inviato via email o condiviso. Chiudendo la pagina, i dati vengono persi. La pagina funziona anche offline.</p>
+    <div class="game-box">
+      <label class="gswitch"><input type="checkbox" id="gameToggle" checked><span class="gslider"></span></label>
+      <p><b>🎮 Modalità gioco (facoltativa)</b><br>Guadagna punti rispondendo, sblocca trofei legati alla tua reale salute finanziaria e ricevi missioni concrete su cui lavorare. È solo un modo più coinvolgente di fare la stessa identica analisi: puoi disattivarla quando vuoi e i risultati non cambiano.</p>
+    </div>
+    <div style="margin-top:18px">
+      <button class="btn btn-primary" data-action="start">Inizia l'analisi →</button>
+    </div>
+  </section>
+
+  <!-- ============ 2. QUESTIONARIO (wizard) ============ -->
+  <section id="wizard" class="card" hidden>
+    <div class="progress-meta"><span id="stepTitle"></span><span id="qCounter"></span></div>
+    <div id="progressBarOuter"><div id="progressBarInner"></div></div>
+    <div id="xpWrap" hidden>
+      <div id="xpBarOuter"><div id="xpBar"></div></div>
+      <div class="xp-label"><b id="xpLevel"></b><span id="xpPts"></span></div>
+    </div>
+    <div class="stepchips" id="stepChips"></div>
+    <div id="stepBody"></div>
+    <div class="wiznav">
+      <button class="btn btn-ghost" id="btnPrev" data-action="prev">← Indietro</button>
+      <button class="btn btn-primary" id="btnNext" data-action="next">Avanti →</button>
+    </div>
+  </section>
+
+  <!-- ============ 3–11. RISULTATI ============ -->
+  <section id="results" hidden>
+    <nav class="resnav">
+      <a href="#secLights">Semafori</a>
+      <a href="#secBadges">Trofei</a>
+      <a href="#secMissions">Missioni</a>
+      <a href="#secSimple">Report semplice</a>
+      <a href="#secSim">Simulatore</a>
+      <a href="#secAlloc">Allocazioni</a>
+      <a href="#secAdv">Report avanzato</a>
+      <a href="#secTips">Principi guida</a>
+      <a href="#secLimits">Limiti</a>
+    </nav>
+    <div id="resultsBody"></div>
+    <div class="card" style="text-align:center">
+      <button class="btn btn-ghost" data-action="print">🖨️ Stampa / salva PDF</button>
+      <button class="btn btn-ghost" id="btnRestart" data-action="restart">↺ Ricomincia</button>
+    </div>
+  </section>
+
+</div>
+
+<footer class="site">
+  Mini Family Office · strumento educativo · nessun dato lascia il tuo browser · non è consulenza personalizzata.
+</footer>
+
+<script>
+"use strict";
+/* ============================================================
+   CONFIGURAZIONE QUESTIONARIO
+   30 domande in 8 step + riepilogo + risultati.
+   Ogni opzione ha "mid" = valore centrale usato nei calcoli.
+   ============================================================ */
+
+// FLUSSO ADATTIVO SU 4 PAGINE + riepilogo + risultati.
+// La PRIMA PAGINA contiene solo le domande di indirizzamento (età, orizzonte,
+// obiettivo, inclusione del partner, livello di approfondimento) che decidono
+// quali domande verranno poste nelle pagine successive:
+//   - Light:        ~15 domande (analisi più imprecisa, basata su stime)
+//   - Standard:     ~25–30 domande
+//   - Approfondito: fino a ~38 domande (CONSIGLIATO: fotografia più accurata)
+const STEPS = [
+  {id:'p0', title:'1 · Per iniziare', sections:['iniziali']},
+  {id:'p1', title:'2 · Persona, famiglia e reddito', sections:['personali','famiglia','reddito']},
+  {id:'p2', title:'3 · Patrimonio, impegni e obiettivi', sections:['patrimonio','debiti','obiettivi','decumulo']},
+  {id:'p3', title:'4 · Rischio e protezioni', sections:['rischio','assicurazioni']},
+  {id:'riepilogo', title:'5 · Riepilogo', sections:[]},
+  {id:'risultati', title:'6 · Risultati', sections:[]}
+];
+const SECTION_TITLES = {
+  iniziali:'🚀 Per iniziare', personali:'👤 Dati personali', famiglia:'👨‍👩‍👧 Famiglia e coppia', reddito:'💶 Reddito e spese',
+  patrimonio:'🏦 Patrimonio', debiti:'📉 Impegni finanziari', obiettivi:'🎯 Obiettivi',
+  decumulo:'🌅 Fase di utilizzo del capitale', rischio:'⚖️ Rischio e investimenti', assicurazioni:'🛡️ Coperture assicurative'
+};
+
+// --- Livello di approfondimento (1=Light, 2=Standard, 3=Approfondito) ---
+// Finché l'utente non sceglie, si assume il percorso consigliato (Approfondito).
+function tier(){
+  if (A.approfondimento === 'light') return 1;
+  if (A.approfondimento === 'standard') return 2;
+  return 3;
+}
+function tierName(){ return ['', 'Light', 'Standard', 'Approfondito'][tier()]; }
+function T2(){ return tier() >= 2; }
+function T3(){ return tier() >= 3; }
+function deepMode(){ return tier() >= 2; } // dati di dettaglio disponibili (Standard/Approfondito)
+function isFI(){ return A.obiettivo === 'rendita' || A.obiettivo === 'pensione'; }
+function hasPartner(){ return A.includiPartner === 'si' || A.includiPartner === 'solo_io'; }
+function coupleMode(){ return A.includiPartner === 'si'; }
+
+const QUESTIONS = [
+// ---------- SEZIONE INIZIALE: guida l'intero percorso ----------
+{id:'eta', step:'iniziali', type:'radio', label:'Qual è la tua età?', options:[
+  {v:'u30', l:'Meno di 30 anni', mid:27},{v:'30_39', l:'30–39 anni', mid:35},
+  {v:'40_49', l:'40–49 anni', mid:45},{v:'50_59', l:'50–59 anni', mid:55},
+  {v:'60_69', l:'60–69 anni', mid:65},{v:'70p', l:'70 anni o più', mid:75}]},
+{id:'orizzonte', step:'iniziali', type:'radio', label:'Su quale orizzonte temporale vuoi pianificare?',
+ help:'Quanto tempo hai davanti prima di usare la maggior parte del capitale che accumuli.', options:[
+  {v:'breve', l:'Meno di 5 anni', mid:4},{v:'medio', l:'5–10 anni', mid:7},
+  {v:'lungo', l:'10–20 anni', mid:15},{v:'moltolungo', l:'Oltre 20 anni', mid:25}]},
+{id:'obiettivo', step:'iniziali', type:'select', label:'Qual è il tuo obiettivo finanziario principale?', options:[
+  {v:'emergenza', l:'Costruire un fondo di emergenza'},
+  {v:'casa', l:'Acquistare o cambiare casa'},
+  {v:'figli', l:'Educazione / futuro dei figli'},
+  {v:'pensione', l:'Integrazione pensionistica'},
+  {v:'crescita', l:'Far crescere il patrimonio'},
+  {v:'rendita', l:'Rendita / indipendenza finanziaria'},
+  {v:'protezione', l:'Proteggere la famiglia'}]},
+{id:'includiPartner', step:'iniziali', type:'radio', label:'Vuoi includere il tuo coniuge/partner nell’analisi?',
+ help:'Includendo il partner valuteremo anche quanto reddito porta ciascuno di voi e gli eventuali rischi per il patrimonio familiare legati alla sua attività professionale.', options:[
+  {v:'si', l:'Sì: analisi di coppia (consigliato se convivete)'},
+  {v:'solo_io', l:'Ho un partner, ma analizzate solo me'},
+  {v:'no_partner', l:'Non ho un coniuge/partner'}]},
+{id:'approfondimento', step:'iniziali', type:'radio', label:'Quanto vuoi approfondire l’analisi?',
+ help:'Consigliamo il percorso Approfondito: più domande ma fotografia molto più accurata. ⚠️ Attenzione: con il percorso Light l’analisi sarà più imprecisa, perché molti dati verranno stimati con ipotesi standard.', options:[
+  {v:'approfondito', l:'Approfondito: analisi dettagliata, fino a ~38 domande (consigliato)'},
+  {v:'standard', l:'Standard: buon equilibrio tra dettaglio e velocità (~25–30 domande)'},
+  {v:'light', l:'Light: solo l’essenziale, ~15 domande (analisi più imprecisa)'}]},
+
+// ---------- SEZIONE: DATI PERSONALI ----------
+{id:'residenza', step:'personali', type:'select', label:'Dove vivi?', visibleIf: T3, options:[
+  {v:'nord', l:'Nord Italia'},{v:'centro', l:'Centro Italia'},
+  {v:'sud', l:'Sud Italia e Isole'},{v:'estero', l:'Estero'}]},
+
+// ---------- SEZIONE: FAMIGLIA E COPPIA ----------
+{id:'dipendenti', step:'famiglia', type:'radio', label:'Quante persone dipendono economicamente da te (figli o altri)?', options:[
+  {v:'0', l:'Nessuna', mid:0},{v:'1', l:'1 persona', mid:1},
+  {v:'2', l:'2 persone', mid:2},{v:'3p', l:'3 o più persone', mid:3}]},
+{id:'quotaReddito', step:'famiglia', type:'radio', label:'Come si divide il reddito familiare tra te e il tuo partner?',
+ visibleIf: coupleMode, options:[
+  {v:'solo_io', l:'Praticamente solo io', share:1.0},
+  {v:'prev_io', l:'Prevalentemente io (circa 70/30)', share:0.7},
+  {v:'meta', l:'Circa metà ciascuno', share:0.5},
+  {v:'prev_partner', l:'Prevalentemente il partner (circa 30/70)', share:0.3},
+  {v:'solo_partner', l:'Praticamente solo il partner', share:0.0}]},
+{id:'responsabilita', step:'famiglia', type:'multi', label:'Ricopri ruoli con responsabilità patrimoniali personali particolari?',
+ visibleIf: function(){ return T2() || coupleMode(); },
+ help:'Alcuni ruoli espongono il patrimonio personale a rischi specifici. Seleziona tutto ciò che ti riguarda.', options:[
+  {v:'albo', l:'Professionista iscritto ad albo (medico, avvocato, ingegnere…)'},
+  {v:'amministratore', l:'Amministratore di società'},
+  {v:'sindaco', l:'Sindaco o revisore di società'},
+  {v:'snc', l:'Socio di SNC'},
+  {v:'sas', l:'Socio accomandatario di SAS'},
+  {v:'altro', l:'Altro ruolo con responsabilità personale'},
+  {v:'nessuna', l:'Nessuno di questi', exclusive:true}]},
+{id:'responsabilitaPartner', step:'famiglia', type:'multi', label:'Il tuo partner ricopre ruoli con responsabilità patrimoniali particolari?',
+ visibleIf: coupleMode,
+ help:'L’attività professionale del partner può esporre il patrimonio familiare, soprattutto in regime di comunione dei beni.', options:[
+  {v:'albo', l:'Professionista iscritto ad albo'},
+  {v:'amministratore', l:'Amministratore di società'},
+  {v:'sindaco', l:'Sindaco o revisore di società'},
+  {v:'snc', l:'Socio di SNC'},
+  {v:'sas', l:'Socio accomandatario di SAS'},
+  {v:'altro', l:'Altro ruolo con responsabilità personale'},
+  {v:'nessuna', l:'Nessuno di questi', exclusive:true}]},
+
+// ---------- SEZIONE: REDDITO E SPESE ----------
+{id:'fonteReddito', step:'reddito', type:'select', label:'Qual è la fonte principale del reddito familiare?', visibleIf: T2, options:[
+  {v:'dip_ind', l:'Lavoro dipendente a tempo indeterminato'},
+  {v:'dip_det', l:'Lavoro dipendente a termine'},
+  {v:'autonomo', l:'Lavoro autonomo / libera professione'},
+  {v:'impresa', l:'Impresa propria'},
+  {v:'pensione', l:'Pensione'},
+  {v:'rendite', l:'Rendite (affitti, capitali)'},
+  {v:'misto', l:'Misto / altro'}]},
+{id:'stabilita', step:'reddito', type:'radio', label:'Quanto è stabile il tuo reddito?', visibleIf: T2, options:[
+  {v:'molto', l:'Molto stabile e prevedibile'},{v:'abbastanza', l:'Abbastanza stabile'},
+  {v:'variabile', l:'Variabile di anno in anno'},{v:'molto_var', l:'Molto variabile o incerto'}]},
+{id:'reddito', step:'reddito', type:'radio', label:'Reddito annuo netto complessivo del nucleo familiare', precise:true, unit:'€/anno', options:[
+  {v:'r1', l:'Meno di 15.000 €', mid:12000},{v:'r2', l:'15.000–25.000 €', mid:20000},
+  {v:'r3', l:'25.000–40.000 €', mid:32000},{v:'r4', l:'40.000–60.000 €', mid:50000},
+  {v:'r5', l:'60.000–100.000 €', mid:80000},{v:'r6', l:'Oltre 100.000 €', mid:130000}]},
+{id:'spesaMensile', step:'reddito', type:'radio', label:'Spesa mensile media della famiglia (tutto incluso, comprese le rate)', precise:true, unit:'€/mese', options:[
+  {v:'s1', l:'Meno di 1.000 €', mid:800},{v:'s2', l:'1.000–1.500 €', mid:1250},
+  {v:'s3', l:'1.500–2.500 €', mid:2000},{v:'s4', l:'2.500–4.000 €', mid:3200},
+  {v:'s5', l:'Oltre 4.000 €', mid:5000}]},
+{id:'risparmioMensile', step:'reddito', type:'radio', label:'Quanto riesci a risparmiare in media ogni mese?', precise:true, unit:'€/mese', options:[
+  {v:'0', l:'Nulla o quasi', mid:0},{v:'a', l:'Meno di 100 €', mid:50},
+  {v:'b', l:'100–250 €', mid:175},{v:'c', l:'250–500 €', mid:375},
+  {v:'d', l:'500–1.000 €', mid:750},{v:'e', l:'Oltre 1.000 €', mid:1500}]},
+{id:'fondoEmergenza', step:'reddito', type:'radio', label:'Hai un fondo di emergenza dedicato?', visibleIf: T2,
+ help:'Denaro accantonato e subito disponibile per imprevisti, separato dagli investimenti.', options:[
+  {v:'no', l:'No, non ho riserve dedicate'},
+  {v:'liquidita', l:'Uso la liquidità generica sul conto'},
+  {v:'lt3', l:'Sì, copre meno di 3 mesi di spese'},
+  {v:'m3_6', l:'Sì, copre 3–6 mesi di spese'},
+  {v:'gt6', l:'Sì, copre oltre 6 mesi di spese'}]},
+
+// ---------- STEP 4: PATRIMONIO ----------
+{id:'liquidita', step:'patrimonio', type:'radio', label:'Liquidità totale (conti correnti, depositi)', precise:true, unit:'€', options:[
+  {v:'l1', l:'Meno di 5.000 €', mid:2500},{v:'l2', l:'5.000–15.000 €', mid:10000},
+  {v:'l3', l:'15.000–30.000 €', mid:22000},{v:'l4', l:'30.000–60.000 €', mid:45000},
+  {v:'l5', l:'60.000–100.000 €', mid:80000},{v:'l6', l:'Oltre 100.000 €', mid:150000}]},
+{id:'investimenti', step:'patrimonio', type:'radio', label:'Investimenti finanziari (fondi, ETF, azioni, obbligazioni, polizze di investimento)', precise:true, unit:'€', options:[
+  {v:'0', l:'Nessuno', mid:0},{v:'i1', l:'Meno di 10.000 €', mid:5000},
+  {v:'i2', l:'10.000–25.000 €', mid:17500},{v:'i3', l:'25.000–50.000 €', mid:37500},
+  {v:'i4', l:'50.000–100.000 €', mid:75000},{v:'i5', l:'100.000–250.000 €', mid:175000},
+  {v:'i6', l:'Oltre 250.000 €', mid:400000}]},
+{id:'tipoStrumenti', step:'patrimonio', type:'select', label:'Dove sono investiti oggi prevalentemente i tuoi capitali?',
+ visibleIf: function(){ return T3() && A.investimenti !== undefined && A.investimenti !== '0'; },
+ help:'Serve anche per stimare la fiscalità: i titoli di Stato sono tassati al 12,5%, gli altri strumenti al 26%.', options:[
+  {v:'deposito', l:'Conti deposito / liquidità remunerata'},
+  {v:'titoli_stato', l:'Titoli di Stato / obbligazioni governative'},
+  {v:'fondi', l:'Fondi comuni / ETF diversificati'},
+  {v:'azioni', l:'Azioni singole'},
+  {v:'misto', l:'Un mix di più strumenti'}]},
+{id:'immobili', step:'patrimonio', type:'radio', label:'Valore stimato degli immobili di proprietà (inclusa prima casa)', precise:true, unit:'€', visibleIf: T2, options:[
+  {v:'0', l:'Nessun immobile', mid:0},{v:'m1', l:'Meno di 100.000 €', mid:75000},
+  {v:'m2', l:'100.000–250.000 €', mid:175000},{v:'m3', l:'250.000–500.000 €', mid:350000},
+  {v:'m4', l:'Oltre 500.000 €', mid:700000}]},
+{id:'previdenza', step:'patrimonio', type:'radio', label:'Previdenza integrativa (fondo pensione, PIP)', visibleIf: T2, options:[
+  {v:'0', l:'Non ne ho', mid:0},{v:'p1', l:'Sì, meno di 10.000 € accumulati', mid:5000},
+  {v:'p2', l:'Sì, 10.000–50.000 €', mid:25000},{v:'p3', l:'Sì, oltre 50.000 €', mid:80000}]},
+{id:'contribuzionePrevidenza', step:'patrimonio', type:'radio', label:'Quanto versi oggi alla previdenza integrativa?', visibleIf: T3,
+ help:'I versamenti sono deducibili fino a circa 5.164 € l’anno: un vantaggio fiscale immediato.', options:[
+  {v:'0', l:'Nulla', mid:0},{v:'v1', l:'Meno di 100 €/mese', mid:50},
+  {v:'v2', l:'100–300 €/mese', mid:200},{v:'v3', l:'Oltre 300 €/mese', mid:400}]},
+{id:'altriAsset', step:'patrimonio', type:'radio', label:'Altri asset rilevanti (quote societarie, oro, arte, cripto…)', visibleIf: T3, options:[
+  {v:'0', l:'Nessuno', mid:0},{v:'a1', l:'Meno di 25.000 €', mid:12500},
+  {v:'a2', l:'25.000–100.000 €', mid:60000},{v:'a3', l:'Oltre 100.000 €', mid:150000}]},
+
+// ---------- SEZIONE: IMPEGNI FINANZIARI ----------
+// Domanda "porta": se l'utente seleziona "Nessuno", le altre 4 domande
+// vengono compilate automaticamente come "nessun impegno" e nascoste.
+{id:'tipiDebiti', step:'debiti', type:'multi', label:'Quali impegni finanziari hai attualmente?',
+ help:'Se non ne hai, seleziona "Nessuno": le altre domande su questo tema verranno saltate automaticamente.', options:[
+  {v:'mutuo', l:'Mutuo'},
+  {v:'prestiti', l:'Prestiti personali'},{v:'auto', l:'Finanziamento auto'},
+  {v:'leasing', l:'Leasing'},{v:'revolving', l:'Carte revolving'},
+  {v:'altri', l:'Altri debiti'},{v:'nessuno', l:'Nessuno', exclusive:true}]},
+{id:'mutuo', step:'debiti', type:'radio', label:'Debito residuo del mutuo', precise:true, unit:'€',
+ visibleIf: function(){ return T2() && (A.tipiDebiti || []).includes('mutuo'); }, options:[
+  {v:'0', l:'Nessun mutuo', mid:0},{v:'d1', l:'Meno di 50.000 €', mid:30000},
+  {v:'d2', l:'50.000–100.000 €', mid:75000},{v:'d3', l:'100.000–200.000 €', mid:150000},
+  {v:'d4', l:'Oltre 200.000 €', mid:250000}]},
+{id:'altriDebitiTot', step:'debiti', type:'radio', label:'Totale residuo degli altri debiti (esclusi mutui)', precise:true, unit:'€',
+ visibleIf: function(){ return T2() && (A.tipiDebiti || []).some(function(v){ return ['prestiti','auto','leasing','revolving','altri'].includes(v); }); }, options:[
+  {v:'0', l:'Nessuno', mid:0},{v:'e1', l:'Meno di 10.000 €', mid:5000},
+  {v:'e2', l:'10.000–30.000 €', mid:20000},{v:'e3', l:'Oltre 30.000 €', mid:45000}]},
+{id:'rataMensile', step:'debiti', type:'radio', label:'Rata mensile totale di tutti gli impegni (mutuo + prestiti + leasing…)', precise:true, unit:'€/mese',
+ visibleIf: function(){ const td = A.tipiDebiti || []; return td.length > 0 && !td.includes('nessuno'); }, options:[
+  {v:'0', l:'Nessuna rata', mid:0},{v:'t1', l:'Meno di 300 €', mid:200},
+  {v:'t2', l:'300–600 €', mid:450},{v:'t3', l:'600–1.000 €', mid:800},
+  {v:'t4', l:'Oltre 1.000 €', mid:1300}]},
+{id:'durataImpegni', step:'debiti', type:'radio', label:'Durata residua dell’impegno più lungo',
+ visibleIf: function(){ const td = A.tipiDebiti || []; return T2() && td.length > 0 && !td.includes('nessuno'); }, options:[
+  {v:'0', l:'Nessun impegno', mid:0},{v:'u5', l:'Meno di 5 anni', mid:3},
+  {v:'a5_10', l:'5–10 anni', mid:7},{v:'a10_20', l:'10–20 anni', mid:15},
+  {v:'o20', l:'Oltre 20 anni', mid:25}]},
+
+// ---------- SEZIONE: OBIETTIVI (dettaglio solo percorso completo) ----------
+// L'obiettivo principale è chiesto nella sezione iniziale. Nel percorso
+// essenziale il capitale target viene stimato con default prudenti dichiarati.
+{id:'capitaleObiettivo', step:'obiettivi', type:'radio', label:'Quale capitale vorresti raggiungere per questo obiettivo (a fine piano)?', precise:true, unit:'€',
+ visibleIf: function(){ return T2() && !isFI(); }, options:[
+  {v:'c1', l:'Meno di 25.000 €', mid:20000},{v:'c2', l:'25.000–50.000 €', mid:37500},
+  {v:'c3', l:'50.000–100.000 €', mid:75000},{v:'c4', l:'100.000–250.000 €', mid:175000},
+  {v:'c5', l:'250.000–500.000 €', mid:375000},{v:'c6', l:'Oltre 500.000 €', mid:650000}]},
+
+// ---------- SEZIONE: DECUMULO (percorso completo, obiettivi pensione/indipendenza) ----------
+{id:'etaObiettivo', step:'decumulo', type:'radio', label:'A che età vorresti iniziare a vivere (anche in parte) del tuo capitale?',
+ visibleIf: function(){ return T2() && isFI(); }, options:[
+  {v:'u50', l:'Prima dei 50 anni', mid:48},{v:'50_55', l:'50–55 anni', mid:53},
+  {v:'55_60', l:'55–60 anni', mid:58},{v:'60_67', l:'60–67 anni', mid:64},
+  {v:'67p', l:'Dopo i 67 anni', mid:68}]},
+{id:'speseTarget', step:'decumulo', type:'radio', label:'Che tenore di vita mensile vorresti in quella fase (in euro di oggi)?', precise:true, unit:'€/mese',
+ visibleIf: function(){ return T2() && isFI(); }, options:[
+  {v:'st1', l:'Meno di 1.500 €', mid:1200},{v:'st2', l:'1.500–2.500 €', mid:2000},
+  {v:'st3', l:'2.500–4.000 €', mid:3200},{v:'st4', l:'Oltre 4.000 €', mid:5000}]},
+{id:'altreEntrateFuture', step:'decumulo', type:'radio', label:'Su quali altre entrate mensili potrai contare in quella fase (pensione pubblica, affitti…)?', precise:true, unit:'€/mese',
+ visibleIf: function(){ return T2() && isFI(); },
+ help:'Il capitale necessario copre solo la differenza tra il tenore di vita desiderato e queste entrate.', options:[
+  {v:'0', l:'Nessuna o quasi', mid:0},{v:'ae1', l:'Meno di 500 €', mid:300},
+  {v:'ae2', l:'500–1.000 €', mid:750},{v:'ae3', l:'1.000–2.000 €', mid:1500},
+  {v:'ae4', l:'Oltre 2.000 €', mid:2500}]},
+
+// ---------- SEZIONE: RISCHIO ----------
+{id:'conoscenza', step:'rischio', type:'radio', label:'Come valuti la tua conoscenza finanziaria?', visibleIf: T2, options:[
+  {v:'base', l:'Base: conosco conti e depositi', score:0},
+  {v:'media', l:'Media: so cosa sono fondi e obbligazioni', score:1},
+  {v:'buona', l:'Buona: conosco ETF, azioni e diversificazione', score:2},
+  {v:'avanzata', l:'Avanzata: valuto rischio, costi e asset allocation', score:3}]},
+{id:'esperienza', step:'rischio', type:'radio', label:'Che esperienza di investimento hai?', visibleIf: T2, options:[
+  {v:'nessuna', l:'Nessuna', score:0},
+  {v:'depositi', l:'Solo depositi, buoni o obbligazioni', score:1},
+  {v:'fondi', l:'Fondi comuni o ETF', score:2},
+  {v:'azioni', l:'Azioni singole o strumenti complessi', score:3}]},
+{id:'reazione', step:'rischio', type:'radio', label:'Il tuo portafoglio perde il 20% in pochi mesi. Cosa fai?', options:[
+  {v:'vendo_tutto', l:'Vendo tutto per evitare altre perdite', score:0},
+  {v:'vendo_parte', l:'Vendo una parte', score:1},
+  {v:'mantengo', l:'Mantengo le posizioni e aspetto', score:2},
+  {v:'compro', l:'Ne approfitto per investire di più', score:3}]},
+{id:'perditaMax', step:'rischio', type:'radio', label:'Qual è la perdita temporanea massima che potresti tollerare senza vendere?', options:[
+  {v:'p5', l:'Circa 5%', score:0, maxdd:5},
+  {v:'p10', l:'Circa 10%', score:1, maxdd:10},
+  {v:'p20', l:'Circa 20%', score:2, maxdd:20},
+  {v:'p30', l:'30% o più', score:3, maxdd:30}]},
+{id:'priorita', step:'rischio', type:'radio', label:'Tra stabilità e rendimento, cosa conta di più per te?', visibleIf: T3,
+ options:[
+  {v:'protezione', l:'Protezione: preferisco stabilità anche con rendimenti bassi', score:0},
+  {v:'equilibrio', l:'Equilibrio: un po’ di crescita accettando oscillazioni moderate', score:1.5},
+  {v:'crescita', l:'Crescita: accetto oscillazioni ampie per rendimenti maggiori', score:3}]},
+
+// ---------- STEP 8: ASSICURAZIONI ----------
+{id:'coperture', step:'assicurazioni', type:'multi', label:'Quali coperture assicurative hai già attive?',
+ help:'Considera solo polizze personali/familiari in vigore. Seleziona tutte quelle presenti.', options:[
+  {v:'tcm', l:'Vita caso morte (TCM)'},
+  {v:'invalidita', l:'Invalidità permanente (da malattia o infortunio)'},
+  {v:'infortuni', l:'Infortuni'},
+  {v:'sanitaria', l:'Sanitaria / rimborso spese mediche'},
+  {v:'ltc', l:'LTC / non autosufficienza'},
+  {v:'rc', l:'Responsabilità civile della famiglia'},
+  {v:'abitazione', l:'Abitazione (incendio, danni)'},
+  {v:'tutela', l:'Tutela legale personale/familiare'},
+  {v:'mutuoprot', l:'Protezione mutuo/prestiti (CPI)'},
+  {v:'nessuna', l:'Nessuna copertura', exclusive:true}]}
+];
+
+/* ============================================================
+   STATO E UTILITY
+   ============================================================ */
+let A = {};              // risposte: A[id] = valore (o array per multi)
+let currentStep = 0;     // indice in STEPS
+
+const byId = id => document.getElementById(id);
+const Q = id => QUESTIONS.find(q => q.id === id);
+const optOf = (id, v) => { const q = Q(id); return q ? (q.options.find(o => o.v === v) || null) : null; };
+
+// Valore numerico di una risposta: campo preciso (se inserito) o valore centrale del range
+function midVal(id){
+  const p = A[id + '_precise'];
+  if (p !== undefined && p !== null && p !== '' && !isNaN(+p) && +p >= 0) return +p;
+  const o = optOf(id, A[id]);
+  return o && typeof o.mid === 'number' ? o.mid : 0;
+}
+function scoreVal(id){ const o = optOf(id, A[id]); return o && typeof o.score === 'number' ? o.score : 0; }
+function labelOf(id){
+  const q = Q(id); if (!q) return '—';
+  if (q.type === 'multi'){
+    const arr = A[id] || [];
+    if (!arr.length) return '—';
+    return arr.map(v => (optOf(id, v) || {l:v}).l).join(', ');
+  }
+  const o = optOf(id, A[id]);
+  const p = A[id + '_precise'];
+  const hasP = p !== undefined && p !== '' && !isNaN(+p);
+  if (!o) return hasP ? fmtEUR(+p) + ' (valore preciso)' : '—'; // valido anche solo il valore preciso
+  let s = o.l;
+  if (hasP) s += ' (preciso: ' + fmtEUR(+p) + ')';
+  return s;
+}
+function fmtEUR(n){
+  if (n === null || n === undefined || isNaN(n)) return '—';
+  return new Intl.NumberFormat('it-IT', {style:'currency', currency:'EUR', maximumFractionDigits:0}).format(n);
+}
+function fmtPct(n, dec){ return (isNaN(n) ? '—' : n.toFixed(dec === undefined ? 1 : dec).replace('.', ',') + '%'); }
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+/* ============================================================
+   WIZARD: RENDERING E NAVIGAZIONE
+   ============================================================ */
+function startWizard(){
+  byId('intro').hidden = true;
+  byId('wizard').hidden = false;
+  currentStep = 0;
+  renderStep();
+  window.scrollTo(0, 0);
+}
+
+// Una domanda è visibile se non ha condizione o la condizione è vera
+function isVisible(q){ return !q.visibleIf || q.visibleIf(); }
+function visibleQuestions(){ return QUESTIONS.filter(isVisible); }
+
+// Una domanda è considerata risposta anche se è stato inserito SOLO
+// il valore preciso, senza selezionare un range
+function hasPrecise(q){
+  if (!q.precise) return false;
+  const p = A[q.id + '_precise'];
+  return p !== undefined && p !== '' && !isNaN(+p);
+}
+function isAnswered(q){
+  if (q.type === 'multi') return !!(A[q.id] && A[q.id].length);
+  if (A[q.id] !== undefined && A[q.id] !== '') return true;
+  return hasPrecise(q);
+}
+
+function questionsForStep(stepId){
+  const s = STEPS.find(x => x.id === stepId);
+  if (!s || !s.sections || !s.sections.length) return [];
+  return QUESTIONS.filter(q => s.sections.includes(q.step) && isVisible(q));
+}
+function pageOfSection(sec){ return STEPS.findIndex(s => (s.sections || []).includes(sec)); }
+function answeredCount(){ return visibleQuestions().filter(isAnswered).length; }
+
+function updateCounter(){
+  const tot = visibleQuestions().length, done = answeredCount();
+  const el = byId('qCounter');
+  if (el) el.textContent = done + ' / ' + tot + ' domande · ne mancano ' + Math.max(0, tot - done);
+}
+
+// Auto-compilazione impegni finanziari in base alla domanda "porta"
+function normalizeDebts(){
+  const td = A.tipiDebiti || [];
+  const none = !td.length || td.includes('nessuno');
+  if (none){
+    A.mutuo = '0'; A.altriDebitiTot = '0'; A.rataMensile = '0'; A.durataImpegni = '0';
+    A.mutuo_precise = ''; A.altriDebitiTot_precise = ''; A.rataMensile_precise = '';
+    A._debtsAuto = true;
+  } else {
+    // se prima era tutto auto-compilato a zero, richiedi di nuovo i dati ora rilevanti
+    if (A._debtsAuto){ A.rataMensile = undefined; A.durataImpegni = undefined; A._debtsAuto = false; }
+    if (!td.includes('mutuo')){ A.mutuo = '0'; A.mutuo_precise = ''; }
+    else if (A.mutuo === '0' && !hasPrecise(Q('mutuo'))){ A.mutuo = undefined; }
+    const others = td.some(v => ['prestiti','auto','leasing','revolving','altri'].includes(v));
+    if (!others){ A.altriDebitiTot = '0'; A.altriDebitiTot_precise = ''; }
+    else if (A.altriDebitiTot === '0' && !hasPrecise(Q('altriDebitiTot'))){ A.altriDebitiTot = undefined; }
+  }
+}
+
+// Corpo di una pagina: sezioni tematiche con intestazione + domande visibili
+function renderStepBody(stepId){
+  const s = STEPS.find(x => x.id === stepId);
+  let html = '';
+  (s.sections || []).forEach(sec => {
+    const qs = QUESTIONS.filter(q => q.step === sec && isVisible(q));
+    if (!qs.length) return;
+    html += '<h3 style="margin:24px 0 2px;color:var(--brand);border-bottom:2px solid var(--line);padding-bottom:6px">' +
+      esc(SECTION_TITLES[sec] || sec) + '</h3>' + qs.map(renderQuestion).join('');
+  });
+  // Disclaimer dinamico: percorso Light = analisi più imprecisa
+  if (stepId === 'p0' && A.approfondimento === 'light')
+    html += '<div class="alert warn">⚠️ <div><b>Hai scelto il percorso Light.</b> L’analisi sarà più imprecisa: diversi dati (debiti residui, dettaglio patrimoniale, profilo di rischio) verranno stimati con ipotesi standard invece che con le tue risposte. Per decisioni importanti consigliamo il percorso Approfondito.</div></div>';
+  return html;
+}
+
+function renderStep(){
+  const step = STEPS[currentStep];
+  byId('stepTitle').textContent = step.title;
+  updateCounter();
+  updateXPBar();
+  byId('progressBarInner').style.width = Math.round(100 * currentStep / (STEPS.length - 1)) + '%';
+
+  // chips degli step
+  byId('stepChips').innerHTML = STEPS.map((s, i) =>
+    '<span class="stepchip ' + (i === currentStep ? 'active' : (i < currentStep ? 'done' : '')) + '">' + esc(s.title) + '</span>'
+  ).join('');
+
+  const body = byId('stepBody');
+  if (step.id === 'riepilogo'){ body.innerHTML = renderRecap(); }
+  else if (step.id === 'risultati'){ /* gestito da showResults() */ }
+  else { body.innerHTML = renderStepBody(step.id); }
+
+  byId('btnPrev').disabled = currentStep === 0;
+  byId('btnNext').textContent = step.id === 'riepilogo' ? '📊 Genera l’analisi' : 'Avanti →';
+}
+
+function renderQuestion(q){
+  // Nessun handler inline: gli eventi sono gestiti tramite delegazione (compatibile iOS/Quick Look)
+  let inner = '';
+  if (q.type === 'select'){
+    inner = '<select class="fsel" data-q="' + q.id + '">' +
+      '<option value="">— Seleziona —</option>' +
+      q.options.map(o => '<option value="' + o.v + '"' + (A[q.id] === o.v ? ' selected' : '') + '>' + esc(o.l) + '</option>').join('') +
+      '</select>';
+  } else if (q.type === 'multi'){
+    const cur = A[q.id] || [];
+    inner = '<div class="opts">' + q.options.map(o =>
+      '<label class="opt' + (cur.includes(o.v) ? ' checked' : '') + '">' +
+      '<input type="checkbox" data-q="' + q.id + '" data-v="' + o.v + '" ' + (cur.includes(o.v) ? 'checked' : '') +
+      '> ' + esc(o.l) + '</label>'
+    ).join('') + '</div>';
+  } else { // radio
+    inner = '<div class="opts">' + q.options.map(o =>
+      '<label class="opt' + (A[q.id] === o.v ? ' checked' : '') + '">' +
+      '<input type="radio" name="' + q.id + '" value="' + o.v + '" data-q="' + q.id + '" ' + (A[q.id] === o.v ? 'checked' : '') +
+      '> ' + esc(o.l) + '</label>'
+    ).join('') + '</div>';
+  }
+  if (q.precise){
+    const pv = A[q.id + '_precise'];
+    inner += '<div class="precise"><input type="number" min="0" step="1" inputmode="numeric" placeholder="Valore preciso (opzionale)"' +
+      ' value="' + (pv !== undefined && pv !== '' ? pv : '') + '"' +
+      ' data-precise="' + q.id + '"><span>' + esc(q.unit || '€') + ' — se lo inserisci, i calcoli useranno questo valore</span></div>';
+  }
+  return '<div class="q" id="q_' + q.id + '"><label class="qlabel">' + esc(q.label) + '</label>' +
+    (q.help ? '<div class="qhelp">' + esc(q.help) + '</div>' : '') + inner + '</div>';
+}
+
+// --- gestori risposta (richiamati dalla event delegation) ---
+function setAnswer(id, v){
+  A[id] = v;
+  award('q_' + id, 10, 'risposta registrata');
+  const pi = pageOfSection(Q(id).step);
+  if (currentStep === pi){ // ridisegna per evidenziare la scelta
+    byId('stepBody').innerHTML = renderStepBody(STEPS[pi].id);
+    updateCounter();
+  }
+}
+function setPrecise(id, v){
+  A[id + '_precise'] = v === '' ? '' : Math.max(0, +v);
+  if (v !== '') award('p_' + id, 5, 'valore preciso: analisi più accurata');
+  // il valore preciso rende valida la domanda anche senza range selezionato
+  const el = byId('q_' + id);
+  if (el && v !== '') el.classList.remove('q-missing');
+  updateCounter();
+}
+function toggleMulti(id, v, checked){
+  let cur = (A[id] || []).slice();
+  const isExclusive = (optOf(id, v) || {}).exclusive;
+  if (checked){
+    if (isExclusive) cur = [v];
+    else { cur = cur.filter(x => !(optOf(id, x) || {}).exclusive); cur.push(v); }
+  } else cur = cur.filter(x => x !== v);
+  A[id] = cur;
+  if (cur.length) award('q_' + id, 10, 'risposta registrata');
+  if (id === 'tipiDebiti') normalizeDebts(); // auto-compila/azzera le altre domande sui debiti
+  const pi = pageOfSection(Q(id).step);
+  if (currentStep === pi){
+    byId('stepBody').innerHTML = renderStepBody(STEPS[pi].id);
+    updateCounter();
+  }
+}
+
+// --- validazione step corrente (solo domande visibili; il valore preciso vale come risposta) ---
+function validateAnswers(stepId){
+  const missing = questionsForStep(stepId).filter(q => !isAnswered(q));
+  missing.forEach(q => { const el = byId('q_' + q.id); if (el) el.classList.add('q-missing'); });
+  if (missing.length){
+    const first = byId('q_' + missing[0].id);
+    if (first && first.scrollIntoView) first.scrollIntoView(true);
+  }
+  return missing.length === 0;
+}
+
+function nextStep(){
+  const step = STEPS[currentStep];
+  if (step.id !== 'riepilogo' && step.id !== 'risultati' && !validateAnswers(step.id)) return;
+  if (step.id === 'riepilogo'){ showResults(); return; }
+  if (step.sections && step.sections.length) award('page_' + step.id, 25, '„' + step.title + '” completata!');
+  currentStep = Math.min(currentStep + 1, STEPS.length - 1);
+  renderStep();
+  window.scrollTo(0, 0);
+}
+function prevStep(){
+  if (byId('results').hidden === false){ // torna dal report al riepilogo
+    byId('results').hidden = true; byId('wizard').hidden = false;
+    currentStep = STEPS.findIndex(s => s.id === 'riepilogo');
+  } else currentStep = Math.max(currentStep - 1, 0);
+  renderStep();
+  window.scrollTo(0, 0);
+}
+function gotoStep(i){ currentStep = i; byId('results').hidden = true; byId('wizard').hidden = false; renderStep(); window.scrollTo(0, 0); }
+// Riavvio con doppio tocco di conferma (niente confirm(): su iOS può essere bloccato)
+let restartArmed = false;
+function restart(){
+  const btn = byId('btnRestart');
+  if (!restartArmed){
+    restartArmed = true;
+    if (btn) btn.textContent = '⚠️ Confermi? Tocca di nuovo per cancellare tutto';
+    setTimeout(() => { restartArmed = false; if (btn) btn.textContent = '↺ Ricomincia'; }, 4000);
+    return;
+  }
+  restartArmed = false;
+  A = {}; GAME.xp = 0; GAME.rewarded = {};
+  byId('results').hidden = true; byId('intro').hidden = false; window.scrollTo(0, 0);
+}
+
+/* ============================================================
+   GAMIFICATION (facoltativa — principi: amplificare motivazioni
+   reali, apprendimento prima di tutto, partecipazione volontaria)
+   Punti e trofei sono legati alla qualità dei dati e alla salute
+   finanziaria effettiva, mai a comportamenti fittizi.
+   ============================================================ */
+const GAME = { enabled:true, xp:0, rewarded:{} };
+const LEVELS = [
+  {min:0,   name:'🌱 Apprendista del patrimonio'},
+  {min:100, name:'📘 Pianificatore'},
+  {min:220, name:'🧭 Stratega finanziario'},
+  {min:360, name:'🏛️ CFO di famiglia'}
+];
+function gameLevel(){
+  let cur = LEVELS[0], next = null;
+  for (let i = 0; i < LEVELS.length; i++){
+    if (GAME.xp >= LEVELS[i].min) cur = LEVELS[i];
+    else { next = LEVELS[i]; break; }
+  }
+  return { cur, next };
+}
+function updateXPBar(){
+  const w = byId('xpWrap'); if (!w) return;
+  w.hidden = !GAME.enabled;
+  if (!GAME.enabled) return;
+  const { cur, next } = gameLevel();
+  const from = cur.min, to = next ? next.min : Math.max(GAME.xp, cur.min + 1);
+  byId('xpBar').style.width = Math.min(100, Math.round(100 * (GAME.xp - from) / Math.max(1, to - from))) + '%';
+  byId('xpLevel').textContent = cur.name;
+  byId('xpPts').textContent = GAME.xp + ' punti' + (next ? ' · prossimo livello a ' + next.min : ' · livello massimo!');
+}
+function toast(msg){
+  if (!GAME.enabled) return;
+  let wrap = document.querySelector('.toast-wrap');
+  if (!wrap){ wrap = document.createElement('div'); wrap.className = 'toast-wrap'; document.body.appendChild(wrap); }
+  const t = document.createElement('div');
+  t.className = 'toast'; t.textContent = msg;
+  wrap.appendChild(t);
+  setTimeout(function(){ if (t.parentNode) t.parentNode.removeChild(t); }, 3000);
+}
+// premio una-tantum: ogni chiave viene pagata una sola volta
+function award(key, pts, label){
+  if (!GAME.enabled || GAME.rewarded[key]) return;
+  GAME.rewarded[key] = true;
+  GAME.xp += pts;
+  toast('+' + pts + ' punti · ' + label);
+  updateXPBar();
+}
+function confettiBurst(){
+  if (!GAME.enabled) return;
+  const colors = ['#1f4e79','#2e7dba','#0e8a6d','#d99a06','#8a5fbf','#d64545'];
+  for (let i = 0; i < 60; i++){
+    const c = document.createElement('span');
+    c.className = 'confetti';
+    c.style.left = Math.random() * 100 + 'vw';
+    c.style.background = colors[i % colors.length];
+    c.style.animationDuration = (2.2 + Math.random() * 2) + 's';
+    c.style.animationDelay = (Math.random() * .6) + 's';
+    document.body.appendChild(c);
+    setTimeout(function(){ if (c.parentNode) c.parentNode.removeChild(c); }, 5200);
+  }
+}
+
+// ---- Trofei: si sbloccano solo con comportamenti finanziari reali ----
+function generateBadges(M){
+  const preciseCount = QUESTIONS.filter(q => q.precise && A[q.id + '_precise'] !== undefined && A[q.id + '_precise'] !== '').length;
+  return [
+    {ic:'🛡️', name:'Guardiano', earned:M.ef.months >= 6, how:'Fondo di emergenza da almeno 6 mesi di spese', got:'La tua riserva copre 6+ mesi: le emergenze non ti spaventano.'},
+    {ic:'🐜', name:'Formica d’oro', earned:M.cf.savingsRate >= 0.15, how:'Tasso di risparmio di almeno il 15%', got:'Risparmi almeno il 15% del reddito: la base di ogni patrimonio.'},
+    {ic:'⛓️', name:'Spezza catene', earned:M.nw.totalDebt === 0 || M.debt.rateOnIncome <= 0.2, how:'Nessun debito, o rate sotto il 20% del reddito', got:'I debiti non comandano sul tuo bilancio.'},
+    {ic:'🎯', name:'Rotta tracciata', earned:M.goalGap <= 0, how:'Proiezione che raggiunge il tuo obiettivo', got:'Con le ipotesi prudenti attuali, il tuo obiettivo è a portata.'},
+    {ic:'🧊', name:'Mente fredda', earned:A.reazione === 'mantengo' || A.reazione === 'compro', how:'Disciplina dichiarata nei ribassi di mercato', got:'Nei cali non vendi: è il superpotere dell’investitore.'},
+    {ic:'🔬', name:'Analista', earned:M.tier === 3, how:'Completa il percorso Approfondito', got:'Hai scelto l’analisi più accurata.'},
+    {ic:'📐', name:'Precisione svizzera', earned:preciseCount >= 3, how:'Inserisci almeno 3 valori precisi', got:'Dati precisi = analisi più affidabile.'},
+    {ic:'👫', name:'Gioco di squadra', earned:!!M.couple, how:'Fai l’analisi di coppia', got:'Pianificare in due rende la famiglia più solida.'},
+    {ic:'☂️', name:'Ombrello aperto', earned:M.ins.red === 0 && (A.coperture || []).some(c => c !== 'nessuna'), how:'Nessuna protezione essenziale mancante', got:'I rischi gravi sono coperti: si costruisce solo su fondamenta protette.'}
+  ];
+}
+function renderBadges(M){
+  const badges = generateBadges(M);
+  const earned = badges.filter(b => b.earned).length;
+  return '<p class="muted small">Trofei sbloccati: <b>' + earned + ' su ' + badges.length + '</b>. Quelli in grigio ti dicono già su cosa lavorare.</p><div class="badge-grid">' +
+    badges.map(b => '<div class="badge-card' + (b.earned ? '' : ' locked') + '"><div class="bic">' + b.ic + '</div><b>' + esc(b.name) + '</b><p>' + esc(b.earned ? b.got : 'Come sbloccarlo: ' + b.how) + '</p></div>').join('') + '</div>';
+}
+
+// ---- Missioni: sfide concrete generate dalle aree deboli reali ----
+function generateMissions(M){
+  const ms = [];
+  if (M.ef.months < 6) ms.push({ic:'🛡️', t:'Missione Scudo', d:'Porta il fondo di emergenza a 6 mesi di spese: mancano circa ' + fmtEUR(M.ef.gap) + '. Versali su un conto separato e non toccarli.', pts:100});
+  if (M.debt.hasRevolving) ms.push({ic:'✂️', t:'Missione Forbici', d:'Estingui le carte revolving: nessun investimento prudente rende quanto costano.', pts:120});
+  if (M.debt.rateOnIncome > 0.35) ms.push({ic:'⚖️', t:'Missione Alleggerimento', d:'Riduci le rate sotto il 35% del reddito: rinegozia, consolida o estingui il debito più caro.', pts:100});
+  if (M.ins.red > 0) ms.push({ic:'☂️', t:'Missione Ombrello', d:'Chiudi le ' + M.ins.red + ' lacune assicurative critiche segnalate: proteggere i rischi gravi viene prima di investire.', pts:100});
+  if (M.cf.savingsRate < 0.15 && M.cf.implicitSavings > 0) ms.push({ic:'🐜', t:'Missione +50', d:'Aumenta il risparmio di 50 €/mese (automatizzalo il giorno dello stipendio) e punta al 15% del reddito.', pts:80});
+  if (M.risk.warnings.length) ms.push({ic:'🧭', t:'Missione Bussola', d:'Chiarisci con un consulente le incoerenze del tuo profilo di rischio prima di cambiare gli investimenti.', pts:60});
+  if (M.tier === 1) ms.push({ic:'🔬', t:'Missione Lente', d:'Rifai l’analisi con il percorso Approfondito per una fotografia molto più accurata.', pts:60});
+  if (!ms.length) ms.push({ic:'🏆', t:'Missione Mantenimento', d:'Le basi sono solide! Rivedi il piano tra 12 mesi o dopo eventi importanti (casa, figli, lavoro) e difendi il tuo indice.', pts:50});
+  return ms;
+}
+function renderMissions(M, score){
+  return generateMissions(M).map(m =>
+    '<div class="mission"><span class="mic">' + m.ic + '</span><div><b>' + esc(m.t) + '</b><p>' + esc(m.d) + '</p></div><span class="mpts">+' + m.pts + ' pt</span></div>'
+  ).join('') + '<div class="alert info">🔁 <div><b>Sfida con te stesso:</b> salva il report di oggi (indice ' + score + '/100), completa una missione nella vita reale e rifai l’analisi tra qualche mese. Battere il proprio punteggio è l’unica classifica che conta.</div></div>';
+}
+
+// ---- Indice di salute finanziaria 0–100 (dai semafori) ----
+function computeHealthScore(lights){
+  const pts = lights.reduce((s, l) => s + (l.level === 'g' ? 10 : (l.level === 'y' ? 5 : 0)), 0);
+  return Math.round(100 * pts / (lights.length * 10));
+}
+
+// --- riepilogo dati inseriti (collectAnswers) ---
+function collectAnswers(){
+  return QUESTIONS.map(q => ({id:q.id, step:q.step, label:q.label, value:labelOf(q.id)}));
+}
+function renderRecap(){
+  let html = '<p class="muted">Controlla le risposte. Puoi tornare a qualsiasi pagina per correggerle.</p>';
+  STEPS.slice(0, 4).forEach((s, si) => {
+    html += '<h3 style="margin-top:20px;color:var(--brand)">' + esc(s.title) +
+      ' <a style="font-size:.78rem;cursor:pointer;text-decoration:underline;color:var(--brand-2)" data-goto="' + si + '">modifica</a></h3>';
+    s.sections.forEach(sec => {
+      const qs = QUESTIONS.filter(q => q.step === sec && isVisible(q));
+      if (!qs.length) return;
+      html += '<div class="muted small" style="margin-top:10px;font-weight:700">' + esc(SECTION_TITLES[sec] || sec) + '</div>';
+      html += qs.map(q =>
+        '<div class="rec-row"><span class="rl">' + esc(q.label) + '</span><span class="rv">' + esc(labelOf(q.id)) + '</span></div>'
+      ).join('');
+    });
+  });
+  return html;
+}
+/* ============================================================
+   MOTORE DI CALCOLO
+   Ipotesi dichiarate (nominali, prudenti, al lordo di inflazione):
+   - Conservativo: 2,0% annuo · Bilanciato: 3,2% · Dinamico: 4,5%
+   - Scenario prudente: base −1,5 punti · positivo: base +1,5 punti
+   - Costi/tasse non modellati in dettaglio (v. sezione limiti)
+   ============================================================ */
+
+const RETURNS = { conservativo:0.020, bilanciato:0.032, dinamico:0.045 };
+const SCENARIO_DELTA = 0.015;
+
+// ---- Patrimonio ----
+function calculateNetWorth(){
+  const liq = midVal('liquidita'), inv = midVal('investimenti'), imm = midVal('immobili'),
+        prev = midVal('previdenza'), altri = midVal('altriAsset');
+  const grossAssets = liq + inv + imm + prev + altri;
+  let mutuo, altriDeb, totalDebt, debtEstimated = false;
+  const td = A.tipiDebiti || [];
+  const hasDebts = td.length > 0 && !td.includes('nessuno');
+  if (deepMode() || !hasDebts){
+    mutuo = midVal('mutuo'); altriDeb = midVal('altriDebitiTot');
+    totalDebt = mutuo + altriDeb;
+  } else {
+    // Percorso essenziale: il debito residuo è stimato dalla rata
+    // (ipotesi dichiarata: durata media residua 5 anni)
+    totalDebt = Math.round(midVal('rataMensile') * 12 * 5);
+    mutuo = td.includes('mutuo') ? Math.round(totalDebt * 0.8) : 0;
+    altriDeb = totalDebt - mutuo;
+    debtEstimated = true;
+  }
+  return { liq, inv, imm, prev, altri, grossAssets, mutuo, altriDeb, totalDebt, debtEstimated, netWorth: grossAssets - totalDebt };
+}
+
+// ---- Fiscalità (stime semplificate, dichiarate nelle assunzioni) ----
+// 26% sui guadagni della maggior parte degli strumenti, 12,5% titoli di Stato,
+// 20% come proxy per portafogli misti. Bollo 0,2% annuo sul conto titoli.
+function effTaxRate(){
+  const map = { deposito:0.26, titoli_stato:0.125, fondi:0.26, azioni:0.26, misto:0.20 };
+  return map[A.tipoStrumenti] !== undefined ? map[A.tipoStrumenti] : 0.26;
+}
+
+// ---- Capitale obiettivo: dichiarato, calcolato (indipendenza) o default prudente ----
+function computeGoal(cf, investable){
+  if (deepMode() && isFI() && isAnswered(Q('speseTarget'))){
+    // Regola del 4% (25× il fabbisogno) + correzione fiscale sul decumulo:
+    // si assume che ~50% di ogni prelievo sia rendimento tassato.
+    const needY = Math.max(0, (midVal('speseTarget') - midVal('altreEntrateFuture')) * 12);
+    const taxFactor = 1 + effTaxRate() * 0.5;
+    return { value: Math.round(needY * 25 * taxFactor),
+      label:'capitale per l’indipendenza: 25× il fabbisogno annuo non coperto da altre entrate (regola del 4%), maggiorato per la fiscalità stimata sul decumulo' };
+  }
+  if (deepMode() && !isFI() && isAnswered(Q('capitaleObiettivo')))
+    return { value: midVal('capitaleObiettivo'), label:'capitale obiettivo che hai dichiarato' };
+  // default prudenti e dichiarati per il percorso essenziale
+  const D = {
+    emergenza: { v: cf.expensesM * 6, l:'6 mesi di spese (fondo di emergenza pieno)' },
+    casa: { v: 60000, l:'anticipo tipico per un acquisto immobiliare (ipotesi standard 60.000 €)' },
+    figli: { v: 50000, l:'budget educativo indicativo per figlio (ipotesi standard 50.000 €)' },
+    protezione: { v: cf.expensesY, l:'12 mesi di spese come cuscinetto di protezione' },
+    crescita: { v: Math.max(50000, investable * 2), l:'raddoppio del capitale investibile attuale (ipotesi)' },
+    pensione: { v: Math.max(100000, cf.expensesY * 10), l:'10 anni di spese attuali (ipotesi semplificata)' },
+    rendita: { v: Math.max(250000, cf.expensesY * 25), l:'25 volte le spese annue attuali (regola del 4%)' }
+  };
+  const d = D[A.obiettivo] || D.crescita;
+  return { value: Math.round(d.v), label: d.l };
+}
+
+// ---- Analisi di coppia (solo se l'utente sceglie di includere il partner) ----
+function analyzeCouple(cf){
+  if (!coupleMode()) return null;
+  const share = (optOf('quotaReddito', A.quotaReddito) || { share:0.5 }).share;
+  const mine = Math.round(cf.income * share);
+  const theirs = cf.income - mine;
+  const resp = (A.responsabilitaPartner || []).filter(v => v !== 'nessuna');
+  const heavy = resp.some(v => ['snc','sas','sindaco'].includes(v));
+  const concentration = share >= 0.7 || share <= 0.3;   // reddito concentrato su una sola persona
+  const keyPerson = share >= 0.5 ? 'tu' : 'il tuo partner';
+  const respLabels = resp.map(v => (optOf('responsabilitaPartner', v) || { l:v }).l);
+  return { share, mine, theirs, resp, respLabels, heavy, concentration, keyPerson };
+}
+
+// ---- Cash flow ----
+function calculateCashFlow(){
+  const income = midVal('reddito');                       // annuo netto
+  const expensesM = midVal('spesaMensile');
+  const savingsM = midVal('risparmioMensile');
+  const expensesY = expensesM * 12, savingsY = savingsM * 12;
+  const savingsRate = income > 0 ? savingsY / income : 0;
+  // controllo coerenza: reddito - spese dovrebbe ≈ risparmio
+  const implicitSavings = income - expensesY;
+  const incoherent = Math.abs(implicitSavings - savingsY) > Math.max(6000, income * 0.25);
+  return { income, expensesM, expensesY, savingsM, savingsY, savingsRate, implicitSavings, incoherent };
+}
+
+// ---- Sostenibilità del debito ----
+function calculateDebtSustainability(nw, cf){
+  const rateM = midVal('rataMensile');
+  const rateY = rateM * 12;
+  const rateOnIncome = cf.income > 0 ? rateY / cf.income : 0;      // incidenza rate/reddito
+  const debtToIncome = cf.income > 0 ? nw.totalDebt / cf.income : 0;
+  const hasRevolving = (A.tipiDebiti || []).includes('revolving');
+  const yearsLeft = midVal('durataImpegni');
+  return { rateM, rateY, rateOnIncome, debtToIncome, hasRevolving, yearsLeft };
+}
+
+// ---- Fondo di emergenza ----
+function calculateEmergencyFund(nw, cf){
+  const months = cf.expensesM > 0 ? nw.liq / cf.expensesM : 0;   // mesi coperti dalla liquidità
+  const dedicated = A.fondoEmergenza;                             // percezione dichiarata
+  const target = 6 * cf.expensesM;                                // obiettivo prudente: 6 mesi
+  const gap = Math.max(0, target - nw.liq);
+  return { months, dedicated, target, gap };
+}
+
+// ---- Capitale investibile: investimenti + liquidità oltre 6 mesi di spese ----
+function calculateInvestable(nw, cf){
+  const buffer = 6 * cf.expensesM;
+  return nw.inv + Math.max(0, nw.liq - buffer);
+}
+
+// ---- Profilo di rischio ----
+// Usa i fattori disponibili nel percorso scelto (il percorso essenziale ne
+// chiede meno) mediandoli su scala comune, così i due percorsi sono comparabili.
+function determineRiskProfile(){
+  const hIdx = ['breve','medio','lungo','moltolungo'].indexOf(A.orizzonte); // 0..3
+  // priorità dichiarata (percorso completo) o derivata dall'obiettivo (essenziale)
+  const prio = A.priorita || ({ crescita:'crescita', rendita:'crescita', pensione:'equilibrio',
+    casa:'equilibrio', figli:'equilibrio', emergenza:'protezione', protezione:'protezione' }[A.obiettivo] || 'equilibrio');
+  const prioScore = { protezione:0, equilibrio:1.5, crescita:3 }[prio];
+
+  const factors = [];                       // ciascun fattore vale 0..3
+  if (A.conoscenza) factors.push(scoreVal('conoscenza'));
+  if (A.esperienza) factors.push(scoreVal('esperienza'));
+  if (A.reazione) factors.push(scoreVal('reazione'));
+  if (A.perditaMax) factors.push(scoreVal('perditaMax'));
+  factors.push(prioScore);
+  factors.push(Math.max(0, hIdx));
+  let score = (factors.reduce((s, x) => s + x, 0) / factors.length) * 6; // scala 0..18
+  const age = midVal('eta');
+  if (age >= 65) score -= 2; else if (age >= 55) score -= 1;
+
+  let profile = score <= 6 ? 'conservativo' : (score <= 11 ? 'bilanciato' : 'dinamico');
+
+  // vincoli prudenziali e incoerenze
+  const warnings = [];
+  const maxdd = (optOf('perditaMax', A.perditaMax) || {}).maxdd || 5;
+  if (A.orizzonte === 'breve' && profile !== 'conservativo'){
+    warnings.push('Orizzonte inferiore a 5 anni: il profilo è stato limitato a Conservativo per prudenza.');
+    profile = 'conservativo';
+  }
+  if (maxdd <= 5 && profile !== 'conservativo'){
+    warnings.push('Hai indicato una tolleranza massima alle perdite di circa il 5%: il profilo è stato limitato a Conservativo.');
+    profile = 'conservativo';
+  } else if (maxdd <= 10 && profile === 'dinamico'){
+    warnings.push('Tolleranza alle perdite intorno al 10%: il profilo Dinamico non è coerente ed è stato ridotto a Bilanciato.');
+    profile = 'bilanciato';
+  }
+  if (prio === 'crescita' && maxdd <= 10)
+    warnings.push('Incoerenza: l’obiettivo punta alla crescita ma tolleri perdite contenute. Meglio chiarire questo punto con un consulente.');
+  if (A.reazione === 'vendo_tutto' && prio !== 'protezione')
+    warnings.push('Attenzione comportamentale: vendere tutto durante un calo è il modo più comune di trasformare una perdita temporanea in una definitiva.');
+  if (A.conoscenza && scoreVal('conoscenza') === 0 && scoreVal('esperienza') === 3)
+    warnings.push('Esperienza su strumenti complessi con conoscenza di base: possibile eccesso di fiducia (overconfidence).');
+
+  return { score, profile, warnings, maxdd, age, hIdx, prio };
+}
+
+// ---- Allocazioni indicative (3 proposte) ----
+function generateAllocationProfiles(risk, ef){
+  // base prudente per ciascun profilo: [liquidità, obbligazioni, azioni globali, oro/real asset, previdenza]
+  const base = {
+    conservativo: {liq:15, bond:55, eq:20, gold:5, pens:5},
+    bilanciato:   {liq:10, bond:40, eq:35, gold:8, pens:7},
+    dinamico:     {liq:5,  bond:25, eq:55, gold:8, pens:7}
+  };
+  const age = midVal('eta');
+  const out = {};
+  ['conservativo','bilanciato','dinamico'].forEach(p => {
+    const a = Object.assign({}, base[p]);
+    // aggiustamenti prudenti
+    if (age >= 60){ const shift = Math.min(10, a.eq); a.eq -= shift; a.bond += shift; }          // età alta → meno azioni
+    if (A.orizzonte === 'moltolungo' && p !== 'conservativo'){ a.eq += 5; a.bond -= 5; }          // orizzonte lungo → più azioni
+    if (ef.months < 3){ const shift = Math.min(10, a.eq); a.liq += shift; a.eq -= shift; }        // poca liquidità → priorità riserva
+    out[p] = a;
+  });
+  return out;
+}
+
+// ---- Gap assicurativi ----
+function calculateInsuranceGaps(nw, cf, debt){
+  const cov = A.coperture || [];
+  const has = c => cov.includes(c);
+  const deps = midVal('dipendenti');
+  const hasPartnerNoIncome = coupleMode() && A.quotaReddito === 'solo_io';
+  const hasFamily = deps > 0 || hasPartner();
+  const worksForIncome = !['pensione','rendite'].includes(A.fonteReddito);
+  const age = midVal('eta');
+  const gaps = []; // {area, level:'r'|'y'|'g', why}
+
+  // TCM: essenziale se qualcuno dipende dal tuo reddito
+  if ((deps > 0 || hasPartnerNoIncome) && !has('tcm'))
+    gaps.push({area:'Vita caso morte (TCM)', level:'r', why:'Ci sono persone che dipendono dal tuo reddito ma manca una copertura in caso di decesso. Capitale indicativo di riferimento: 5–10 volte il reddito annuo (' + fmtEUR(cf.income*5) + '–' + fmtEUR(cf.income*10) + ').'});
+  else if (deps > 0 && has('tcm'))
+    gaps.push({area:'Vita caso morte (TCM)', level:'g', why:'Copertura presente. Verifica che il capitale sia adeguato a reddito e debiti residui.'});
+
+  // Invalidità: protegge la capacità di produrre reddito
+  if (worksForIncome && !has('invalidita'))
+    gaps.push({area:'Invalidità permanente', level: deps > 0 ? 'r' : 'y', why:'Il reddito da lavoro è il tuo principale "asset": un’invalidità grave lo interromperebbe. È spesso il rischio più sottovalutato.'});
+  else if (worksForIncome)
+    gaps.push({area:'Invalidità permanente', level:'g', why:'Copertura presente.'});
+
+  // Infortuni
+  if (worksForIncome && !has('infortuni') && !has('invalidita'))
+    gaps.push({area:'Infortuni', level:'y', why:'Nessuna protezione per infortuni con conseguenze economiche.'});
+
+  // Sanitaria
+  gaps.push(has('sanitaria')
+    ? {area:'Sanitaria', level:'g', why:'Copertura presente.'}
+    : {area:'Sanitaria', level:'y', why:'Grandi interventi o cure lunghe possono pesare sul patrimonio. Da valutare in base a regione e esigenze familiari.'});
+
+  // LTC (rilevante crescendo con l'età)
+  if (age >= 50)
+    gaps.push(has('ltc')
+      ? {area:'LTC / non autosufficienza', level:'g', why:'Copertura presente.'}
+      : {area:'LTC / non autosufficienza', level:'y', why:'Dopo i 50 anni conviene valutare il rischio di non autosufficienza: i costi assistenziali possono erodere il patrimonio.'});
+
+  // RC famiglia: costo basso, rischio potenzialmente enorme
+  if (hasFamily && !has('rc'))
+    gaps.push({area:'RC famiglia', level:'y', why:'Un danno causato a terzi (anche dai figli) può generare richieste molto elevate. Copertura di norma poco costosa.'});
+  else if (has('rc'))
+    gaps.push({area:'RC famiglia', level:'g', why:'Copertura presente.'});
+
+  // Abitazione
+  if (nw.imm > 0)
+    gaps.push(has('abitazione')
+      ? {area:'Abitazione', level:'g', why:'Copertura presente.'}
+      : {area:'Abitazione', level:'y', why:'Possiedi immobili senza copertura per incendio/danni: un evento grave colpirebbe l’asset più grande.'});
+
+  // Protezione mutuo
+  if (nw.mutuo > 0 && !has('mutuoprot') && !has('tcm'))
+    gaps.push({area:'Protezione mutuo', level:'y', why:'Mutuo in corso senza TCM né polizza dedicata: in caso di evento grave il debito resterebbe alla famiglia.'});
+
+  // Tutela legale
+  if (!has('tutela'))
+    gaps.push({area:'Tutela legale', level:'y', why:'Copertura accessoria da valutare: aiuta a sostenere spese legali impreviste.'});
+
+  // Responsabilità personale qualificata (utente)
+  const resp = (A.responsabilita || []).filter(v => v !== 'nessuna');
+  if (resp.length){
+    const heavy = resp.some(v => ['snc','sas','sindaco'].includes(v));
+    gaps.push({area:'Responsabilità personale qualificata', level: heavy ? 'r' : 'y',
+      why:'Ricopri ruoli che espongono il patrimonio personale (' + resp.map(v => (optOf('responsabilita', v)||{l:v}).l).join(', ') +
+      '). Serve una verifica specifica delle coperture di responsabilità personale/professionale con un professionista: questa analisi non copre l’ambito aziendale.'});
+  }
+
+  // Responsabilità professionale del partner (se analisi di coppia)
+  const respP = (A.responsabilitaPartner || []).filter(v => v !== 'nessuna');
+  if (coupleMode() && respP.length){
+    const heavyP = respP.some(v => ['snc','sas','sindaco'].includes(v));
+    gaps.push({area:'Responsabilità professionale del partner', level: heavyP ? 'r' : 'y',
+      why:'Il tuo partner ricopre ruoli che possono esporre il patrimonio familiare (' + respP.map(v => (optOf('responsabilitaPartner', v)||{l:v}).l).join(', ') +
+      '). Da verificare: coperture di responsabilità professionale del partner e regime patrimoniale della coppia (comunione o separazione dei beni).'});
+  }
+
+  const red = gaps.filter(g => g.level === 'r').length;
+  const yellow = gaps.filter(g => g.level === 'y').length;
+  return { gaps, red, yellow, covCount: cov.filter(c => c !== 'nessuna').length };
+}
+
+// ---- Proiezione patrimoniale (capitalizzazione mensile) ----
+function runProjection(P0, monthly, years, annualReturn){
+  const rm = annualReturn / 12;
+  let v = Math.max(0, P0);
+  const points = [v];
+  const months = Math.round(years * 12);
+  for (let m = 1; m <= months; m++){
+    v = v * (1 + rm) + monthly;
+    if (m % 12 === 0) points.push(v);
+  }
+  if (months % 12 !== 0) points.push(v);
+  return { final: v, points, contributed: Math.max(0, P0) + monthly * months };
+}
+
+/* ============================================================
+   VALUTAZIONE A SEMAFORO (10 aree)
+   ============================================================ */
+function computeTrafficLights(M){
+  const {nw, cf, debt, ef, risk, ins} = M;
+  const L = [];
+  const add = (name, level, why) => L.push({name, level, why});
+
+  // 1. Solidità patrimoniale
+  const nwRatio = cf.income > 0 ? nw.netWorth / cf.income : 0;
+  if (nw.netWorth < 0) add('Solidità patrimoniale', 'r', 'Il patrimonio netto è negativo: i debiti superano gli attivi.');
+  else if (nwRatio < 1) add('Solidità patrimoniale', 'y', 'Patrimonio netto inferiore a un anno di reddito: la base è ancora sottile.');
+  else if (nwRatio < 3) add('Solidità patrimoniale', 'y', 'Patrimonio netto pari a ' + nwRatio.toFixed(1).replace('.',',') + ' anni di reddito: in costruzione.');
+  else add('Solidità patrimoniale', 'g', 'Patrimonio netto pari a circa ' + nwRatio.toFixed(1).replace('.',',') + ' anni di reddito.');
+
+  // 2. Liquidità / fondo emergenza
+  if (ef.months >= 6) add('Liquidità / fondo emergenza', 'g', 'La liquidità copre circa ' + Math.round(ef.months) + ' mesi di spese.');
+  else if (ef.months >= 3) add('Liquidità / fondo emergenza', 'y', 'Copertura di circa ' + Math.round(ef.months) + ' mesi: l’obiettivo prudente è 6 mesi.');
+  else add('Liquidità / fondo emergenza', 'r', 'Meno di 3 mesi di spese coperte: priorità assoluta prima di investire.');
+
+  // 3. Sostenibilità cash flow
+  if (cf.implicitSavings < 0) add('Sostenibilità cash flow', 'r', 'Le spese stimate superano il reddito: il bilancio familiare è in deficit.');
+  else if (cf.savingsRate >= 0.15) add('Sostenibilità cash flow', 'g', 'Tasso di risparmio di circa ' + fmtPct(cf.savingsRate*100, 0) + ': ottima capacità di accumulo.');
+  else if (cf.savingsRate >= 0.05) add('Sostenibilità cash flow', 'y', 'Tasso di risparmio di circa ' + fmtPct(cf.savingsRate*100, 0) + ': margine di miglioramento.');
+  else add('Sostenibilità cash flow', 'r', 'Risparmio quasi nullo: senza accantonamenti il piano non può decollare.');
+
+  // 4. Impegni finanziari / debiti
+  if (debt.rateY === 0 && nw.totalDebt === 0) add('Impegni finanziari', 'g', 'Nessun debito in corso.');
+  else if (debt.hasRevolving) add('Impegni finanziari', 'r', 'Le carte revolving hanno costi molto elevati: estinguerle è di norma la priorità numero uno.');
+  else if (debt.rateOnIncome > 0.35) add('Impegni finanziari', 'r', 'Le rate assorbono circa ' + fmtPct(debt.rateOnIncome*100, 0) + ' del reddito: livello critico (soglia di attenzione: 35%).');
+  else if (debt.rateOnIncome > 0.20) add('Impegni finanziari', 'y', 'Rate pari a circa ' + fmtPct(debt.rateOnIncome*100, 0) + ' del reddito: sostenibile ma da monitorare.');
+  else add('Impegni finanziari', 'g', 'Rate pari a circa ' + fmtPct(debt.rateOnIncome*100, 0) + ' del reddito: incidenza contenuta.');
+
+  // 5. Coperture assicurative
+  if (ins.red > 0) add('Coperture assicurative', 'r', ins.red + ' protezione/i essenziale/i mancante/i (dettaglio nella sezione dedicata).');
+  else if (ins.yellow >= 3) add('Coperture assicurative', 'y', 'Diverse aree di protezione da valutare o completare.');
+  else add('Coperture assicurative', 'g', 'Le protezioni principali risultano presenti rispetto al tuo profilo.');
+
+  // 6. Coerenza investimenti / orizzonte
+  if (A.orizzonte === 'breve' && risk.profile !== 'conservativo') add('Coerenza investimenti / orizzonte', 'r', 'Orizzonte breve e profilo aggressivo non sono compatibili.');
+  else if (risk.hIdx >= 2 && nw.inv === 0 && cf.savingsY > 0 && ef.months >= 3) add('Coerenza investimenti / orizzonte', 'y', 'Orizzonte lungo, buona capacità di risparmio ma nessun investimento: il capitale fermo perde potere d’acquisto con l’inflazione.');
+  else add('Coerenza investimenti / orizzonte', 'g', 'Orizzonte e impostazione appaiono coerenti.');
+
+  // 7. Propensione al rischio vs allocazione
+  if (risk.warnings.length >= 2) add('Propensione vs tolleranza al rischio', 'r', 'Più segnali di incoerenza tra rischio dichiarato e comportamento atteso.');
+  else if (risk.warnings.length === 1) add('Propensione vs tolleranza al rischio', 'y', risk.warnings[0]);
+  else add('Propensione vs tolleranza al rischio', 'g', 'Il profilo ' + risk.profile + ' appare coerente con le tue risposte.');
+
+  // 8. Rischio comportamentale
+  if (A.reazione === 'vendo_tutto') add('Rischio comportamentale', 'r', 'La reazione di panico nei cali è il principale distruttore di rendimento di lungo periodo.');
+  else if (A.reazione === 'vendo_parte' || (A.conoscenza && scoreVal('conoscenza') <= 1 && risk.profile === 'dinamico')) add('Rischio comportamentale', 'y', 'Nei momenti di stress potresti deviare dal piano: utile definire regole scritte in anticipo.');
+  else add('Rischio comportamentale', 'g', 'Atteggiamento dichiarato disciplinato nei ribassi.');
+
+  // 9. Protezione del nucleo familiare
+  const deps = midVal('dipendenti');
+  if (deps > 0 || (coupleMode() && A.quotaReddito === 'solo_io')){
+    const tcmOk = (A.coperture || []).includes('tcm'), invOk = (A.coperture || []).includes('invalidita');
+    if (!tcmOk && !invOk) add('Protezione del nucleo familiare', 'r', 'Persone a carico e nessuna protezione su decesso o invalidità di chi produce reddito.');
+    else if (!tcmOk || !invOk) add('Protezione del nucleo familiare', 'y', 'Protezione del nucleo parziale: manca ' + (!tcmOk ? 'la copertura caso morte' : 'la copertura invalidità') + '.');
+    else add('Protezione del nucleo familiare', 'g', 'Le protezioni chiave del nucleo risultano presenti.');
+  } else add('Protezione del nucleo familiare', 'g', 'Nessuna persona economicamente dipendente: l’esigenza di protezione del nucleo è limitata.');
+
+  // 10. Responsabilità civile personale qualificata (utente + eventuale partner)
+  const resp = (A.responsabilita || []).filter(v => v !== 'nessuna');
+  const respP = (A.responsabilitaPartner || []).filter(v => v !== 'nessuna');
+  const heavyRole = v => ['snc','sas','sindaco'].includes(v);
+  if (A.responsabilita === undefined && !coupleMode()) add('Responsabilità personale qualificata', 'y', 'Tema non incluso nel percorso Light. Se ricopri ruoli con responsabilità personali (professionista con albo, amministratore, socio SNC/SAS, sindaco/revisore), rifai l’analisi in modalità Standard o Approfondita.');
+  else if (!resp.length && !respP.length) add('Responsabilità personale qualificata', 'g', 'Nessun ruolo con esposizione patrimoniale particolare dichiarato' + (coupleMode() ? ', né per te né per il partner.' : '.'));
+  else if (resp.some(heavyRole) || respP.some(heavyRole)) add('Responsabilità personale qualificata', 'r', (resp.some(heavyRole) ? 'Ricopri ruoli' : 'Il tuo partner ricopre ruoli') + ' con responsabilità illimitata o molto elevata: necessaria verifica professionale specifica delle coperture e del regime patrimoniale.');
+  else add('Responsabilità personale qualificata', 'y', (resp.length && respP.length ? 'Tu e il tuo partner ricoprite' : (respP.length ? 'Il tuo partner ricopre' : 'Ricopri')) + ' ruoli con possibile esposizione personale: consigliata una verifica delle coperture di responsabilità con un professionista.');
+
+  return L;
+}
+
+/* ============================================================
+   MODELLO COMPLESSIVO
+   ============================================================ */
+function computeAll(){
+  normalizeDebts(); // garantisce coerenza delle risposte auto-compilate sui debiti
+  const nw = calculateNetWorth();
+  const cf = calculateCashFlow();
+  const debt = calculateDebtSustainability(nw, cf);
+  const ef = calculateEmergencyFund(nw, cf);
+  const investable = calculateInvestable(nw, cf);
+  const risk = determineRiskProfile();
+  const ins = calculateInsuranceGaps(nw, cf, debt);
+  const allocs = generateAllocationProfiles(risk, ef);
+
+  // obiettivo (dichiarato, calcolato per l'indipendenza, o default prudente)
+  const goalObj = computeGoal(cf, investable);
+  const goal = goalObj.value;
+
+  // orizzonte: dal piano dichiarato, oppure dall'età-obiettivo (indipendenza/pensione)
+  let years = midVal('orizzonte');
+  if (deepMode() && isFI() && A.etaObiettivo)
+    years = Math.min(40, Math.max(1, midVal('etaObiettivo') - midVal('eta')));
+
+  const baseR = RETURNS[risk.profile];
+  const monthly = cf.savingsM;
+  const projBase = runProjection(investable, monthly, years, baseR);
+  const projLow  = runProjection(investable, monthly, years, Math.max(0.005, baseR - SCENARIO_DELTA));
+  const projHigh = runProjection(investable, monthly, years, baseR + SCENARIO_DELTA);
+  const goalGap = goal - projBase.final;
+
+  // fiscalità stimata (v. assunzioni): imposta sui guadagni e bollo titoli
+  const tax = effTaxRate();
+  const growth = Math.max(0, projBase.final - projBase.contributed);
+  const netFinal = projBase.contributed + growth * (1 - tax);        // valore netto se liquidato a fine piano
+  const bolloStima = Math.round(0.002 * ((investable + projBase.final) / 2) * years); // 0,2% annuo sul saldo medio
+
+  // sostenibilità degli accantonamenti: il risparmio dichiarato è compatibile col bilancio?
+  const sustainable = cf.implicitSavings >= cf.savingsY * 0.8 || cf.savingsY === 0;
+
+  const couple = analyzeCouple(cf);
+
+  const M = { nw, cf, debt, ef, investable, risk, ins, allocs, goal, goalLabel: goalObj.label,
+              years, baseR, monthly, projBase, projLow, projHigh, goalGap, sustainable,
+              tax, growth, netFinal, bolloStima, deep: deepMode(), tier: tier(), tierLabel: tierName(), couple };
+  M.lights = computeTrafficLights(M);
+  return M;
+}
+/* ============================================================
+   GRAFICI SVG (vanilla, nessuna libreria)
+   ============================================================ */
+const PALETTE = ['#1f4e79','#2e7dba','#0e8a6d','#d99a06','#8a5fbf','#d64545','#5a6b7d'];
+
+function polar(cx, cy, r, ang){ return [cx + r * Math.cos(ang), cy + r * Math.sin(ang)]; }
+
+// Donut chart: items = [{label, value, color}]
+function svgDonut(items, size){
+  size = size || 220;
+  const total = items.reduce((s, i) => s + i.value, 0);
+  if (total <= 0) return '<p class="muted small" style="text-align:center">Nessun dato da rappresentare.</p>';
+  const cx = size/2, cy = size/2, r1 = size/2 - 6, r2 = size/4.4;
+  let a = -Math.PI/2, paths = '';
+  items.filter(i => i.value > 0).forEach(i => {
+    const frac = i.value / total, a2 = a + frac * 2 * Math.PI;
+    const large = frac > 0.5 ? 1 : 0;
+    // settore quasi completo: disegna anello pieno
+    if (frac > 0.999){
+      paths += `<circle cx="${cx}" cy="${cy}" r="${(r1+r2)/2}" fill="none" stroke="${i.color}" stroke-width="${r1-r2}"/>`;
+    } else {
+      const [x1,y1] = polar(cx,cy,r1,a), [x2,y2] = polar(cx,cy,r1,a2);
+      const [x3,y3] = polar(cx,cy,r2,a2), [x4,y4] = polar(cx,cy,r2,a);
+      paths += `<path d="M${x1.toFixed(1)},${y1.toFixed(1)} A${r1},${r1} 0 ${large} 1 ${x2.toFixed(1)},${y2.toFixed(1)} L${x3.toFixed(1)},${y3.toFixed(1)} A${r2},${r2} 0 ${large} 0 ${x4.toFixed(1)},${y4.toFixed(1)} Z" fill="${i.color}" stroke="#fff" stroke-width="1.5"/>`;
+    }
+    a = a2;
+  });
+  const legend = '<div class="legend">' + items.filter(i => i.value > 0).map(i =>
+    `<span><i style="background:${i.color}"></i>${esc(i.label)} · ${fmtEUR(i.value)} (${fmtPct(100*i.value/total,0)})</span>`).join('') + '</div>';
+  return `<svg viewBox="0 0 ${size} ${size}" width="${size}" role="img">${paths}</svg>` + legend;
+}
+
+// Line chart: series = [{name, color, points[]}] (punti annuali), hline opzionale = {value,label}
+function svgLines(series, hline, yearsLabel){
+  const w = 680, h = 300, padL = 78, padR = 16, padT = 16, padB = 34;
+  let maxV = 0, maxN = 0;
+  series.forEach(s => { maxN = Math.max(maxN, s.points.length - 1); s.points.forEach(p => maxV = Math.max(maxV, p)); });
+  if (hline) maxV = Math.max(maxV, hline.value);
+  maxV = maxV * 1.08 || 1;
+  const X = i => padL + (w - padL - padR) * (maxN ? i / maxN : 0);
+  const Y = v => padT + (h - padT - padB) * (1 - v / maxV);
+  let g = '';
+  for (let k = 0; k <= 4; k++){
+    const v = maxV * k / 4, y = Y(v);
+    g += `<line x1="${padL}" y1="${y}" x2="${w-padR}" y2="${y}" stroke="#e3e8ef"/>` +
+         `<text x="${padL-8}" y="${y+4}" font-size="11" fill="#5a6b7d" text-anchor="end">${fmtShort(v)}</text>`;
+  }
+  const step = Math.max(1, Math.ceil(maxN / 8));
+  for (let i = 0; i <= maxN; i += step)
+    g += `<text x="${X(i)}" y="${h-10}" font-size="11" fill="#5a6b7d" text-anchor="middle">${i}</text>`;
+  g += `<text x="${(w+padL)/2}" y="${h+2}" font-size="10" fill="#5a6b7d" text-anchor="middle">${esc(yearsLabel || 'anni')}</text>`;
+  series.forEach(s => {
+    const d = s.points.map((p, i) => (i ? 'L' : 'M') + X(i).toFixed(1) + ',' + Y(p).toFixed(1)).join(' ');
+    g += `<path d="${d}" fill="none" stroke="${s.color}" stroke-width="2.5" stroke-linejoin="round"/>`;
+  });
+  if (hline){
+    g += `<line x1="${padL}" y1="${Y(hline.value)}" x2="${w-padR}" y2="${Y(hline.value)}" stroke="#d64545" stroke-dasharray="6 4" stroke-width="1.5"/>` +
+         `<text x="${w-padR}" y="${Y(hline.value)-6}" font-size="11" fill="#d64545" text-anchor="end">${esc(hline.label)}</text>`;
+  }
+  const legend = '<div class="legend">' + series.map(s => `<span><i style="background:${s.color}"></i>${esc(s.name)}</span>`).join('') +
+    (hline ? `<span><i style="background:#d64545"></i>${esc(hline.label)}</span>` : '') + '</div>';
+  return `<div class="chart-box"><svg viewBox="0 0 ${w} ${h+8}" width="${w}">${g}</svg>${legend}</div>`;
+}
+function fmtShort(v){
+  if (v >= 1e6) return (v/1e6).toFixed(1).replace('.',',') + ' M€';
+  if (v >= 1e3) return Math.round(v/1e3) + ' k€';
+  return Math.round(v) + ' €';
+}
+
+// Barre orizzontali: items = [{label, value, color, text}]
+function svgHBars(items, maxV){
+  const w = 680, rowH = 34, padL = 200, padR = 90, h = items.length * rowH + 10;
+  maxV = maxV || Math.max(1, ...items.map(i => i.value));
+  let g = '';
+  items.forEach((it, k) => {
+    const y = 8 + k * rowH, bw = Math.max(2, (w - padL - padR) * it.value / maxV);
+    g += `<text x="${padL-8}" y="${y+15}" font-size="12" fill="#1c2733" text-anchor="end">${esc(trunc(it.label, 28))}</text>` +
+         `<rect x="${padL}" y="${y}" width="${bw}" height="20" rx="5" fill="${it.color}"/>` +
+         `<text x="${padL+bw+7}" y="${y+15}" font-size="12" fill="#5a6b7d">${esc(it.text !== undefined ? it.text : String(it.value))}</text>`;
+  });
+  return `<div class="chart-box"><svg viewBox="0 0 ${w} ${h}" width="${w}">${g}</svg></div>`;
+}
+function trunc(s, n){ return s.length > n ? s.slice(0, n-1) + '…' : s; }
+
+// Barre impilate per confronto allocazioni
+function svgStacked(rows){ // rows = [{label, segments:[{value,color,name}]}]
+  const w = 680, rowH = 46, padL = 120, padR = 12, h = rows.length * rowH + 6;
+  let g = '';
+  rows.forEach((r, k) => {
+    const y = 6 + k * rowH;
+    g += `<text x="${padL-8}" y="${y+20}" font-size="12" font-weight="600" fill="#1c2733" text-anchor="end">${esc(r.label)}</text>`;
+    let x = padL;
+    r.segments.forEach(s => {
+      const bw = (w - padL - padR) * s.value / 100;
+      if (bw > 0.5){
+        g += `<rect x="${x.toFixed(1)}" y="${y}" width="${bw.toFixed(1)}" height="30" fill="${s.color}"/>`;
+        if (bw > 34) g += `<text x="${(x+bw/2).toFixed(1)}" y="${y+20}" font-size="11" fill="#fff" text-anchor="middle">${s.value}%</text>`;
+        x += bw;
+      }
+    });
+  });
+  return `<div class="chart-box"><svg viewBox="0 0 ${w} ${h}" width="${w}">${g}</svg></div>`;
+}
+
+// Barra a soglie per l'incidenza rate/reddito
+function svgGauge(pct){
+  const w = 680, h = 74, padL = 14, padR = 14, bw = w - padL - padR;
+  const zones = [{to:20, c:'#2e9e5b'},{to:35, c:'#d99a06'},{to:60, c:'#d64545'}];
+  let g = '', x0 = padL, prev = 0;
+  zones.forEach(z => {
+    const zw = bw * (z.to - prev) / 60;
+    g += `<rect x="${x0}" y="26" width="${zw}" height="16" fill="${z.c}" opacity=".28" rx="3"/>`;
+    g += `<text x="${x0+zw}" y="60" font-size="10" fill="#5a6b7d" text-anchor="middle">${z.to}%</text>`;
+    x0 += zw; prev = z.to;
+  });
+  const p = Math.min(60, Math.max(0, pct));
+  const xm = padL + bw * p / 60;
+  g += `<polygon points="${xm-7},14 ${xm+7},14 ${xm},26" fill="#1c2733"/>` +
+       `<text x="${xm}" y="10" font-size="12" font-weight="700" fill="#1c2733" text-anchor="middle">${fmtPct(pct,0)}</text>`;
+  return `<div class="chart-box"><svg viewBox="0 0 ${w} ${h}" width="${w}">${g}</svg><div class="legend"><span><i style="background:#2e9e5b"></i>≤20% contenuta</span><span><i style="background:#d99a06"></i>20–35% da monitorare</span><span><i style="background:#d64545"></i>&gt;35% critica</span></div></div>`;
+}
+
+/* ============================================================
+   SIMULATORE DINAMICO GUIDATO
+   Parametri modificabili: accantonamento mensile, durata piano,
+   allocazione azionaria entro ±10 punti dal profilo coerente.
+   ============================================================ */
+let MODEL = null;
+const SIM = { monthly:0, years:10, tilt:0 };
+
+function simBaseEquity(){ return MODEL.allocs[MODEL.risk.profile].eq; }
+
+function updateSimulator(){
+  if (!MODEL) return;
+  SIM.monthly = +byId('simMonthly').value;
+  SIM.years = +byId('simYears').value;
+  SIM.tilt = +byId('simTilt').value;
+  byId('simMonthlyOut').textContent = fmtEUR(SIM.monthly) + '/mese';
+  byId('simYearsOut').textContent = SIM.years + ' anni (fine ' + (new Date().getFullYear() + SIM.years) + ')';
+  const eq = simBaseEquity() + SIM.tilt;
+  byId('simTiltOut').textContent = (SIM.tilt > 0 ? '+' : '') + SIM.tilt + ' p.ti → azionario ' + eq + '%';
+
+  // rendimento atteso: base del profilo ± 0,04 punti percentuali per ogni punto di azionario spostato
+  const r = RETURNS[MODEL.risk.profile] + SIM.tilt * 0.0004;
+  const base = runProjection(MODEL.investable, SIM.monthly, SIM.years, r);
+  const low  = runProjection(MODEL.investable, SIM.monthly, SIM.years, Math.max(0.005, r - SCENARIO_DELTA));
+  const high = runProjection(MODEL.investable, SIM.monthly, SIM.years, r + SCENARIO_DELTA);
+  const gap = base.final - MODEL.goal;
+  const growth = base.final - base.contributed;
+
+  const riskLabel = eq < 25 ? 'Basso' : (eq <= 45 ? 'Medio' : 'Alto');
+  const coherent = MODEL.risk.maxdd >= (eq < 25 ? 5 : (eq <= 45 ? 10 : 20));
+
+  const netF = base.contributed + growth * (1 - (MODEL.tax !== undefined ? MODEL.tax : 0.26));
+  byId('simKpis').innerHTML =
+    kpi(fmtEUR(base.final), 'Patrimonio finale stimato (scenario intermedio)') +
+    kpi(fmtEUR(low.final) + ' – ' + fmtEUR(high.final), 'Forchetta prudente – positivo') +
+    kpi(fmtEUR(base.contributed), 'Capitale versato (iniziale + accantonamenti)') +
+    kpi(fmtEUR(growth), 'Crescita stimata dai rendimenti') +
+    kpi(fmtEUR(netF), 'Valore netto stimato dopo fiscalità (se liquidato)') +
+    kpi((gap >= 0 ? '+' : '') + fmtEUR(gap), gap >= 0 ? 'Sopra l’obiettivo' : 'Sotto l’obiettivo di ' + fmtEUR(MODEL.goal)) +
+    kpi(riskLabel, 'Rischio qualitativo dell’allocazione simulata');
+
+  let msg = '';
+  if (!coherent) msg += `<div class="alert warn">⚠️ Con azionario al ${eq}% le oscillazioni possibili superano la perdita massima che hai dichiarato di tollerare (~${MODEL.risk.maxdd}%). Meglio restare più vicino al profilo suggerito.</div>`;
+  if (gap < 0){
+    const plus100 = runProjection(MODEL.investable, SIM.monthly + 100, SIM.years, r).final - base.final;
+    const plus5y  = runProjection(MODEL.investable, SIM.monthly, SIM.years + 5, r).final - base.final;
+    msg += `<div class="alert info">💡 Per avvicinarti all’obiettivo: <b>+100 €/mese</b> aggiungerebbero circa <b>${fmtEUR(plus100)}</b>; <b>+5 anni di orizzonte</b> circa <b>${fmtEUR(plus5y)}</b>. Piccole variazioni costanti contano più di scommesse sul rendimento.</div>`;
+  } else msg += '<div class="alert ok">✅ Con queste ipotesi prudenti l’obiettivo appare raggiungibile. Ricorda: sono stime, non promesse.</div>';
+  byId('simMsg').innerHTML = msg;
+
+  byId('simChart').innerHTML = svgLines([
+    {name:'Prudente (' + fmtPct((r - SCENARIO_DELTA)*100,1) + ')', color:'#5a6b7d', points:low.points},
+    {name:'Intermedio (' + fmtPct(r*100,1) + ')', color:'#1f4e79', points:base.points},
+    {name:'Positivo (' + fmtPct((r + SCENARIO_DELTA)*100,1) + ')', color:'#0e8a6d', points:high.points}
+  ], {value:MODEL.goal, label:'Obiettivo ' + fmtEUR(MODEL.goal)}, 'anni da oggi');
+}
+function kpi(v, l){ return `<div class="kpi"><div class="v">${v}</div><div class="l">${esc(l)}</div></div>`; }
+
+/* ============================================================
+   REPORT SEMPLIFICATO
+   ============================================================ */
+function generateSimpleReport(M){
+  const g = M.lights.filter(l => l.level === 'g'), y = M.lights.filter(l => l.level === 'y'), r = M.lights.filter(l => l.level === 'r');
+  const profLabel = {conservativo:'Prudente', bilanciato:'Bilanciato', dinamico:'Dinamico'}[M.risk.profile];
+  let h = '';
+
+  h += `<div class="simple-block"><h4>📍 Dove sei oggi</h4>
+    <p>Il tuo patrimonio netto stimato è di circa <b>${fmtEUR(M.nw.netWorth)}</b>. Ogni anno la tua famiglia guadagna circa <b>${fmtEUR(M.cf.income)}</b>, spende circa <b>${fmtEUR(M.cf.expensesY)}</b> e riesce a mettere da parte circa <b>${fmtEUR(M.cf.savingsY)}</b>. La tua liquidità copre circa <b>${Math.round(M.ef.months)} mesi</b> di spese.</p></div>`;
+
+  h += `<div class="simple-block"><h4>💪 Punti di forza</h4>` +
+    (g.length ? '<ul class="clean">' + g.map(l => `<li><b>${esc(l.name)}</b>: ${esc(l.why)}</li>`).join('') + '</ul>' : '<p>Al momento non emergono aree pienamente solide: è normale all’inizio di un percorso. Si costruiscono un passo alla volta.</p>') + '</div>';
+
+  if (r.length + y.length){
+    h += `<div class="simple-block" style="border-left-color:var(--warn)"><h4>🔍 Aree fragili</h4><ul class="clean">` +
+      r.map(l => `<li>🔴 <b>${esc(l.name)}</b>: ${esc(l.why)}</li>`).join('') +
+      y.map(l => `<li>🟡 <b>${esc(l.name)}</b>: ${esc(l.why)}</li>`).join('') + '</ul></div>';
+  }
+
+  // cosa controllare prima (ordine di priorità classico: emergenze → debiti cari → protezioni → investimenti)
+  const prio = [];
+  if (M.ef.months < 3) prio.push('Costruisci il fondo di emergenza: obiettivo 3–6 mesi di spese (' + fmtEUR(M.ef.target) + ') su un conto separato e subito disponibile.');
+  if (M.debt.hasRevolving) prio.push('Estingui le carte revolving: costano più di quanto qualsiasi investimento prudente possa rendere.');
+  if (M.debt.rateOnIncome > 0.35) prio.push('Riduci il peso delle rate: sopra il 35% del reddito ogni imprevisto diventa pericoloso.');
+  if (M.ins.red > 0) prio.push('Colma le protezioni essenziali mancanti (vedi sezione assicurativa): proteggere i rischi gravi viene prima di investire.');
+  if (M.cf.savingsRate < 0.05 && M.cf.implicitSavings > 0) prio.push('Alza il tasso di risparmio: anche 50–100 € in più al mese cambiano il piano nel lungo periodo.');
+  if (!prio.length) prio.push('Le basi appaiono in ordine: puoi concentrarti su costanza degli accantonamenti e revisione annuale del piano.');
+  h += `<div class="simple-block"><h4>✅ Cosa controllare prima</h4><ul class="clean">` + prio.map(p => '<li>' + esc(p) + '</li>').join('') + '</ul></div>';
+
+  h += `<div class="simple-block"><h4>⚖️ Il piano è sostenibile?</h4>
+    <p>${M.sustainable ? 'Sì: il risparmio che hai indicato è compatibile con il tuo bilancio.' : 'Attenzione: il risparmio indicato sembra superiore a quanto il bilancio (reddito meno spese) consente davvero. Rivedi le stime prima di fissare il piano.'}
+    ${M.cf.implicitSavings < 0 ? ' Le spese superano il reddito: prima di ogni piano di investimento serve riportare il bilancio in positivo.' : ''}</p>
+    <p>Impegni finanziari: ${M.nw.totalDebt === 0 ? 'non hai debiti — ottimo punto di partenza.' : 'le rate assorbono circa <b>' + fmtPct(M.debt.rateOnIncome*100,0) + '</b> del reddito' + (M.debt.rateOnIncome <= 0.2 ? ', un livello gestibile.' : (M.debt.rateOnIncome <= 0.35 ? ', un livello da tenere d’occhio.' : ', un livello critico da ridurre.'))}</p>
+    <p>Coperture assicurative: ${M.ins.red > 0 ? 'ci sono <b>lacune importanti</b> da valutare al più presto.' : (M.ins.yellow >= 3 ? 'diverse aree sono da completare, ma senza urgenze drammatiche.' : 'l’impianto di protezione appare ragionevole per il tuo profilo.')}</p></div>`;
+
+  h += `<div class="simple-block"><h4>🧭 Profilo suggerito: <b>${profLabel}</b></h4>
+    <p>In base a età, orizzonte, esperienza e tolleranza alle perdite, l’allocazione più coerente per te è quella <b>${profLabel.toLowerCase()}</b> (la trovi evidenziata più sotto). Con ipotesi prudenti, continuando a risparmiare ${fmtEUR(M.monthly)}/mese per ${M.years} anni, il tuo capitale potrebbe passare da ${fmtEUR(M.investable)} a circa <b>${fmtEUR(M.projBase.final)}</b> (tra ${fmtEUR(M.projLow.final)} e ${fmtEUR(M.projHigh.final)} negli scenari prudente e positivo). ${M.goalGap <= 0 ? 'L’obiettivo di ' + fmtEUR(M.goal) + ' appare raggiungibile.' : 'Rispetto all’obiettivo di ' + fmtEUR(M.goal) + ' mancherebbero circa ' + fmtEUR(M.goalGap) + ': usa il simulatore per capire cosa cambia con più risparmio o più tempo.'}</p>
+    <p class="small muted">Come è stato fissato l’obiettivo di ${fmtEUR(M.goal)}: ${esc(M.goalLabel)}.</p></div>`;
+
+  if (M.couple){
+    h += `<div class="simple-block"><h4>👫 Analisi di coppia</h4>
+    <p>Del reddito familiare di ${fmtEUR(M.cf.income)}, tu ne porti circa il <b>${fmtPct(M.couple.share*100,0)}</b> (${fmtEUR(M.couple.mine)}) e il tuo partner ${fmtEUR(M.couple.theirs)}. ${M.couple.concentration
+      ? 'Il reddito dipende in gran parte da <b>' + (M.couple.keyPerson === 'tu' ? 'te' : 'una sola persona (il tuo partner)') + '</b>: proteggere chi lo produce (vita caso morte, invalidità) è la priorità assicurativa numero uno della famiglia.'
+      : 'Il reddito è ben distribuito tra voi due: la famiglia è più resiliente se uno dei due deve fermarsi.'}</p>
+    ${M.couple.resp.length
+      ? '<p>⚠️ Il tuo partner ricopre ruoli con possibile esposizione patrimoniale (' + esc(M.couple.respLabels.join(', ')) + '): in certe condizioni (ad es. comunione dei beni) anche il patrimonio familiare può esserne coinvolto. Da verificare con un professionista: coperture di responsabilità del partner e regime patrimoniale.</p>'
+      : '<p>Nessun ruolo a rischio patrimoniale segnalato per il partner.</p>'}</div>`;
+  }
+
+  h += `<div class="simple-block"><h4>🧾 Fisco in breve</h4>
+    <p>In Italia i guadagni degli investimenti sono in genere tassati al <b>26%</b> (12,5% per i titoli di Stato) e sul conto titoli si paga un’imposta di bollo dello <b>0,2% l’anno</b>. Se a fine piano liquidassi tutto, il patrimonio stimato di ${fmtEUR(M.projBase.final)} varrebbe circa <b>${fmtEUR(M.netFinal)}</b> netti (stima). La previdenza integrativa gode di vantaggi fiscali: deduzione dei versamenti fino a ~5.164 €/anno e tassazione finale agevolata (15%, riducibile fino al 9%).</p></div>`;
+
+  if (M.risk.warnings.length)
+    h += `<div class="alert warn">⚠️ <div>${M.risk.warnings.map(esc).join('<br>')}</div></div>`;
+
+  return h;
+}
+
+/* ============================================================
+   REPORT AVANZATO
+   ============================================================ */
+function generateAdvancedReport(M){
+  const t = (rows, headers) => '<table class="t"><tr>' + headers.map(x => '<th>' + x + '</th>').join('') + '</tr>' +
+    rows.map(r => '<tr' + (r.tot ? ' class="trow-tot"' : '') + '><td>' + r.k + '</td><td class="num">' + r.v + '</td>' + (r.n !== undefined ? '<td class="small muted">' + r.n + '</td>' : '') + '</tr>').join('') + '</table>';
+
+  let h = '<div class="chart-title">Tabella patrimonio</div>' + t([
+    {k:'Liquidità', v:fmtEUR(M.nw.liq)},{k:'Investimenti finanziari', v:fmtEUR(M.nw.inv)},
+    {k:'Immobili', v:fmtEUR(M.nw.imm)},{k:'Previdenza integrativa', v:fmtEUR(M.nw.prev)},
+    {k:'Altri asset', v:fmtEUR(M.nw.altri)},{k:'Patrimonio lordo', v:fmtEUR(M.nw.grossAssets), tot:true},
+    {k:'Debiti totali', v:'− ' + fmtEUR(M.nw.totalDebt)},{k:'Patrimonio netto', v:fmtEUR(M.nw.netWorth), tot:true}
+  ], ['Voce','Valore stimato']);
+
+  h += '<div class="chart-title">Composizione del patrimonio lordo</div><div class="chart-box" style="text-align:center">' +
+    svgDonut([
+      {label:'Liquidità', value:M.nw.liq, color:PALETTE[1]},
+      {label:'Investimenti', value:M.nw.inv, color:PALETTE[0]},
+      {label:'Immobili', value:M.nw.imm, color:PALETTE[3]},
+      {label:'Previdenza', value:M.nw.prev, color:PALETTE[2]},
+      {label:'Altri asset', value:M.nw.altri, color:PALETTE[4]}
+    ]) + '</div>';
+
+  h += '<div class="chart-title">Tabella cash flow</div>' + t([
+    {k:'Reddito annuo netto', v:fmtEUR(M.cf.income)},
+    {k:'Spese annue stimate', v:'− ' + fmtEUR(M.cf.expensesY)},
+    {k:'Saldo implicito', v:fmtEUR(M.cf.implicitSavings)},
+    {k:'Risparmio annuo dichiarato', v:fmtEUR(M.cf.savingsY), tot:true},
+    {k:'Tasso di risparmio', v:fmtPct(M.cf.savingsRate*100,1)}
+  ], ['Voce','Valore']);
+  if (M.cf.incoherent) h += '<div class="alert warn">⚠️ Reddito, spese e risparmio dichiarati non tornano perfettamente tra loro: i range possono spiegare parte dello scarto, ma conviene ricontrollare le stime.</div>';
+
+  h += '<div class="chart-title">Tabella debiti</div>';
+  if (M.nw.totalDebt === 0 && M.debt.rateY === 0) h += '<p class="muted small">Nessun debito dichiarato.</p>';
+  else {
+    h += t([
+      {k:'Mutuo residuo', v:fmtEUR(M.nw.mutuo)},
+      {k:'Altri debiti (' + ((A.tipiDebiti||[]).filter(x=>x!=='nessuno').map(v=>(optOf('tipiDebiti',v)||{l:v}).l).join(', ') || '—') + ')', v:fmtEUR(M.nw.altriDeb)},
+      {k:'Totale debiti', v:fmtEUR(M.nw.totalDebt), tot:true},
+      {k:'Rata annua totale', v:fmtEUR(M.debt.rateY)},
+      {k:'Incidenza rate / reddito', v:fmtPct(M.debt.rateOnIncome*100,1)},
+      {k:'Debiti / reddito annuo', v:(M.debt.debtToIncome).toFixed(1).replace('.',',') + '×'},
+      {k:'Durata residua massima', v:labelOf('durataImpegni')}
+    ], ['Voce','Valore']);
+    if (M.nw.debtEstimated) h += '<div class="alert info">ℹ️ Percorso Light: il debito residuo è <b>stimato dalla rata mensile</b> (ipotesi: durata media residua 5 anni). Per il dato puntuale rifai l’analisi in modalità Standard o Approfondita.</div>';
+    h += '<div class="chart-title">Composizione debiti</div><div class="chart-box" style="text-align:center">' +
+      svgDonut([{label:'Mutuo', value:M.nw.mutuo, color:PALETTE[0]},{label:'Altri debiti', value:M.nw.altriDeb, color:PALETTE[5]}], 190) + '</div>';
+  }
+  h += '<div class="chart-title">Incidenza rate sul reddito</div>' + svgGauge(M.debt.rateOnIncome*100);
+
+  // Indicatori di sostenibilità
+  h += '<div class="chart-title">Indicatori di sostenibilità</div><div class="kpis">' +
+    kpi(fmtPct(M.cf.savingsRate*100,0), 'Tasso di risparmio (rif. ≥15%)') +
+    kpi(Math.round(M.ef.months) + ' mesi', 'Fondo emergenza (rif. ≥6 mesi)') +
+    kpi(fmtPct(M.debt.rateOnIncome*100,0), 'Rate/reddito (rif. ≤20%)') +
+    kpi((M.debt.debtToIncome).toFixed(1).replace('.',',') + '×', 'Debiti/reddito annuo') +
+    kpi(fmtEUR(M.investable), 'Capitale investibile (oltre 6 mesi di riserva)') +
+    kpi(fmtEUR(M.goal), 'Capitale obiettivo a fine piano') + '</div>';
+
+  // Coperture assicurative
+  h += '<div class="chart-title">Coperture assicurative e gap</div>' + t(
+    M.ins.gaps.map(g => ({k:g.area, v:'<span class="pill ' + g.level + '">' + (g.level==='g'?'OK':(g.level==='y'?'Da valutare':'Critico')) + '</span>', n:g.why})),
+    ['Area','Stato','Nota']);
+  h += svgHBars(M.ins.gaps.map(g => ({
+    label:g.area, value:g.level==='g'?100:(g.level==='y'?55:20),
+    color:g.level==='g'?'#2e9e5b':(g.level==='y'?'#d99a06':'#d64545'),
+    text:g.level==='g'?'adeguata':(g.level==='y'?'da valutare':'lacuna critica')})), 100);
+
+  // Simulazione patrimoniale (scenari base)
+  h += '<div class="chart-title">Simulazione patrimoniale — profilo ' + esc(M.risk.profile) + ' (' + fmtPct(M.baseR*100,1) + ' atteso)</div>';
+  h += svgLines([
+    {name:'Prudente ' + fmtPct((Math.max(0.005, M.baseR-SCENARIO_DELTA))*100,1), color:'#5a6b7d', points:M.projLow.points},
+    {name:'Intermedio ' + fmtPct(M.baseR*100,1), color:'#1f4e79', points:M.projBase.points},
+    {name:'Positivo ' + fmtPct((M.baseR+SCENARIO_DELTA)*100,1), color:'#0e8a6d', points:M.projHigh.points}
+  ], {value:M.goal, label:'Obiettivo'}, 'anni (piano di ' + M.years + ' anni, ' + fmtEUR(M.monthly) + '/mese)');
+  h += t([
+    {k:'Capitale iniziale investibile', v:fmtEUR(M.investable)},
+    {k:'Versamenti totali nel piano', v:fmtEUR(M.projBase.contributed - M.investable)},
+    {k:'Scenario prudente', v:fmtEUR(M.projLow.final)},
+    {k:'Scenario intermedio', v:fmtEUR(M.projBase.final), tot:true},
+    {k:'Scenario positivo', v:fmtEUR(M.projHigh.final)},
+    {k:'Gap vs obiettivo (scenario intermedio)', v:(M.goalGap>0?'− ':'+ ') + fmtEUR(Math.abs(M.goalGap))}
+  ], ['Scenario','Valore a fine piano']);
+
+  // Analisi di coppia
+  if (M.couple){
+    h += '<div class="chart-title">Analisi di coppia</div>' + t([
+      {k:'Reddito familiare annuo netto', v:fmtEUR(M.cf.income)},
+      {k:'Apporto tuo (' + fmtPct(M.couple.share*100,0) + ')', v:fmtEUR(M.couple.mine)},
+      {k:'Apporto del partner (' + fmtPct((1-M.couple.share)*100,0) + ')', v:fmtEUR(M.couple.theirs)},
+      {k:'Concentrazione del reddito', v:M.couple.concentration ? '⚠️ Alta' : 'Equilibrata', n:M.couple.concentration ? 'la famiglia dipende soprattutto da ' + (M.couple.keyPerson === 'tu' ? 'te' : 'il partner') + ': priorità a TCM e copertura invalidità su quella persona' : 'buona resilienza del bilancio familiare'},
+      {k:'Ruoli a rischio patrimoniale del partner', v:M.couple.resp.length ? '⚠️ Presenti' : 'Nessuno', n:M.couple.resp.length ? esc(M.couple.respLabels.join(', ')) + ' — verificare RC professionale del partner e regime patrimoniale (comunione/separazione dei beni)' : ''}
+    ], ['Voce','Valore','Nota']);
+  }
+
+  // Decumulo e fiscalità
+  h += '<div class="chart-title">Decumulo e fiscalità (stime semplificate)</div>';
+  if (M.deep && isFI() && isAnswered(Q('speseTarget'))){
+    const needM = Math.max(0, midVal('speseTarget') - midVal('altreEntrateFuture'));
+    h += t([
+      {k:'Tenore di vita mensile desiderato', v:fmtEUR(midVal('speseTarget'))},
+      {k:'Altre entrate previste (pensione, affitti…)', v:'− ' + fmtEUR(midVal('altreEntrateFuture'))},
+      {k:'Fabbisogno mensile da capitale', v:fmtEUR(needM), tot:true},
+      {k:'Fabbisogno annuo netto', v:fmtEUR(needM*12)},
+      {k:'Capitale obiettivo (25× + fiscalità stimata)', v:fmtEUR(M.goal), tot:true},
+      {k:'Età di inizio decumulo indicata', v:labelOf('etaObiettivo')},
+      {k:'Anni di accumulo residui stimati', v:M.years + ' anni'}
+    ], ['Voce','Valore']);
+    h += '<div class="alert info">💡 <div>Con la <b>regola del 4%</b> un prelievo annuo pari al 4% del capitale iniziale è storicamente risultato sostenibile su orizzonti lunghi, ma non è garantito. La correzione fiscale ipotizza che circa metà di ogni prelievo sia rendimento tassato all’aliquota stimata (' + fmtPct(M.tax*100,1) + ').</div></div>';
+  }
+  h += t([
+    {k:'Aliquota stimata sui guadagni', v:fmtPct(M.tax*100,1), n:A.tipoStrumenti ? 'in base agli strumenti indicati (26% standard, 12,5% titoli di Stato, 20% proxy misto)' : 'ipotesi standard 26% (non specificato)'},
+    {k:'Guadagni stimati a fine piano (scenario intermedio)', v:fmtEUR(M.growth)},
+    {k:'Imposta stimata in caso di liquidazione totale', v:'− ' + fmtEUR(Math.round(M.growth * M.tax))},
+    {k:'Valore netto stimato dopo fiscalità', v:fmtEUR(M.netFinal), tot:true},
+    {k:'Bollo titoli cumulato stimato (0,2%/anno)', v:'~ ' + fmtEUR(M.bolloStima), n:'già un motivo per preferire strumenti e depositi efficienti'}
+  ], ['Voce','Valore']);
+  h += '<p class="small muted">Nota previdenza integrativa: versamenti deducibili fino a 5.164,57 €/anno (risparmio IRPEF immediato), tassazione finale agevolata dal 15% al 9% in base agli anni di partecipazione. Il TFR in fondo pensione gode dello stesso regime. Approfondisci con un consulente previdenziale.</p>';
+
+  // Assunzioni
+  h += `<div class="chart-title">Assunzioni utilizzate</div><ul class="clean small muted">
+    <li>Rendimenti annui nominali attesi (lordi): conservativo 2,0% · bilanciato 3,2% · dinamico 4,5%; scenari prudente/positivo a ±1,5 punti.</li>
+    <li>Capitalizzazione mensile dei versamenti; versamenti costanti; nessuna interruzione.</li>
+    <li>Gli importi a range usano il valore centrale della fascia (o il valore preciso se inserito).</li>
+    <li>Fiscalità: 26% sui guadagni (12,5% titoli di Stato, 20% proxy per portafogli misti), applicata come stima alla liquidazione; bollo 0,2% annuo sul saldo medio. Non sono modellati: minusvalenze compensabili, zainetto fiscale, regime gestito vs amministrato.</li>
+    <li>Percorso essenziale: debiti residui stimati dalla rata (durata media ipotizzata 5 anni); obiettivo di capitale da default prudenti dichiarati.</li>
+    <li>Inflazione e costi di prodotto non modellati esplicitamente: i rendimenti prudenti li compensano solo in parte.</li>
+    <li>Capitale investibile = investimenti attuali + liquidità eccedente 6 mesi di spese.</li>
+    <li>Soglie: fondo emergenza ≥6 mesi; rate/reddito ≤20% (critico &gt;35%); tasso di risparmio ≥15%.</li>
+  </ul>`;
+  return h;
+}
+
+/* ============================================================
+   TIPS & TRICKS / PRINCIPI GUIDA
+   ============================================================ */
+function generateTipsAndTricks(){
+  const tips = [
+    {t:'Il comportamento batte l’analisi', p:'Il risultato finanziario dipende più dalla disciplina (risparmiare con costanza, non vendere nel panico) che dall’intelligenza dei singoli investimenti. Proteggiti dalle tue reazioni prima che dal mercato.', s:'Morgan Housel, “La psicologia dei soldi”'},
+    {t:'Diffida dell’istinto sui soldi', p:'Le decisioni rapide e intuitive sono piene di errori sistematici (ancoraggio, eccesso di fiducia). Sulle scelte patrimoniali importanti rallenta: dormici sopra e usa regole scritte in anticipo.', s:'Daniel Kahneman, “Pensieri lenti e veloci”'},
+    {t:'Le perdite pesano il doppio', p:'Una perdita fa male circa il doppio di quanto un guadagno uguale faccia piacere. Per questo si vende ai minimi. Scegli un’allocazione le cui oscillazioni puoi sopportare davvero, non quella con il rendimento più alto.', s:'Kahneman e Tversky, “Prospect Theory”'},
+    {t:'Ricchezza è ciò che non vedi', p:'I patrimoni solidi si costruiscono spendendo meno di quanto si guadagna per decenni, non con lo stile di vita visibile. Il tasso di risparmio è la variabile che controlli di più.', s:'Stanley e Danko, “Il milionario della porta accanto”'},
+    {t:'Paga prima te stesso', p:'Accantona una quota fissa del reddito appena arriva (idealmente ≥10%), automaticamente, prima di ogni altra spesa. Ciò che resta si spende comunque.', s:'George S. Clason, “L’uomo più ricco di Babilonia”'},
+    {t:'I costi sono certi, i rendimenti no', p:'Ogni punto percentuale di costo annuo è rendimento perso per sempre. Strumenti semplici, diversificati e a basso costo battono nel tempo la maggior parte delle alternative care.', s:'John C. Bogle, “Il piccolo libro dell’investimento vincente”'},
+    {t:'Il passato non si ripete su comando', p:'I rendimenti storici non garantiscono quelli futuri e battere sistematicamente il mercato è raro. Non scegliere un fondo solo perché “ha reso bene ultimamente”.', s:'Burton G. Malkiel, “A Random Walk Down Wall Street”; Eugene Fama, EMH'},
+    {t:'Quattro pilastri, non uno', p:'Teoria, storia, psicologia e industria del risparmio: trascurarne uno costa caro. In particolare, studia le crisi passate: chi conosce il 1929 o il 2008 si spaventa meno nei ribassi.', s:'William J. Bernstein, “I quattro pilastri dell’investimento”'},
+    {t:'Diversifica: è l’unico pasto gratis', p:'Combinare asset che non si muovono insieme riduce il rischio senza sacrificare proporzionalmente il rendimento. Nessun singolo titolo o Paese merita una fetta dominante del patrimonio.', s:'Harry Markowitz, “Portfolio Selection”'},
+    {t:'Preparati a ciò che non è mai successo', p:'Gli eventi estremi e imprevisti dominano la storia finanziaria. Margini di sicurezza (liquidità, assicurazioni, poco debito) valgono più di previsioni precise ma fragili.', s:'Nassim N. Taleb, “Il Cigno Nero”'},
+    {t:'Non confondere cicli e permanenza', p:'Debito, tassi e inflazione si muovono in grandi cicli: ciò che ha funzionato negli ultimi 10 anni può non funzionare nei prossimi 10. Costruisci un portafoglio che regga più scenari.', s:'Ray Dalio, “Principles”; “The Changing World Order”'},
+    {t:'L’euforia è un segnale, non un invito', p:'Quando “tutti guadagnano facilmente” (1929, dot-com, 2008) il rischio è massimo proprio mentre sembra minimo. Distingui il rischio percepito dal rischio reale.', s:'Robert Shiller, “Irrational Exuberance”; Galbraith, “The Great Crash, 1929”'},
+    {t:'Prima i rischi catastrofali', p:'Assicura ciò che non puoi permetterti di perdere (morte, invalidità, responsabilità civile) prima di ottimizzare i rendimenti. Un gap di protezione può azzerare decenni di risparmio.', s:'Principio cardine della pianificazione; cfr. Bernstein, “I quattro pilastri”'},
+    {t:'Il tempo nel mercato batte il timing', p:'Su orizzonti lunghi l’azionario diversificato ha storicamente premiato la pazienza, ma solo chi è rimasto investito. Allunga l’orizzonte invece di cercare il momento perfetto.', s:'Jeremy Siegel, “Stocks for the Long Run”'},
+    {t:'Razionalità limitata: semplifica', p:'Nessuno può elaborare tutte le informazioni: decisioni “abbastanza buone”, semplici e ripetibili battono strategie perfette ma ingestibili. Automatizza risparmio e ribilanciamento.', s:'Herbert Simon, “Administrative Behavior”'}
+  ];
+  return tips.map(x => `<div class="tip"><b>${esc(x.t)}</b><p>${esc(x.p)}</p><div class="src">Per approfondire: ${esc(x.s)}</div></div>`).join('');
+}
+
+/* ============================================================
+   RENDERING RISULTATI
+   ============================================================ */
+function renderTrafficLights(lights){
+  return '<div class="lights-grid">' + lights.map(l =>
+    `<div class="light-card"><span class="light ${l.level}" style="margin-top:3px"></span><div><b>${esc(l.name)}</b> <span class="pill ${l.level}">${l.level==='g'?'Adeguata':(l.level==='y'?'Da monitorare':'Critica')}</span><p>${esc(l.why)}</p></div></div>`
+  ).join('') + '</div>';
+}
+
+function renderAllocations(M){
+  const names = {conservativo:'🛡️ Bassa propensione (Prudente)', bilanciato:'⚖️ Profilo intermedio (Bilanciato)', dinamico:'🚀 Alta propensione (Dinamico)'};
+  const rows = ['conservativo','bilanciato','dinamico'];
+  let h = '<div class="alloc-grid">';
+  rows.forEach(p => {
+    const a = M.allocs[p], sug = p === M.risk.profile;
+    h += `<div class="alloc-card${sug ? ' suggested' : ''}">` +
+      (sug ? '<div class="tag">✔ coerente con il tuo profilo</div>' : '') +
+      `<h4>${names[p]}</h4><p class="small muted">Rendimento atteso ~${fmtPct(RETURNS[p]*100,1)}/anno</p>` +
+      `<div class="alloc-row"><span>Liquidità / fondo emergenza</span><b>${a.liq}%</b></div>` +
+      `<div class="alloc-row"><span>Obbligazionario</span><b>${a.bond}%</b></div>` +
+      `<div class="alloc-row"><span>Azionario globale</span><b>${a.eq}%</b></div>` +
+      `<div class="alloc-row"><span>Oro / real asset</span><b>${a.gold}%</b></div>` +
+      `<div class="alloc-row"><span>Previdenza / fondo pensione</span><b>${a.pens}%</b></div></div>`;
+  });
+  h += '</div>';
+  h += '<div class="chart-title">Confronto visivo</div>' + svgStacked(rows.map(p => ({label:p.charAt(0).toUpperCase()+p.slice(1), segments:[
+    {value:M.allocs[p].liq, color:PALETTE[1]},{value:M.allocs[p].bond, color:PALETTE[2]},
+    {value:M.allocs[p].eq, color:PALETTE[0]},{value:M.allocs[p].gold, color:PALETTE[3]},
+    {value:M.allocs[p].pens, color:PALETTE[4]}]})));
+  h += '<div class="legend"><span><i style="background:'+PALETTE[1]+'"></i>Liquidità</span><span><i style="background:'+PALETTE[2]+'"></i>Obbligazioni</span><span><i style="background:'+PALETTE[0]+'"></i>Azionario</span><span><i style="background:'+PALETTE[3]+'"></i>Oro/real asset</span><span><i style="background:'+PALETTE[4]+'"></i>Previdenza</span></div>';
+  h += '<div class="alert info">🛡️ <div>Percentuali <b>indicative e prudenti</b>, da adattare con un consulente. La <b>protezione assicurativa dei rischi gravi va finanziata prima o insieme</b> agli investimenti: nessuna allocazione regge se un imprevisto non coperto azzera il capitale.' +
+    (M.ef.months < 6 ? ' Nel tuo caso, completa prima il fondo di emergenza (mancano circa ' + fmtEUR(M.ef.gap) + ').' : '') + '</div></div>';
+  return h;
+}
+
+function showResults(){
+  MODEL = computeAll();
+  const M = MODEL;
+  byId('wizard').hidden = true;
+  byId('results').hidden = false;
+
+  const profLabel = {conservativo:'Prudente', bilanciato:'Bilanciato', dinamico:'Dinamico'}[M.risk.profile];
+  const healthScore = computeHealthScore(M.lights);
+
+  // bonus di completamento (una tantum) e festeggiamento
+  award('report', 50, 'analisi completata!');
+  if (M.tier === 3) award('deep', 50, 'percorso Approfondito: trofeo Analista');
+  if (M.couple) award('couple', 20, 'analisi di coppia');
+  confettiBurst();
+
+  let h = '';
+
+  // KPI di sintesi
+  h += `<div class="card"><h2>📊 La tua fotografia</h2><div class="kpis">` +
+    kpi(healthScore + '/100', 'Indice di salute finanziaria') +
+    kpi(fmtEUR(M.nw.netWorth), 'Patrimonio netto stimato') +
+    kpi(fmtEUR(M.cf.income), 'Reddito annuo netto') +
+    kpi(fmtEUR(M.cf.savingsY), 'Risparmio annuo (' + fmtPct(M.cf.savingsRate*100,0) + ')') +
+    kpi(Math.round(M.ef.months) + ' mesi', 'Copertura fondo emergenza') +
+    kpi(fmtPct(M.debt.rateOnIncome*100,0), 'Rate / reddito') +
+    kpi(profLabel, 'Profilo di rischio coerente') +
+    kpi(M.tierLabel, 'Percorso di analisi svolto') + '</div>' +
+    (M.tier === 1 ? '<div class="alert warn">⚠️ <b>Percorso Light:</b> questa analisi è più imprecisa, perché basata su poche domande e su stime standard (debiti, patrimonio di dettaglio, profilo di rischio). Per un quadro affidabile rifai l’analisi con il percorso <b>Approfondito</b>.</div>' : '') +
+    (M.cf.incoherent ? '<div class="alert warn">⚠️ Le stime di reddito, spese e risparmio non sono perfettamente coerenti tra loro: i risultati vanno letti come ordine di grandezza.</div>' : '') + '</div>';
+
+  // Semafori
+  h += `<div class="card" id="secLights"><h2>🚦 Valutazione a semaforo</h2><p class="muted small">Verde = tendenzialmente adeguata · Giallo = da monitorare o migliorare · Rosso = potenzialmente critica.</p>` + renderTrafficLights(M.lights) + '</div>';
+
+  // Gamification: trofei e missioni (solo se la modalità gioco è attiva)
+  if (GAME.enabled){
+    h += `<div class="card" id="secBadges"><h2>🏆 I tuoi trofei</h2>` + renderBadges(M) +
+      `<p class="small muted" style="margin-top:12px">Punti totali: <b>${GAME.xp}</b> · Livello: <b>${esc(gameLevel().cur.name)}</b></p></div>`;
+    h += `<div class="card" id="secMissions"><h2>🎯 Le tue prossime missioni</h2><p class="muted small">Sfide concrete generate dalle tue aree più deboli: ogni missione completata nella vita reale migliora l’analisi (e il punteggio) della prossima volta.</p>` + renderMissions(M, healthScore) + '</div>';
+  }
+
+  // Report semplificato
+  h += `<div class="card" id="secSimple"><h2>📄 Report semplificato</h2>` + generateSimpleReport(M) + '</div>';
+
+  // Simulatore
+  const maxMonthly = Math.max(500, Math.min(3000, Math.ceil((M.cf.savingsM * 2 + 200) / 50) * 50));
+  h += `<div class="card" id="secSim"><h2>🎛️ Simulatore guidato</h2>
+    <p class="muted small">Un simulatore volutamente limitato: puoi variare solo accantonamento, durata e (di poco) l’allocazione. Rendimenti prudenti e dichiarati — le curve sono stime, non previsioni.</p>
+    <div class="sim-controls" id="simControls">
+      <div class="sim-ctl"><label>Accantonamento mensile <output id="simMonthlyOut"></output></label>
+        <input type="range" id="simMonthly" min="0" max="${maxMonthly}" step="50" value="${Math.min(maxMonthly, M.cf.savingsM)}">
+        <div class="sim-note">Il tuo risparmio attuale è ~${fmtEUR(M.cf.savingsM)}/mese</div></div>
+      <div class="sim-ctl"><label>Durata del piano <output id="simYearsOut"></output></label>
+        <input type="range" id="simYears" min="5" max="40" step="1" value="${Math.min(40, Math.max(5, M.years))}">
+        <div class="sim-note">Orizzonte dichiarato: ~${M.years} anni</div></div>
+      <div class="sim-ctl"><label>Allocazione azionaria <output id="simTiltOut"></output></label>
+        <input type="range" id="simTilt" min="-10" max="10" step="5" value="0">
+        <div class="sim-note">Max ±10 punti rispetto al profilo ${profLabel} (azionario base ${M.allocs[M.risk.profile].eq}%)</div></div>
+    </div>
+    <div class="kpis" id="simKpis"></div>
+    <div id="simMsg"></div>
+    <div id="simChart"></div></div>`;
+
+  // Allocazioni
+  h += `<div class="card" id="secAlloc"><h2>🥧 Tre allocazioni indicative</h2>` + renderAllocations(M) + '</div>';
+
+  // Report avanzato
+  h += `<div class="card" id="secAdv"><h2>📈 Report avanzato</h2>` + generateAdvancedReport(M) + '</div>';
+
+  // Tips
+  h += `<div class="card" id="secTips"><h2>💡 Tips &amp; Tricks — Principi guida</h2><p class="muted small">Sintesi operative ispirate alla letteratura finanziaria: ogni scheda indica la fonte per approfondire.</p>` + generateTipsAndTricks() + '</div>';
+
+  // Limiti e prossimi passi
+  h += `<div class="card" id="secLimits"><h2>🧭 Limiti di questa analisi e prossimi passi</h2>
+    <h3>Cosa questo strumento NON fa</h3>
+    <ul class="clean small">
+      <li>Non è consulenza finanziaria, assicurativa, fiscale o legale personalizzata.</li>
+      <li>Usa valori centrali dei range e ipotesi semplificate: non conosce contratti, tasse, costi reali dei tuoi prodotti.</li>
+      <li>Non modella inflazione puntuale, sequenza dei rendimenti, eventi di vita (separazioni, eredità, spese sanitarie straordinarie).</li>
+      <li>Non analizza coperture professionali o aziendali: per le responsabilità qualificate serve una verifica dedicata.</li>
+      <li>Le simulazioni non sono previsioni: i mercati possono fare molto peggio (e meglio) degli scenari mostrati.</li>
+    </ul>
+    <h3>Prossimi passi suggeriti</h3>
+    <ul class="clean small">
+      <li>Stampa o salva in PDF questo report e portalo a un <b>consulente finanziario abilitato</b> e a un <b>intermediario assicurativo</b>: sarà una base di discussione già strutturata.</li>
+      <li>Rifai l’analisi 1–2 volte l’anno o dopo eventi importanti (figli, casa, cambio lavoro).</li>
+      <li>Verifica per prime le aree rosse del semaforo, poi le gialle.</li>
+    </ul>
+    <p class="muted small" style="margin-top:10px">🔒 Promemoria privacy: nessun dato è stato salvato o inviato. Chiudendo la pagina tutto viene cancellato.</p></div>`;
+
+  byId('resultsBody').innerHTML = h;
+  updateSimulator();
+  window.scrollTo(0, 0);
+}
+
+/* ============================================================
+   EVENT DELEGATION (compatibilità iOS/Safari e visualizzatori
+   che bloccano i gestori inline onclick/onchange)
+   ============================================================ */
+document.addEventListener('click', function(e){
+  const t = e.target.closest ? e.target.closest('[data-action],[data-goto]') : null;
+  if (!t) return;
+  if (t.hasAttribute('data-goto')){ gotoStep(+t.getAttribute('data-goto')); return; }
+  const a = t.getAttribute('data-action');
+  if (a === 'start') startWizard();
+  else if (a === 'prev') prevStep();
+  else if (a === 'next') nextStep();
+  else if (a === 'print') window.print();
+  else if (a === 'restart') restart();
+});
+document.addEventListener('change', function(e){
+  const el = e.target;
+  if (el.id === 'gameToggle'){ GAME.enabled = el.checked; updateXPBar(); return; } // partecipazione volontaria
+  if (el.tagName === 'SELECT' && el.hasAttribute('data-q')) setAnswer(el.getAttribute('data-q'), el.value);
+  else if (el.type === 'radio' && el.hasAttribute('data-q')) setAnswer(el.getAttribute('data-q'), el.value);
+  else if (el.type === 'checkbox' && el.hasAttribute('data-q')) toggleMulti(el.getAttribute('data-q'), el.getAttribute('data-v'), el.checked);
+  else if (el.hasAttribute('data-precise')) setPrecise(el.getAttribute('data-precise'), el.value);
+});
+document.addEventListener('input', function(e){
+  const el = e.target;
+  if (el.type === 'range' && (el.id === 'simMonthly' || el.id === 'simYears' || el.id === 'simTilt')) updateSimulator();
+});
+
+// Se questo codice viene eseguito, il JavaScript è attivo: nascondi l'avviso
+(function(){ const w = byId('jsWarn'); if (w) w.style.display = 'none'; })();
+</script>
+</body>
+</html>
