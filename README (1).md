@@ -1,6 +1,6 @@
 # Bussola · Lloyd Varesino
 
-**Versione 0.6** · strumento interno della rete commerciale
+**Versione 0.7** · strumento interno della rete commerciale
 
 Bussola guida il commerciale nella raccolta dei dati per i preventivi, nella denuncia dei sinistri e negli adempimenti di compliance. Alla fine prepara un riepilogo in PDF da inviare al backoffice giusto.
 
@@ -74,7 +74,7 @@ icona-192.png  icona-512.png  icona-maskable-512.png
 README.md             questo documento
 ```
 
-Per aggiornare si caricano i nuovi file al posto dei vecchi (**Add file → Upload files**). Il nome della cache in `sw.js` cambia da solo a ogni composizione, quindi i dispositivi scaricano la versione nuova alla prima apertura con rete.
+Per aggiornare si **estrae lo zip** e si caricano i 7 file al posto dei vecchi (**Add file → Upload files**, trascinando i file e non lo zip: GitHub non lo apre). Dopo il caricamento GitHub impiega uno o due minuti a pubblicare: lo si vede nella scheda **Actions** (pallino verde). Il nome della cache in `sw.js` cambia da solo a ogni composizione e l'app mostra la versione nuova alla prima apertura con rete.
 
 Il repository e il sito sono **pubblici**: si vedono il codice, i questionari e gli indirizzi del backoffice. I dati dei clienti invece non passano mai da GitHub.
 
@@ -114,12 +114,17 @@ node strumenti/prova_completa.js 390   # percorsi completi, telefono
 node strumenti/prova_property.js 390   # percorso azienda completo
 node strumenti/prova_casa.js 390       # percorso casa
 node strumenti/prova_home.js 390       # home ed eliminazione delle pratiche
+node strumenti/prova_aggiornamento.js "python3 ricomponi.py --rilascio"   # una nuova versione si vede alla prima apertura
 ```
 Le prove nel browser richiedono Playwright e un server locale avviato dentro `dist/` (`python3 -m http.server 8765`).
 
 ---
 
 ## Versioni
+
+### 0.7 — 01/10/2026
+- Aggiornamenti visibili subito: la pagina si scarica prima dalla rete (dalla copia salvata solo se la rete manca) e, quando arriva una versione nuova, l'app si ricarica da sola una volta. Le pratiche in corso restano salvate.
+- Chi aveva già installato la 0.6 o una versione precedente vede la nuova alla seconda apertura; dalla 0.7 in poi basta la prima.
 
 ### 0.6 — 01/10/2026
 - Nuova voce **Responsabilità civile** sotto Azienda: RC professionale, RC amministratori (D&O), RC enti pubblici e dipendenti, RC strutture sanitarie.
