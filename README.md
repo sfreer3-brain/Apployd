@@ -1,6 +1,6 @@
 # Bussola · Lloyd Varesino
 
-**Versione 0.7** · strumento interno della rete commerciale
+**Versione 0.8** · strumento interno della rete commerciale
 
 Bussola guida il commerciale nella raccolta dei dati per i preventivi, nella denuncia dei sinistri e negli adempimenti di compliance. Alla fine prepara un riepilogo in PDF da inviare al backoffice giusto.
 
@@ -16,11 +16,13 @@ La navigazione segue l'albero dei prodotti dell'agenzia: **Persona fisica / Azie
 | Area | Prodotto | Note |
 |---|---|---|
 | Persona fisica · Rami elementari | **Casa** | Questionario interno, neutro rispetto alle compagnie: ogni garanzia ha la spiegazione da dare al cliente ed è consigliata in base alle caratteristiche della casa |
+| Persona fisica · Rami elementari | **Infortuni** | Infortuni e, a scelta, malattia: garanzie neutre (dai DIP AXA, Unipol, Helvetia) consigliate in base a lavoro e sport, somme assicurate, domande sanitarie quando servono |
 | Persona fisica · Vita investimento | **Piano di accumulo**, **Fondo pensione** | Con l'analisi patrimoniale (Mini Family Office) integrata |
 | Azienda · Rami elementari | **Commercio**, **Azienda**, **Industria** | Sezioni A–G (incendio, danni indiretti, furto, guasti macchine, assistenza informatica, RC, tutela legale), con garanzie aggiuntive consigliate |
+| Azienda · Rami elementari | **Infortuni** | Titolari, soci, amministratori, dipendenti; anche integrativa INAIL |
 | Azienda · Rami elementari | **Ufficio** | |
 | Azienda · Rami elementari | **Cyber risk** | Il prodotto dipende dalla dimensione: professionisti, PMI, Midcorp |
-| Azienda · Responsabilità civile | **RC professionale** | Si sceglie l'area (6 voci) e poi la professione: tecnici, area economica e visto di conformità, avvocati, mediazione e OCC, immobiliare e intermediazione, informatica e consulenza, certificazione, ambiente e sicurezza. Anche per un singolo progetto (opera pubblica, verifica, ATI) |
+| Azienda · Responsabilità civile | **RC professionale** | Si sceglie l'area e poi la professione: tecnici, area economica e visto di conformità, avvocati, mediazione e OCC, immobiliare e intermediazione, informatica e consulenza, certificazione, ambiente e sicurezza. L'ultima voce delle aree è il singolo progetto (opera pubblica, verifica, ATI) |
 | Azienda · Responsabilità civile | **RC amministratori (D&O)** | Società, enti no profit, ordini professionali, singolo amministratore o dirigente |
 | Azienda · Responsabilità civile | **RC enti pubblici e dipendenti** | Amministratori e dipendenti pubblici (singoli o in gruppo), enti, progettisti e verificatori interni |
 | Azienda · Responsabilità civile | **RC strutture sanitarie** | RSA e strutture residenziali, poliambulatori e centri medici, case di cura |
@@ -40,7 +42,7 @@ Il percorso è unico per tutti i rami. Per ogni tipo di evento l'app indica i do
 ### Compliance e Guida
 Contengono schede di promemoria (MUP, privacy, adeguatezza, antiriciclaggio) e regole operative per ramo. **Sono una bozza da validare in agenzia.**
 
-La Guida contiene anche le coordinate bancarie dell'agenzia (con il tasto per copiare IBAN e BIC) e i **documenti utili**: la lettera di disdetta del cliente, che si compila e diventa un PDF da firmare (i dati non vengono salvati), e la procedura per la presa visione della documentazione POG con il collegamento al cloud dell'agenzia. Le credenziali di accesso al cloud non sono nell'app, perché il sito è pubblico.
+La Guida contiene anche le coordinate bancarie dell'agenzia (con i tasti per copiare IBAN, BIC o tutte le coordinate) e i **documenti utili**: la lettera di disdetta del cliente, che si compila e diventa un PDF da firmare (i dati non vengono salvati), e la procedura per la presa visione della documentazione POG con il collegamento al cloud dell'agenzia. Le credenziali di accesso al cloud non sono nell'app, perché il sito è pubblico.
 
 ### Invio al backoffice
 1. Il commerciale controlla il riepilogo e sceglie il destinatario. L'app propone i destinatari a turno per distribuire il lavoro.
@@ -121,6 +123,12 @@ Le prove nel browser richiedono Playwright e un server locale avviato dentro `di
 ---
 
 ## Versioni
+
+### 0.8 — 01/10/2026
+- Nuovo questionario **Infortuni** (persona fisica e azienda), con la sezione malattia facoltativa. Garanzie con nomi dell'agenzia e spiegazione per il cliente, consigliate in base a lavoro e sport; nel PDF la nota per il backoffice con le compagnie (AXA, Unipol, Helvetia).
+- Con le garanzie malattia compaiono le domande del questionario sanitario (sì o no, dettagli facoltativi, nota sull'oblio oncologico) e il consenso ai dati sanitari.
+- RC professionale: "Singolo progetto o opera pubblica" è diventata l'ultima voce delle aree; una domanda in meno all'inizio.
+- Guida: tasto "Copia tutto" per le coordinate bancarie.
 
 ### 0.7 — 01/10/2026
 - Aggiornamenti visibili subito: la pagina si scarica prima dalla rete (dalla copia salvata solo se la rete manca) e, quando arriva una versione nuova, l'app si ricarica da sola una volta. Le pratiche in corso restano salvate.

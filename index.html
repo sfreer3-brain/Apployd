@@ -269,7 +269,7 @@ dd.grave{color:var(--rosso);font-weight:700}
 const AGENZIA = {
   nome: "Lloyd Varesino",
   app: "Bussola",
-  versione: "0.7",       // scritta da ricomponi.py (file VERSIONE)
+  versione: "0.8",       // scritta da ricomponi.py (file VERSIONE)
   dataBuild: "01/10/2026",
   giorniConservazioneBozze: 7   // le bozze non inviate si cancellano da sole dopo N giorni
 };
@@ -295,7 +295,7 @@ const ALBERO = [
     { id: "pf-auto", nome: "Auto", invio: "auto", questionario: null },
     { id: "pf-re", nome: "Rami elementari", nota: "Casa, persona, animali, viaggi", invio: "danni", figli: [
       { id: "casa",      nome: "Casa", questionario: "casa" },
-      { id: "pf-inf",    nome: "Infortuni", questionario: null },
+      { id: "pf-inf",    nome: "Infortuni", nota: "Anche malattia", questionario: "infortuni" },
       { id: "salute",    nome: "Salute", questionario: null },
       { id: "tcm",       nome: "Caso morte", questionario: null },
       { id: "pet",       nome: "Pet", nota: "Cani e gatti", questionario: null },
@@ -313,7 +313,7 @@ const ALBERO = [
         { id: "edile-rc",  nome: "RC", nota: "Responsabilità civile verso terzi e prestatori", questionario: null },
         { id: "car",       nome: "CAR", nota: "Tutti i rischi del cantiere", questionario: null },
         { id: "postuma",   nome: "Postuma", nota: "Decennale postuma", questionario: null } ] },
-      { id: "az-inf",    nome: "Infortuni", questionario: null },
+      { id: "az-inf",    nome: "Infortuni", nota: "Titolari, soci, dipendenti", questionario: "infortuni" },
       { id: "welfare",   nome: "Welfare", questionario: null },
       { id: "ufficio",   nome: "Ufficio", questionario: "ufficio" },
       { id: "cyber",     nome: "Cyber risk", nota: "Studi professionali e società", questionario: "cyber" } ] },
@@ -531,10 +531,11 @@ const DOMANDA_ALTRA_POLIZZA = { id: "altraPolizza", tipo: "sino", obbl: true, do
             { id: "altraMassimale", tipo: "euro", dom: "Massimale o somma assicurata" } ] } };
 
 const DOC_UTILI = {
-  rcprof: r => r.copertura === "progetto" ? "Delibera o lettera d'incarico, bando di gara, relazione sul progetto" : "Polizza in corso, visura camerale, dichiarazione IVA o Modello Unico",
+  rcprof: r => r.area === "progetto" ? "Delibera o lettera d'incarico, bando di gara, relazione sul progetto" : "Polizza in corso, visura camerale, dichiarazione IVA o Modello Unico",
   do: r => r.doChi === "persona" ? "Ultimo bilancio delle società in cui ha incarichi, polizza in corso" : "Ultimo bilancio approvato, visura camerale, polizza in corso",
   po: r => r.poChi === "ente" ? "Elenco dei dipendenti da assicurare, polizza in corso" : r.poChi === "progetto" ? "Delibera d'incarico, bando, relazione sul progetto" : "Atto di nomina o incarico, polizza in corso",
   sanita: r => r.tipoSan === "casacura" ? "Proposta DUAL case di cura compilata, ultimo bilancio, polizza RC sanitaria in corso, statistica sinistri" : "Polizza RC sanitaria in corso, autorizzazione o accreditamento, elenco delle sedi, ultimo bilancio",
+  infortuni: r => r._segmento === "az" ? "Elenco degli assicurati con data di nascita e mansione, polizza in corso" : "Polizza in corso, questionario sanitario della compagnia se già compilato",
   casa: "Polizza in corso, planimetria o visura catastale, foto dell'immobile",
   ufficio: "Polizza in corso, visura camerale, planimetria, contratto d'affitto"
 };
@@ -749,7 +750,8 @@ const AREE_PROF = [
   { v: "legale",      t: "Area legale", n: "avvocati, organismi di mediazione, OCC" },
   { v: "immobiliare", t: "Immobiliare e intermediazione", n: "agenti immobiliari, amministratori di condominio, mediatori creditizi, periti assicurativi" },
   { v: "consulenza",  t: "Consulenza, informatica e certificazione", n: "IT e web, consulenza aziendale, marketing, privacy, enti di certificazione" },
-  { v: "ambiente",    t: "Ambiente e sicurezza", n: "consulenti ambientali, sicurezza sul lavoro, servizi tecnici senza albo" }
+  { v: "ambiente",    t: "Ambiente e sicurezza", n: "consulenti ambientali, sicurezza sul lavoro, servizi tecnici senza albo" },
+  { v: "progetto",    t: "Singolo progetto o opera pubblica", n: "polizza per un solo incarico: progettazione di un'opera pubblica, verifica di un progetto, progetto in ATI" }
 ];
 
 /* gruppo: decide le domande specifiche. proposta: per la compagnia serve la proposta completa. */
@@ -779,8 +781,8 @@ const PROFESSIONI = {
 const P_ = r => PROFESSIONI[r.professione];
 const g = (r, ...gruppi) => !!P_(r) && gruppi.includes(P_(r).gruppo);
 const prof = (r, ...nomi) => nomi.includes(r.professione);
-const annuale = r => r.copertura === "annuale";
-const progetto = r => r.copertura === "progetto";
+const annuale = r => !!r.area && r.area !== "progetto";
+const progetto = r => r.area === "progetto";
 
 /* Regole per professione: fatturato massimo del modulo standard, massimali
    (migliaia di €), opzioni di franchigia. "altro": si può chiedere un massimale diverso. */
@@ -856,11 +858,8 @@ QUESTIONARI.rcprof = {
   ramo: "rcprof",
   passi: [
     { id: "prof", titolo: "Professione", sotto: "Da qui dipendono le domande successive.", campi: [
-      { id: "copertura", tipo: "scelta", verticale: true, obbl: true, dom: "Cosa vuole assicurare?",
-        opzioni: [{ v: "annuale", t: "Tutta l'attività professionale", n: "polizza annuale: il caso più comune" },
-                  { v: "progetto", t: "Un singolo progetto o incarico", n: "opera pubblica (progettista), verifica di un progetto, progetto in ATI" }] },
-      { id: "area", tipo: "scelta", verticale: true, obbl: true, se: annuale, dom: "In che area lavora?", opzioni: AREE_PROF },
-      { id: "professione", tipo: "scelta", verticale: true, obbl: true, se: r => annuale(r) && !!r.area, dom: "Professione",
+      { id: "area", tipo: "scelta", verticale: true, obbl: true, dom: "In che area lavora?", aiuto: "Per una polizza su un solo incarico scegli l'ultima voce.", opzioni: AREE_PROF },
+      { id: "professione", tipo: "scelta", verticale: true, obbl: true, se: annuale, dom: "Professione",
         opzioni: r => Object.entries(PROFESSIONI).filter(([, p]) => p.area === r.area).map(([v, p]) => ({ v, t: p.nome, n: p.nota })) },
       { id: "forma", tipo: "scelta", obbl: true, se: r => annuale(r) && !!P_(r), dom: "In che forma lavora?",
         opzioni: r => prof(r, "agenteImm")
@@ -1987,6 +1986,147 @@ const DOC_POG = {
   nota: "La presa visione non sostituisce la formazione obbligatoria sui prodotti."
 };
 
+/* ---- 27_dati_infortuni.js ---- */
+/* =====================================================================
+   INFORTUNI E MALATTIA — questionario interno, neutro rispetto alle
+   compagnie. Unione delle garanzie dei DIP AXA (infortuni e malattia),
+   Unipol (infortuni, malattia da ricovero) e Helvetia (Formula Persona,
+   Mod. H1142). Stesso questionario per persona fisica e azienda.
+   ===================================================================== */
+const azInf = r => r._segmento === "az";
+const garInf = (r, ...x) => x.some(v => (r.garInf || []).includes(v));
+const MALATTIA = ["ipMal", "ipMalGrave", "renditaMal", "morteIctus", "diariaRicMal", "diariaConvMal", "oncologica", "capitaleConv", "itempMal", "impiego"];
+const conMalattia = r => garInf(r, ...MALATTIA);
+const DIARIE = ["diariaRic", "diariaConv", "diariaGesso", "diariaRicMal", "diariaConvMal"];
+
+const SPORT = [
+  { v: "nessuno", t: "Nessuno" }, { v: "leggeri", t: "Palestra, corsa, nuoto, tennis" }, { v: "squadra", t: "Calcio e sport di squadra" },
+  { v: "sci", t: "Sci e snowboard" }, { v: "bici", t: "Ciclismo, mountain bike" }, { v: "moto", t: "Moto (anche solo per spostarsi)" },
+  { v: "montagna", t: "Alpinismo, arrampicata" }, { v: "sub", t: "Immersioni subacquee" }, { v: "aerei", t: "Volo, paracadute, parapendio" },
+  { v: "cavallo", t: "Equitazione" }, { v: "combattimento", t: "Sport da combattimento" }, { v: "motori", t: "Gare con auto o moto" }, { v: "altro", t: "Altro" }];
+const SPORT_RISCHIO = ["montagna", "sub", "aerei", "combattimento", "motori"];
+const sportRischio = r => (r.sport || []).some(x => SPORT_RISCHIO.includes(x)) || r.agonismo === "si";
+
+const GI = { inf: "Infortuni", mal: "Malattia", srv: "Servizi" };
+const I = (v, t, n, g, comp, se) => ({ v, t, n, g, comp, se });
+const GARANZIE_INF = [
+  I("morte", "Morte da infortunio", "Un capitale ai beneficiari se l'infortunio è mortale", GI.inf, ["AXA", "UNI", "HEL"]),
+  I("ip", "Invalidità permanente da infortunio", "Un capitale in proporzione all'invalidità che resta dopo l'infortunio", GI.inf, ["AXA", "UNI", "HEL"]),
+  I("ipGrave", "Capitale in più per invalidità grave", "Un ulteriore capitale se l'invalidità è pari o superiore al 60%", GI.inf, ["AXA", "HEL"]),
+  I("rendita", "Rendita vitalizia per invalidità grave", "Un assegno mensile per tutta la vita se l'invalidità è pari o superiore al 60%", GI.inf, ["AXA"]),
+  I("itemp", "Inabilità temporanea", "Un importo per ogni giorno in cui non può lavorare; pensata per i lavoratori autonomi", GI.inf, ["AXA", "UNI", "HEL"]),
+  I("diariaRic", "Diaria da ricovero", "Un importo per ogni giorno di ricovero, day hospital o intervento ambulatoriale", GI.inf, ["AXA", "UNI", "HEL"]),
+  I("diariaConv", "Diaria di convalescenza", "Un importo per i giorni di convalescenza dopo il ricovero", GI.inf, ["AXA", "UNI", "HEL"]),
+  I("diariaGesso", "Diaria da gesso o tutore", "Un importo per i giorni di immobilizzazione con gesso o tutore", GI.inf, ["UNI", "HEL"]),
+  I("traumi", "Diaria traumi", "Un indennizzo per fratture e traumi, anche senza ricovero", GI.inf, ["AXA"]),
+  I("spese", "Rimborso delle spese di cura", "Visite, esami, medicinali, fisioterapia e sala operatoria dopo un infortunio", GI.inf, ["AXA", "UNI", "HEL"]),
+  I("respContraente", "Infortuni di cui è responsabile il contraente", "Per esempio l'azienda verso i propri dipendenti: la polizza paga anche quando il responsabile è il contraente", GI.inf, ["UNI"], azInf),
+  I("sportRischio", "Estensione agli sport a rischio", "Copre gli infortuni negli sport esclusi dalle condizioni base", GI.inf, ["UNI", "HEL"]),
+  I("ipMal", "Invalidità permanente da malattia", "Un capitale se una malattia lascia un'invalidità permanente (di solito dal 25%)", GI.mal, ["AXA"]),
+  I("ipMalGrave", "Invalidità grave da malattia", "Un capitale se l'invalidità da malattia è pari o superiore al 60%", GI.mal, ["AXA", "HEL"]),
+  I("renditaMal", "Rendita vitalizia per invalidità grave da malattia", "Un assegno mensile a vita se l'invalidità da malattia è pari o superiore al 60%", GI.mal, ["AXA"]),
+  I("morteIctus", "Morte per ictus, infarto o tumore", "Un capitale ai beneficiari", GI.mal, ["AXA"]),
+  I("diariaRicMal", "Diaria da ricovero per malattia", "Un importo per ogni giorno di ricovero o day hospital per malattia", GI.mal, ["AXA", "UNI", "HEL"]),
+  I("diariaConvMal", "Diaria di convalescenza dopo malattia", "Un importo per i giorni di convalescenza dopo il ricovero", GI.mal, ["AXA", "HEL"]),
+  I("oncologica", "Diaria doppia per malattie oncologiche", "La diaria da ricovero raddoppia in caso di tumore", GI.mal, ["HEL"]),
+  I("capitaleConv", "Capitale per grave malattia", "Un capitale alla diagnosi di una grave malattia, per affrontare la convalescenza", GI.mal, ["AXA"]),
+  I("itempMal", "Inabilità temporanea da malattia", "Un importo per i giorni in cui la malattia gli impedisce di lavorare", GI.mal, ["AXA"]),
+  I("impiego", "Perdita d'impiego", "Un sostegno se perde il lavoro dipendente", GI.mal, ["AXA"], r => !azInf(r) && r.lavoro === "dipendente"),
+  I("assistenza", "Assistenza 24 ore su 24", "Consulenza medica al telefono e servizi in caso di emergenza", GI.srv, ["HEL"]),
+  I("tutela", "Tutela legale", "Le spese legali per controversie legate a un infortunio", GI.srv, ["HEL"])
+];
+const SUGGERISCI_INF = r => ["morte", "ip", "spese"]
+  .concat(r.lavoro === "autonomo" ? ["itemp"] : [])
+  .concat(sportRischio(r) ? ["sportRischio"] : [])
+  .concat(azInf(r) && (r.assicuratiAz || []).includes("dipendenti") ? ["respContraente"] : []);
+
+const avvisoSalute = v => v === "si" ? { livello: "blu", testo: "I dettagli vanno nel questionario sanitario della compagnia: il backoffice lo manderà al cliente." } : null;
+
+QUESTIONARI.infortuni = {
+  titolo: "Infortuni",
+  passi: [
+    PASSO_CLIENTE,
+    { id: "assicurati", titolo: "Chi assicurare", sotto: "Lavoro e tempo libero decidono il rischio e il premio.", campi: [
+      { id: "chiInf", tipo: "scelta", obbl: true, se: r => !azInf(r), dom: "Chi va assicurato?",
+        opzioni: [{ v: "cliente", t: "Il cliente" }, { v: "altro", t: "Un'altra persona" }, { v: "famiglia", t: "Più persone della famiglia" }] },
+      { id: "assicuratiAz", tipo: "multipla", obbl: true, se: azInf, dom: "Chi va assicurato?",
+        opzioni: [{ v: "titolari", t: "Titolari e soci" }, { v: "amministratori", t: "Amministratori" }, { v: "dirigenti", t: "Dirigenti" }, { v: "dipendenti", t: "Dipendenti" }, { v: "collaboratori", t: "Collaboratori" }] },
+      { id: "numAssicurati", tipo: "testo", obbl: true, tastiera: "numeric", se: r => azInf(r) || r.chiInf === "famiglia", dom: "Quante persone" },
+      { id: "elencoAssicurati", tipo: "nota", obbl: true, se: r => azInf(r) || ["altro", "famiglia"].includes(r.chiInf),
+        dom: "Per ogni assicurato: nome, data di nascita, professione o mansione",
+        aiuto: r => azInf(r) ? "Se sono tanti, scrivi le categorie e il numero, e allega l'elenco nell'ultimo passo." : "" },
+      { id: "professione", tipo: "testo", obbl: true, largo: true, se: r => !azInf(r) && r.chiInf === "cliente", dom: "Professione, descritta con precisione",
+        aiuto: "Decide la classe di rischio: per esempio «impiegato amministrativo» o «idraulico, lavora anche su tetti»." },
+      { id: "lavoro", tipo: "scelta", obbl: true, se: r => !azInf(r) && r.chiInf !== "famiglia", dom: "Tipo di lavoro",
+        opzioni: [{ v: "dipendente", t: "Dipendente" }, { v: "autonomo", t: "Autonomo o libero professionista" }, { v: "nonlavora", t: "Non lavora (studente, pensionato, casalinga)" }] },
+      { id: "manuale", tipo: "scelta", verticale: true, obbl: true, se: r => r.lavoro !== "nonlavora", dom: r => azInf(r) || r.chiInf === "famiglia" ? "Attività più rischiosa tra gli assicurati" : "Che lavoro fa in pratica?",
+        opzioni: [{ v: "ufficio", t: "Ufficio o lavoro intellettuale" }, { v: "leggero", t: "Lavoro manuale leggero", n: "commercio, artigianato senza macchine pericolose" },
+                  { v: "pesante", t: "Lavoro manuale pesante o rischioso", n: "macchine, altezze, cantieri, guida di mezzi pesanti" }] },
+      { id: "ambito", tipo: "scelta", verticale: true, obbl: true, dom: "Quando deve valere la copertura?",
+        opzioni: [{ v: "24ore", t: "Sempre: lavoro e tempo libero" }, { v: "lavoro", t: "Solo durante il lavoro" }, { v: "liberi", t: "Solo nel tempo libero" }] },
+      { id: "sport", tipo: "multipla", obbl: true, se: r => r.ambito !== "lavoro", dom: "Sport praticati", opzioni: SPORT,
+        avviso: v => v.some(x => SPORT_RISCHIO.includes(x)) ? { livello: "ambra", testo: "Sport a rischio: senza l'estensione dedicata gli infortuni in quello sport non sono coperti." } : null },
+      { id: "sportAltro", tipo: "testo", obbl: true, se: r => (r.sport || []).includes("altro"), dom: "Quale sport" },
+      { id: "agonismo", tipo: "sino", obbl: true, se: r => r.ambito !== "lavoro" && (r.sport || []).some(x => x !== "nessuno"), dom: "Partecipa a gare o campionati?",
+        avvisoSe: v => v === "si" ? { livello: "ambra", testo: "L'attività agonistica di solito è esclusa: va chiesta espressamente." } : null }
+    ]},
+    { id: "garanzieInf", titolo: "Garanzie", sotto: "Costruisci la copertura sui bisogni del cliente: le consigliate sono un punto di partenza.", campi: [
+      { id: "garInf", tipo: "multipla", verticale: true, obbl: true, dom: "Garanzie da quotare",
+        opzioni: r => GARANZIE_INF.filter(o => !o.se || o.se(r)), suggerito: SUGGERISCI_INF,
+        avvisoSe: (v, r) => (v || []).includes("itemp") && r.lavoro === "dipendente" ? { livello: "blu", testo: "Molte compagnie danno l'inabilità temporanea solo ai lavoratori autonomi." } : null }
+    ]},
+    { id: "somme", titolo: "Somme assicurate", sotto: "Una cifra per persona. Il backoffice propone le combinazioni delle compagnie più vicine.", campi: [
+      { id: "capMorte", tipo: "euro", obbl: true, se: r => garInf(r, "morte"), dom: "Capitale per morte",
+        aiuto: "Un riferimento: quanto servirebbe alla famiglia per alcuni anni di reddito e per i debiti in corso." },
+      { id: "capIP", tipo: "euro", obbl: true, se: r => garInf(r, "ip"), dom: "Capitale per invalidità permanente",
+        aiuto: "Di solito più alto di quello per morte: con un'invalidità grave le spese aumentano." },
+      { id: "franchigiaIP", tipo: "scelta", se: r => garInf(r, "ip"), dom: "Franchigia sull'invalidità",
+        aiuto: "Senza franchigia si paga anche un'invalidità piccola, ma il premio sale.",
+        opzioni: [{ v: "standard", t: "Come da proposta della compagnia" }, { v: "nessuna", t: "Senza franchigia, se possibile" }] },
+      { id: "capRendita", tipo: "euro", se: r => garInf(r, "rendita", "renditaMal"), dom: "Rendita mensile desiderata" },
+      { id: "diariaImporto", tipo: "euro", obbl: true, se: r => garInf(r, ...DIARIE), dom: "Importo della diaria al giorno" },
+      { id: "itempImporto", tipo: "euro", obbl: true, se: r => garInf(r, "itemp", "itempMal"), dom: "Inabilità temporanea: importo al giorno" },
+      { id: "speseMax", tipo: "euro", obbl: true, se: r => garInf(r, "spese"), dom: "Massimo rimborso per spese di cura" },
+      { id: "capIPMal", tipo: "euro", obbl: true, se: r => garInf(r, "ipMal", "ipMalGrave"), dom: "Capitale per invalidità da malattia" },
+      { id: "capMorteIctus", tipo: "euro", obbl: true, se: r => garInf(r, "morteIctus"), dom: "Capitale per morte da ictus, infarto o tumore" },
+      { id: "capGraveMal", tipo: "euro", se: r => garInf(r, "capitaleConv"), dom: "Capitale per grave malattia" },
+      { id: "sommeUguali", tipo: "sino", obbl: true, se: r => azInf(r) && Number(r.numAssicurati) > 1, dom: "Le somme sono uguali per tutti gli assicurati?",
+        figli: { quando: "no", campi: [{ id: "sommeDiverse", tipo: "nota", obbl: true, dom: "Somme per categoria o per persona" }] } },
+      { id: "inail", tipo: "sino", se: r => azInf(r) && (r.assicuratiAz || []).includes("dipendenti"), dom: "La polizza deve integrare l'INAIL dei dipendenti?" }
+    ]},
+    { id: "salute", titolo: "Salute e precedenti", sotto: "Domande che finiscono nella proposta: leggile al cliente.", campi: [
+      { id: "pesoAltezza", tipo: "info", se: r => !azInf(r) && conMalattia(r), dom: "Questionario sanitario",
+        elenco: r => ["Le domande sono quelle del questionario sanitario delle compagnie per la malattia.", "Al cliente basta rispondere sì o no; i dettagli sono facoltativi e li raccoglie comunque il questionario della compagnia, che il cliente firma."]
+          .concat(r.chiInf === "famiglia" ? ["Con più assicurati rispondi «sì» se vale per almeno uno e indica chi nei dettagli."] : []) },
+      { id: "peso", tipo: "testo", tastiera: "numeric", se: r => !azInf(r) && conMalattia(r), dom: "Peso (kg)" },
+      { id: "altezza", tipo: "testo", tastiera: "numeric", se: r => !azInf(r) && conMalattia(r), dom: "Altezza (cm)" },
+      { id: "pressione", tipo: "testo", se: r => !azInf(r) && conMalattia(r), dom: "Pressione arteriosa (minima / massima)" },
+      ...[
+        ["malAttuali", "Soffre attualmente di malattie?"],
+        ["malPassate", "Ha sofferto di malattie?", "Oblio oncologico (legge 193/2023): non si dichiarano i tumori con cure concluse da oltre 10 anni senza ricadute (5 anni se la malattia è comparsa prima dei 21 anni)."],
+        ["traumi", "Ha subito traumi o infortuni?"],
+        ["ricoveri", "Ha avuto ricoveri, day hospital o day surgery?"],
+        ["imperfezioni", "Ha imperfezioni fisiche o funzionali?", "Per esempio alluce valgo, dito a martello, deviazione del setto nasale."],
+        ["sintomi", "Soffre ora o ha sofferto di recente di stanchezza persistente, febbricola, sudori notturni, perdita di peso anomala, linfonodi ingrossati?"]
+      ].map(([id, dom, aiuto]) => ({ id, tipo: "sino", obbl: true, se: r => !azInf(r) && conMalattia(r), dom, aiuto,
+          figli: { quando: "si", campi: [{ id: id + "Dett", tipo: "testo", largo: true, dom: "Quando e cosa (facoltativo)" }] } })),
+      { id: "invalidita", tipo: "sino", obbl: true, se: r => !azInf(r), dom: "Ha un'invalidità permanente già riconosciuta?", avvisoSe: avvisoSalute,
+        figli: { quando: "si", campi: [{ id: "invaliditaDett", tipo: "testo", largo: true, dom: "Da quando, tipo e grado (facoltativo)" }] } },
+      { id: "infortuniPrec", tipo: "sino", obbl: true, dom: r => azInf(r) ? "Negli ultimi 5 anni ci sono stati infortuni indennizzati agli assicurati?" : "Negli ultimi 5 anni ha avuto infortuni indennizzati?",
+        figli: { quando: "si", campi: [{ id: "infortuniPrecN", tipo: "testo", tastiera: "numeric", dom: "Quanti" }] } },
+      { id: "rifiuti", tipo: "sino", obbl: true, dom: "Una compagnia ha mai rifiutato o disdetto una polizza infortuni o malattia?",
+        avvisoSe: v => v === "si" ? { livello: "ambra", testo: "La compagnia vorrà sapere perché: chiedilo al cliente e scrivilo nelle note." } : null },
+      { id: "salutePiu", tipo: "info", se: r => azInf(r) && conMalattia(r), dom: "Garanzie malattia",
+        elenco: ["Ogni assicurato compilerà il questionario sanitario della compagnia: avvisa il cliente."] },
+      DOMANDA_ALTRA_POLIZZA,
+      { id: "consensoSanitario", tipo: "sino", obbl: true, dom: "Consenso al trattamento dei dati sanitari firmato?",
+        aiuto: "Serve il consenso esplicito: le risposte qui sopra riguardano la salute.",
+        avvisoNo: { livello: "ambra", testo: "Senza consenso ai dati sanitari la compagnia non può valutare la richiesta: fallo firmare prima dell'invio." } }
+    ]},
+    PASSO_CHIUSURA
+  ]
+};
+
 /* ---- 30_logica.js ---- */
 /* =====================================================================
    LOGICA: memoria locale, pratiche, visibilità dei campi, controlli.
@@ -3011,6 +3151,7 @@ function htmlAgenzia() {
   return `<div class="campo"><div class="dom">Coordinate bancarie dell'agenzia</div>
       ${riga("Intestatario", C.intestatario)}${riga("IBAN", ibanLeggibile(C.iban), C.iban)}${riga("BIC", C.bic, C.bic)}
       ${riga("Banca", C.banca)}${riga("Sede", C.indirizzo)}
+      <button class="btn piccolo" style="margin-top:8px" data-copia="${esc([C.intestatario, "IBAN: " + C.iban, "BIC: " + C.bic, C.banca, C.indirizzo].join("\n"))}" data-copia-nome="Coordinate complete">Copia tutto</button>
       <div data-esito-copia class="aiuto" style="min-height:1.2em;margin:6px 0 0"></div></div>
     <div class="campo"><div class="dom">Documenti utili</div>
       <details class="doc-utile"><summary>Lettera di disdetta del cliente</summary>
@@ -3100,7 +3241,7 @@ function collegaEventi() {
     if (b.dataset.copia) {
       const out = document.querySelector("[data-esito-copia]");
       (navigator.clipboard ? navigator.clipboard.writeText(b.dataset.copia) : Promise.reject()).then(
-        () => { if (out) out.textContent = "Copiato: " + b.dataset.copia; }, () => { if (out) out.textContent = "Copia non riuscita: selezionalo a mano."; });
+        () => { if (out) out.textContent = "Copiato: " + (b.dataset.copiaNome || b.dataset.copia); }, () => { if (out) out.textContent = "Copia non riuscita: selezionalo a mano."; });
       return;
     }
     if (b.dataset.az === "avanti") return avanti();
