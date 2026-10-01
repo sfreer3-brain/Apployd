@@ -1,6 +1,6 @@
 # Bussola · Lloyd Varesino
 
-**Versione 0.3** · strumento interno della rete commerciale
+**Versione 0.5** · strumento interno della rete commerciale
 
 Bussola guida il commerciale nella raccolta dei dati per i preventivi, nella denuncia dei sinistri e negli adempimenti di compliance. Alla fine prepara un riepilogo in PDF da inviare al backoffice giusto.
 
@@ -46,7 +46,7 @@ Contengono schede di promemoria (MUP, privacy, adeguatezza, antiriciclaggio) e r
    - **PC Windows:** si scaricano i file e si apre l'email già compilata.
 4. Si tocca **Ho inviato**: la pratica e gli allegati vengono cancellati dal dispositivo.
 
-Le pratiche non inviate si cancellano da sole dopo 7 giorni.
+Le pratiche non inviate si cancellano da sole dopo 7 giorni. Si possono eliminare prima con il cestino accanto alla pratica (due tocchi, per evitare errori) o con «Elimina questa pratica» in fondo al questionario. Il pulsante con la casetta, in alto a destra, riporta alla home: la pratica iniziata resta salvata, quella aperta e lasciata vuota non viene conservata.
 
 ---
 
@@ -109,12 +109,21 @@ node strumenti/prova_completa.js 1366  # percorsi completi, PC
 node strumenti/prova_completa.js 390   # percorsi completi, telefono
 node strumenti/prova_property.js 390   # percorso azienda completo
 node strumenti/prova_casa.js 390       # percorso casa
+node strumenti/prova_home.js 390       # home ed eliminazione delle pratiche
 ```
 Le prove nel browser richiedono Playwright e un server locale avviato dentro `dist/` (`python3 -m http.server 8765`).
 
 ---
 
 ## Versioni
+
+### 0.5 — 01/10/2026
+- Pulsante Home (casetta) in alto a destra in tutte le schermate interne: la pratica iniziata resta salvata, quella vuota non viene conservata.
+- Eliminazione delle pratiche non completate: cestino nell'elenco della home e «Elimina questa pratica» in fondo al questionario e al riepilogo, sempre con conferma in due tocchi. Con la pratica si cancellano anche gli allegati.
+
+### 0.4 — 01/10/2026
+- Sinistro auto: nello scontro con un altro veicolo la targa della controparte è obbligatoria (avviso se non ha il formato delle targhe italiane, senza bloccare).
+- Sinistri: IBAN obbligatorio. In alternativa il commerciale spunta l'impegno a consegnarlo entro 3 giorni; il backoffice lo trova tra le cose da verificare.
 
 ### 0.3 — 30/09/2026
 - Casa neutra rispetto alle compagnie: niente nomi né codici di compagnia per il commerciale, garanzie con nomi dell'agenzia e spiegazione da dire al cliente, elenco a righe leggibile.

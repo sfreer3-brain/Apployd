@@ -81,7 +81,13 @@ body.interno #barra .separa{display:none}
 .ico.rosso{background:var(--rosso-chiaro);color:var(--rosso)}
 .sezione-titolo{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--testo-2);margin:26px 2px 10px}
 .vuoto{background:var(--carta);border:1px dashed var(--bordo);border-radius:var(--raggio);padding:18px;color:var(--testo-2);font-size:15px;text-align:center}
-.pratica{background:var(--carta);border:1px solid var(--bordo);border-radius:var(--raggio);padding:14px;display:flex;align-items:center;gap:12px;width:100%;text-align:left;margin-bottom:8px}
+.riga-pratica{display:flex;gap:8px;align-items:stretch;margin-bottom:8px}
+.pratica{background:var(--carta);border:1px solid var(--bordo);border-radius:var(--raggio);padding:14px;display:flex;align-items:center;gap:12px;flex:1;min-width:0;text-align:left}
+.elimina{flex:none;width:56px;border:1px solid var(--bordo);border-radius:var(--raggio);background:var(--carta);color:var(--testo-2);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600}
+.elimina.conferma{background:var(--rosso);border-color:var(--rosso);color:#fff}
+.avviso-elimina{color:var(--rosso);font-size:13px;font-weight:600;text-align:right;margin:-4px 2px 8px}
+.elimina-pratica{display:block;margin:28px auto 0;background:none;border:0;color:var(--rosso);font-weight:600;font-size:14px;text-decoration:underline;min-height:44px}
+.elimina-pratica.conferma{background:var(--rosso);color:#fff;text-decoration:none;border-radius:10px;padding:0 16px}
 .pratica div{flex:1;min-width:0}
 .pratica b{display:block;font-size:16px}
 .pratica small{color:var(--testo-2);font-size:13px}
@@ -143,6 +149,8 @@ body.interno #barra .separa{display:none}
 .gruppo-opz{flex-basis:100%;font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--testo-2);margin:10px 0 2px}
 .gruppo-opz:first-child{margin-top:0}
 .comp{font-size:12px;font-weight:500;opacity:.75;margin-left:4px;white-space:nowrap}
+.spunta.impegno{border-style:dashed}
+.spunta.impegno[aria-pressed=true]{border-style:solid}
 .elenco-spunte{display:flex;flex-direction:column;gap:6px}
 .spunta{display:flex;gap:12px;align-items:flex-start;text-align:left;width:100%;border:1px solid var(--bordo);border-radius:10px;background:#fbfcfd;padding:10px 12px;min-height:52px}
 .spunta .casella{width:24px;height:24px;border-radius:6px;border:1.5px solid var(--bordo);flex:none;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;margin-top:1px}
@@ -228,6 +236,9 @@ dd.grave{color:var(--rosso);font-weight:700}
     <span class="separa"></span>
     <h1 id="titolo">Bussola</h1>
     <span class="sotto" id="sottotitolo"></span>
+    <button class="indietro" id="btnHome" aria-label="Torna alla home" title="Torna alla home" hidden>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>
+    </button>
   </div>
   <div id="progresso" hidden></div>
 </header>
@@ -244,8 +255,8 @@ dd.grave{color:var(--rosso);font-weight:700}
 const AGENZIA = {
   nome: "Lloyd Varesino",
   app: "Bussola",
-  versione: "0.3",       // scritta da ricomponi.py (file VERSIONE)
-  dataBuild: "30/09/2026",
+  versione: "0.5",       // scritta da ricomponi.py (file VERSIONE)
+  dataBuild: "01/10/2026",
   giorniConservazioneBozze: 7   // le bozze non inviate si cancellano da sole dopo N giorni
 };
 
@@ -1185,7 +1196,8 @@ QUESTIONARI.sinistro = {
       { id: "controparte", tipo: "sino", obbl: true, se: r => eventoS(r, "scontro", "rcTerzi", "rcCose", "richiesta"), dom: "C'è una controparte (altro veicolo o danneggiato)?",
         figli: { quando: "si", campi: [
           { id: "contNome", tipo: "testo", obbl: true, dom: "Nome della controparte" },
-          { id: "contTarga", tipo: "testo", maiuscolo: true, se: r => ramoS(r, "auto"), dom: "Targa della controparte" },
+          { id: "contTarga", tipo: "testo", maiuscolo: true, se: r => ramoS(r, "auto"), obbl: r => eventoS(r, "scontro"), dom: "Targa della controparte",
+            avviso: v => /^[A-Z]{2}\s?\d{3}\s?[A-Z]{2}$/i.test(String(v).trim()) ? null : { livello: "blu", testo: "Non è una targa italiana del tipo AB123CD: va bene se è estera o di una moto, altrimenti ricontrolla." } },
           { id: "contAss", tipo: "testo", se: r => ramoS(r, "auto"), dom: "Assicurazione della controparte" },
           { id: "cai", tipo: "sino", obbl: true, se: r => eventoS(r, "scontro"), dom: "Il modulo CAI è stato firmato da entrambi?",
             avvisoSe: v => v === "no" ? { livello: "ambra", testo: "Senza CAI firmato da entrambi i tempi di liquidazione si allungano: raccogli testimoni e foto." } : null } ] } },
@@ -1204,8 +1216,11 @@ QUESTIONARI.sinistro = {
       { id: "riparato", tipo: "sino", se: r => !ramoS(r, "infortuni", "salute", "rcprof"), dom: "Il danno è già stato riparato?",
         avvisoSe: v => v === "si" ? { livello: "ambra", testo: "Se è già riparato servono foto del prima e fattura: la compagnia potrebbe non poter periziare." } : null },
       { id: "iban", tipo: "testo", maiuscolo: true, largo: true, dom: "IBAN per il pagamento",
-        verifica: v => ibanValido(v) ? null : "IBAN non valido: controlla le cifre",
-        avvisoVuoto: () => ({ livello: "blu", testo: "Senza IBAN la pratica parte lo stesso, ma il pagamento si blocca finché non arriva." }) },
+        obbl: r => r.ibanImpegno !== true, msgObbl: "Inserisci l'IBAN oppure spunta l'impegno qui sotto",
+        verifica: v => ibanValido(v) ? null : "IBAN non valido: controlla le cifre" },
+      { id: "ibanImpegno", tipo: "flag", se: r => vuoto(r.iban),
+        dom: "Mi impegno a consegnare l'IBAN entro 3 giorni. So che senza IBAN l'indennizzo al cliente può subire ritardi.",
+        avvisoSe: v => v === true ? { livello: "ambra", testo: "IBAN non ancora fornito: il commerciale si è impegnato a consegnarlo entro 3 giorni." } : null },
       { id: "ibanIntestatario", tipo: "testo", se: r => !vuoto(r.iban), dom: "Intestatario del conto" }
     ]},
     { id: "documenti", titolo: "Documenti", sotto: "Cosa serve per istruire la pratica.", campi: [
@@ -1609,14 +1624,14 @@ function campiAttivi(passo, r) {
 
 function passiVisibili(q, r) { return q.passi.filter(p => (!p.se || p.se(r)) && campiAttivi(p, r).length > 0); }
 
-function vuoto(v) { return v == null || v === "" || (Array.isArray(v) && v.length === 0); }
+function vuoto(v) { return v == null || v === "" || v === false || (Array.isArray(v) && v.length === 0); }
 
 /* Restituisce { idCampo: "messaggio" } per i campi obbligatori mancanti o non validi */
 function controllaPasso(passo, r) {
   const errori = {};
   for (const c of campiAttivi(passo, r)) {
     const v = r[c.id];
-    if (c.obbl && vuoto(v)) { errori[c.id] = c.tipo === "mfo" ? "Completa l'analisi fino alla pagina dei risultati" : "Risposta necessaria"; continue; }
+    if (valore(c.obbl, r) && vuoto(v)) { errori[c.id] = c.msgObbl || (c.tipo === "mfo" ? "Completa l'analisi fino alla pagina dei risultati" : "Risposta necessaria"); continue; }
     if (c.verifica && !vuoto(v)) { const m = c.verifica(v, r); if (m) { errori[c.id] = m; continue; } }
     if (!vuoto(v) && c.tipo === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) errori[c.id] = "Indirizzo non valido";
     if (!vuoto(v) && c.tipo === "tel") { const n = String(v).replace(/[\s\-\/.()]/g, ""); if (!/^\+?\d{6,15}$/.test(n)) errori[c.id] = "Numero non valido: solo cifre, eventualmente con + davanti"; }
@@ -1709,6 +1724,7 @@ function testoRisposta(c, v, r) {
   if (vuoto(v)) return "";
   switch (c.tipo) {
     case "sino": return v === "si" ? "Sì" : "No";
+    case "flag": return v === true ? "Sì" : "No";
     case "conferma": return v === "si" ? "Confermo" : "NON CONFERMO";
     case "euro": return euro(v);
     case "data": { const [a, m, g] = String(v).split("-"); return g ? `${g}/${m}/${a}` : v; }
@@ -2009,6 +2025,7 @@ function impostaBarra(titolo, sotto, conIndietro, progresso) {
   $("#titolo").textContent = titolo;
   $("#sottotitolo").textContent = sotto || "";
   $("#btnIndietro").hidden = !conIndietro;
+  $("#btnHome").hidden = !conIndietro;
   document.body.classList.toggle("interno", !!conIndietro);
   const p = $("#progresso");
   if (progresso) {
@@ -2031,6 +2048,7 @@ function disegna() {
 function vistaHome() {
   impostaBarra(AGENZIA.app, "", false, null);
   impostaAzioni(null);
+  Pratiche.tutte().filter(praticaVuota).forEach(p => Pratiche.elimina(p.id));   /* aperte e lasciate vuote: non servono */
   const bozze = Pratiche.tutte();
   setTimeout(() => { Stato.messaggio = null; }, 0);
   $("#vista").innerHTML = `
@@ -2052,8 +2070,9 @@ function vistaHome() {
       const q = QUESTIONARI[p.questionario];
       const nome = p.risposte.nome || "Cliente senza nome";
       const tot = passiVisibili(q, p.risposte).length;
-      return `<button class="pratica" data-apri="${p.id}"><span class="ico blu" style="width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center">${p.tipo === "sinistro" ? ICONE.sinistro : ICONE.preventivo}</span>
-        <div><b>${esc(nome)}</b><small>${esc((percorsoNodo(p.prodotto) || [{ nome: q.titolo }]).map(n => n.nome).join(" › "))} · passo ${Math.min(p.passo + 1, tot)} di ${tot}</small></div>${ICONE.freccia}</button>`;
+      return `<div class="riga-pratica"><button class="pratica" data-apri="${p.id}"><span class="ico blu" style="width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center">${p.tipo === "sinistro" ? ICONE.sinistro : ICONE.preventivo}</span>
+        <div><b>${esc(nome)}</b><small>${esc((percorsoNodo(p.prodotto) || [{ nome: q.titolo }]).map(n => n.nome).join(" › "))} · passo ${Math.min(p.passo + 1, tot)} di ${tot}</small></div>${ICONE.freccia}</button>
+        <button class="elimina" data-elimina="${p.id}" aria-label="Elimina la pratica di ${esc(nome)}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button></div>`;
     }).join("") : `<div class="vuoto">Nessuna pratica in sospeso.<br>Le pratiche inviate vengono cancellate da questo dispositivo.</div>`}
     <p class="nota-piccola">${esc(AGENZIA.app)} versione ${esc(AGENZIA.versione)} · ${esc(AGENZIA.dataBuild)}</p>
     ${Memoria.disponibile() ? "" : `<div class="avviso ambra" style="margin-top:12px">${ICONE.attenzione}<span>Questo browser non permette di salvare: se chiudi la pagina perdi la pratica in corso.</span></div>`}
@@ -2130,7 +2149,8 @@ function vistaQuestionario() {
   $("#vista").innerHTML = `<div class="layout-q"><nav class="passi-lato" aria-label="Passi">${lato}</nav><div>
     <div class="passo-titolo">${esc(passo.titolo)}</div>
     <p class="passo-sotto">${esc(passo.sotto || "")}</p>
-    <div id="campi">${disegnaCampi(passo.campi, r)}</div></div></div>`;
+    <div id="campi">${disegnaCampi(passo.campi, r)}</div>
+    <button class="elimina-pratica" data-elimina="${p.id}" data-dentro="1">Elimina questa pratica</button></div></div>`;
   caricaAnteprime();
   avviaMFO();
 }
@@ -2174,6 +2194,10 @@ function disegnaCampo(c, r) {
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
           ${lista.length ? "Aggiungi altro" : "Scatta una foto o scegli un file"}</label></div>`; break;
     }
+    case "flag":
+      return `<div class="campo" data-box="${c.id}"><button class="spunta impegno" data-flag="${c.id}" aria-pressed="${v === true}">
+          <span class="casella">${v === true ? "✓" : ""}</span><span class="testo-spunta"><b>${esc(dom)}</b></span></button>
+        <div data-avviso="${c.id}">${htmlAvviso(c, r)}</div>${err ? `<div class="errore">${esc(err)}</div>` : ""}</div>`;
     case "info": {
       corpo = `<ul class="lista-schede">${(valore(c.elenco, r) || []).map(x => `<li>${esc(x)}</li>`).join("")}</ul>`; break;
     }
@@ -2206,7 +2230,7 @@ function disegnaCampo(c, r) {
   if (figliAperti(c, r)) figli = `<div class="sottocampi">${disegnaCampi(c.figli.campi, r)}</div>`;
   const corto = c.corto || !c.largo && ["testo", "email", "tel", "data", "euro"].includes(c.tipo) || (c.tipo === "sino" && !c.figli && !c.aiuto);
   const cls = (c.tipo === "conferma" ? "campo dichiarazione" : "campo") + (corto ? " corto" : "");
-  const titolo = c.tipo === "conferma" ? `<div class="testo">${esc(dom)}</div>` : `<label for="f_${c.id}" class="dom">${esc(dom)}${c.obbl || c.tipo === "info" ? "" : ` <span style="font-weight:400;color:var(--testo-2);font-size:14px">(${c.almenoUno ? "basta uno tra P. IVA e C.F." : "facoltativo"})</span>`}</label>`;
+  const titolo = c.tipo === "conferma" ? `<div class="testo">${esc(dom)}</div>` : `<label for="f_${c.id}" class="dom">${esc(dom)}${valore(c.obbl, r) || c.tipo === "info" ? "" : ` <span style="font-weight:400;color:var(--testo-2);font-size:14px">(${c.almenoUno ? "basta uno tra P. IVA e C.F." : "facoltativo"})</span>`}</label>`;
   return `<div class="${cls}" data-box="${c.id}">${titolo}${elenco}${aiuto}${corpo}
     <div data-avviso="${c.id}">${htmlAvviso(c, r)}</div>${err ? `<div class="errore">${esc(err)}</div>` : ""}${figli}</div>`;
 }
@@ -2338,7 +2362,8 @@ function vistaRiepilogo() {
            <div class="bottoni-invio"><button class="btn primario" data-az="scarica">Scarica PDF${R.allegati.length ? ` e ${R.allegati.length} allegat${R.allegati.length === 1 ? "o" : "i"}` : ""}</button>
              <button class="btn" data-az="email">Apri email già compilata</button></div>`}
       <div class="stato-file" id="statoInvio"></div>
-    </div>`;
+    </div>
+    <button class="elimina-pratica" data-elimina="${p.id}" data-dentro="1">Elimina questa pratica</button>`;
 }
 
 function puoCondividereFile() {
@@ -2401,6 +2426,37 @@ function chiudiPratica() {
   Stato.pila = [{ schermo: "home", dati: {} }];
   try { history.replaceState({ n: 1 }, ""); } catch (e) {}
   disegna(); window.scrollTo(0, 0);
+}
+
+/* ================= HOME ED ELIMINAZIONE ================= */
+function praticaVuota(p) { return !Object.keys(p.risposte || {}).some(k => !k.startsWith("_") && !vuoto(p.risposte[k])); }
+function vaiHome(messaggio) {
+  const p = Stato.pratica;
+  if (p && !praticaVuota(p)) { Pratiche.salva(p); messaggio = messaggio || `La pratica di ${p.risposte.nome || "cliente senza nome"} è salvata tra quelle da completare.`; }
+  Stato.pratica = null; Stato.errori = {}; Stato.messaggio = messaggio || null;
+  Stato.pila = [{ schermo: "home", dati: {} }];
+  try { history.replaceState({ n: 1 }, ""); } catch (e) {}
+  disegna(); window.scrollTo(0, 0);
+}
+/* Eliminazione in due tocchi (niente finestre di conferma del browser): il primo chiede conferma, il secondo elimina */
+function chiediElimina(b) {
+  const id = b.dataset.elimina;
+  if (!b.classList.contains("conferma")) {
+    document.querySelectorAll(".conferma[data-elimina]").forEach(x => x.classList.remove("conferma"));
+    document.querySelectorAll(".avviso-elimina").forEach(x => x.remove());
+    b.classList.add("conferma"); b.dataset.testo = b.innerHTML;
+    let nota = null;
+    if (b.dataset.dentro) b.textContent = "Tocca di nuovo per eliminare la pratica";
+    else { nota = document.createElement("div"); nota.className = "avviso-elimina"; nota.textContent = "Tocca di nuovo il cestino rosso per eliminare la pratica";
+           b.closest(".riga-pratica").after(nota); }
+    setTimeout(() => { if (b.isConnected && b.classList.contains("conferma")) { b.classList.remove("conferma"); b.innerHTML = b.dataset.testo; if (nota) nota.remove(); } }, 4000);
+    return;
+  }
+  const p = Pratiche.tutte().find(x => x.id === id) || Stato.pratica;
+  const nome = (p && p.risposte.nome) || "cliente senza nome";
+  Pratiche.elimina(id);
+  if (b.dataset.dentro) { Stato.pratica = null; return vaiHome(`Pratica di ${nome} eliminata.`); }
+  Stato.messaggio = `Pratica di ${nome} eliminata.`; disegna();
 }
 
 /* ================= COMPLIANCE E GUIDA ================= */
@@ -2469,6 +2525,8 @@ function collegaEventi() {
     if (b.dataset.az === "inviato") return chiudiPratica();
     if (b.dataset.dest) { Stato.pratica.destinatari = [b.dataset.dest]; Pratiche.salva(Stato.pratica); document.querySelectorAll("[data-dest]").forEach(x => x.setAttribute("aria-pressed", x === b)); return; }
     if (b.dataset.vaiPasso !== undefined) { Stato.pratica.passo = Number(b.dataset.vaiPasso); Stato.errori = {}; Pratiche.salva(Stato.pratica); history.back(); window.scrollTo(0, 0); return; }
+    if (b.id === "btnHome") return vaiHome();
+    if (b.dataset.elimina) return chiediElimina(b);
     if (b.dataset.az === "avanti") return avanti();
     if (b.dataset.az === "indietro") return $("#btnIndietro").click();
     if (b.dataset.passo !== undefined) { Stato.pratica.passo = Number(b.dataset.passo); Stato.errori = {}; Pratiche.salva(Stato.pratica); disegna(); window.scrollTo(0, 0); return; }
@@ -2492,6 +2550,7 @@ function collegaEventi() {
       return rispondi(b.dataset.campo, att.includes(v) ? att.filter(x => x !== v) : att.concat(v), true);
     }
     if (b.dataset.campo && b.dataset.v !== undefined) return rispondi(b.dataset.campo, b.dataset.v, true);
+    if (b.dataset.flag) { const id = b.dataset.flag; delete Stato.errori.iban; return rispondi(id, Stato.pratica.risposte[id] !== true, true); }
     if (b.dataset.togli) {
       const [campo, idf] = b.dataset.togli.split("|");
       Allegati.elimina(idf);
