@@ -181,6 +181,20 @@ dd.grave{color:var(--rosso);font-weight:700}
 .mfo-campo{grid-column:1 / -1}
 .mfo-campo iframe{display:block;width:100%;border:0;background:var(--fondo);margin-top:12px}
 .mfo-campo #mfoEsito .avviso{margin-top:0}
+.riga-dato{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--bordo);font-size:15px}
+.riga-dato:first-of-type{border-top:0}
+.riga-dato span{color:var(--testo-2);flex:0 0 96px}
+.riga-dato b{flex:1;min-width:0;font-weight:600;overflow-wrap:anywhere}
+.doc-utile{border-top:1px solid var(--bordo);padding:10px 0}
+.doc-utile:first-of-type{border-top:0;padding-top:0}
+.doc-utile summary{cursor:pointer;font-weight:600;font-size:16px;color:var(--blu);min-height:40px;display:flex;align-items:center}
+.doc-utile p{font-size:15px;margin:8px 0}
+.dis-griglia{display:grid;grid-template-columns:1fr;gap:10px;margin:10px 0}
+.dis-campo span{display:block;font-size:14px;font-weight:600;margin-bottom:4px}
+.dis-campo small{font-weight:400;color:var(--testo-2)}
+.dis-campo input{width:100%;min-height:48px;border:1px solid var(--bordo);border-radius:10px;padding:8px 12px;background:#fbfcfd;font-size:16px}
+.btn.link{color:var(--blu);text-decoration:none;display:inline-flex}
+@media (min-width: 900px){ .dis-griglia{grid-template-columns:1fr 1fr} }
 .nota-piccola{color:var(--testo-2);font-size:13px;text-align:center;margin-top:18px}
 /* ---------- passi laterali (solo schermi larghi) ---------- */
 .layout-q{display:block}
@@ -255,7 +269,7 @@ dd.grave{color:var(--rosso);font-weight:700}
 const AGENZIA = {
   nome: "Lloyd Varesino",
   app: "Bussola",
-  versione: "0.5",       // scritta da ricomponi.py (file VERSIONE)
+  versione: "0.7",       // scritta da ricomponi.py (file VERSIONE)
   dataBuild: "01/10/2026",
   giorniConservazioneBozze: 7   // le bozze non inviate si cancellano da sole dopo N giorni
 };
@@ -291,7 +305,7 @@ const ALBERO = [
       { id: "fpens",     nome: "Fondo pensione", nota: "Con analisi patrimoniale", questionario: "vita" } ] } ] },
   { id: "az", nome: "Azienda", nota: "Imprese, professionisti, enti", figli: [
     { id: "az-auto", nome: "Auto", nota: "Veicoli aziendali e flotte", invio: "auto", questionario: null },
-    { id: "az-re", nome: "Rami elementari", nota: "Patrimonio, responsabilità, persone", invio: "danni", figli: [
+    { id: "az-re", nome: "Rami elementari", nota: "Patrimonio, cantieri, persone, cyber", invio: "danni", figli: [
       { id: "commercio", nome: "Commercio", nota: "Incendio, furto, catastrofali", questionario: "property" },
       { id: "azienda",   nome: "Azienda", nota: "Incendio, furto, catastrofali", questionario: "property" },
       { id: "industria", nome: "Industria", nota: "Incendio, furto, catastrofali", questionario: "property" },
@@ -301,10 +315,13 @@ const ALBERO = [
         { id: "postuma",   nome: "Postuma", nota: "Decennale postuma", questionario: null } ] },
       { id: "az-inf",    nome: "Infortuni", questionario: null },
       { id: "welfare",   nome: "Welfare", questionario: null },
-      { id: "rcprof",    nome: "RC professionale", nota: "Tecnici, area economica, ambiente e sicurezza", questionario: "rcprof" },
       { id: "ufficio",   nome: "Ufficio", questionario: "ufficio" },
-      { id: "do",        nome: "D&O", nota: "Società, no profit, ordini professionali", questionario: "do" },
       { id: "cyber",     nome: "Cyber risk", nota: "Studi professionali e società", questionario: "cyber" } ] },
+    { id: "az-rc", nome: "Responsabilità civile", nota: "Professionisti, amministratori, enti pubblici, sanità", invio: "danni", figli: [
+      { id: "rcprof",    nome: "RC professionale", nota: "Tutte le professioni, anche per un singolo progetto", questionario: "rcprof" },
+      { id: "do",        nome: "RC amministratori (D&O)", nota: "Società, no profit, ordini, singolo amministratore", questionario: "do" },
+      { id: "po",        nome: "RC enti pubblici e dipendenti", nota: "Amministratori e dipendenti pubblici, enti, opere pubbliche", questionario: "po" },
+      { id: "sanita",    nome: "RC strutture sanitarie", nota: "RSA, poliambulatori, centri medici, case di cura", questionario: "sanita" } ] },
     { id: "az-vita", nome: "Vita", invio: "vita", figli: [
       { id: "ifm",       nome: "IFM / TFM", nota: "Indennità di fine mandato", questionario: null },
       { id: "tfr",       nome: "TFR", questionario: null } ] } ] }
@@ -457,43 +474,6 @@ function derivaDaCF(r) {
      scelta (una opzione), multipla (più opzioni)
    ===================================================================== */
 
-/* ---------- Professioni RC: da qui dipendono le domande specifiche ---------- */
-const PROFESSIONI = {
-  architetto: { nome: "Architetto",                  gruppo: "tecnici",  modulo: "DUAL Professioni Area Tecnica" },
-  ingegnere:  { nome: "Ingegnere",                   gruppo: "tecnici",  modulo: "DUAL Professioni Area Tecnica", nota: "escluso ingegnere informatico" },
-  geometra:   { nome: "Geometra",                    gruppo: "tecnici",  modulo: "DUAL Professioni Area Tecnica" },
-  geologo:    { nome: "Geologo",                     gruppo: "tecnici",  modulo: "DUAL Professioni Area Tecnica" },
-  perito:     { nome: "Perito industriale",          gruppo: "tecnici",  modulo: "DUAL Professioni Periti Industriali" },
-  agro:       { nome: "Agronomo, agrotecnico, perito agrario", gruppo: "agro", modulo: "DUAL Professioni AgroTechno" },
-  commerc:    { nome: "Commercialista, tributarista, EDP", gruppo: "economica", modulo: "DUAL Professioni Area Economica" },
-  cdl:        { nome: "Consulente del lavoro",       gruppo: "economica", modulo: "DUAL Professioni Consulenti del Lavoro" },
-  ambiente:   { nome: "Ambiente, sicurezza, tecnici non iscritti ad albi", gruppo: "ambiente", modulo: "DUAL Professioni non regolamentate" }
-};
-
-/* Regole per professione: fatturato massimo accettato dal modulo standard,
-   massimali disponibili (migliaia di €) e opzioni di franchigia.            */
-const REGOLE_RC = {
-  architetto: { fattMax: 1000000, massimali: [250,500,1000,1500,2000,2500,3000], franchigie: ["1.000 (+20% premio, solo massimali fino a 1,5 mln)","5.000 (−15% premio)","10.000 (−25%, fatturato > 150.000)","25.000 (−35%, fatturato > 150.000)"] },
-  ingegnere:  "architetto", geometra: "architetto", geologo: "architetto",
-  perito:     { fattMax: 1000000, massimali: [250,500,1000,1500,2000,2500,3000], franchigie: ["2.500 (−10% premio)","5.000 (−20% premio)","10.000 (−25%, fatturato > 150.000)","25.000 (−35%, fatturato > 150.000)"] },
-  agro:       { fattMax: 200000,  massimali: [250,500,1000,1500], franchigie: [] },
-  commerc:    { fattMax: 1000000, massimali: [500,1000,1500,2000,2500,3000], franchigie: ["2.500 (−10% premio)","5.000 (−25% premio)"] },
-  cdl:        { fattMax: 1000000, massimali: [500,1000,1500,2000,2500,3000], franchigie: ["1.000 (+15% premio)","5.000 (−30% premio)"] },
-  ambiente:   { fattMax: 500000,  massimali: [250,500,1000,1500,2000,2500,3000], franchigie: [] }
-};
-function regoleRC(prof) { let r = REGOLE_RC[prof]; return typeof r === "string" ? REGOLE_RC[r] : r; }
-
-/* Massimali non disponibili (RD nel modulo) in base al fatturato — tecnici. */
-function massimaleAmmesso(prof, fatt, m) {
-  const g = PROFESSIONI[prof] && PROFESSIONI[prof].gruppo;
-  if (g !== "tecnici" || !fatt) return true;
-  if (prof === "perito") return !(m === 250 && fatt > 150000);
-  if (m === 250 && fatt > 100000) return false;
-  if (m === 250 && fatt > 50000 && prof !== "geometra") return false;
-  if (m === 500 && fatt > 500000) return false;
-  return true;
-}
-
 const SOGGETTI_DICH = ["il cliente e i soci, passati e presenti", "i collaboratori, passati e presenti", "ogni singolo professionista, anche per attività con propria partita IVA"];
 
 /* Sotto-domande riusate quando una dichiarazione NON è confermata */
@@ -507,15 +487,14 @@ const DETTAGLIO_EVENTO = [
 const AVVISO_TAILOR = { livello: "rosso", testo: "Con una risposta \"Non confermo\" il modulo standard non basta: serve la proposta tailor made, che la compagnia valuta caso per caso. Compila i dettagli sotto, il backoffice riceverà la pratica già segnalata." };
 
 const personaDaCF = r => { const e = analizzaCF(r.cf); return e.tipo === "persona" && e.valido; };
-const g = (r, ...gruppi) => r.professione && gruppi.includes(PROFESSIONI[r.professione].gruppo);
 
 
 /* =====================================================================
    BLOCCHI COMUNI: usati da tutti i questionari (domande accorpate)
    ===================================================================== */
 const PASSO_CLIENTE = { id: "cliente", titolo: "Cliente", sotto: "Dati di chi chiede la polizza.", campi: [
-        { id: "nome", tipo: "testo", obbl: true, largo: true, dom: r => r._segmento === "pf" ? "Nome e cognome" : "Ragione sociale o nome e cognome" },
-        { id: "referente", tipo: "testo", se: r => r._segmento === "az" && r._prodotto !== "rcprof", dom: "Referente in azienda" },
+        { id: "nome", tipo: "testo", obbl: true, largo: true, dom: r => r._segmento === "pf" || r.poChi === "persona" || r.doChi === "persona" ? "Nome e cognome" : r.poChi === "gruppo" ? "Mandatario: nome e cognome o ente" : "Ragione sociale o nome e cognome" },
+        { id: "referente", tipo: "testo", se: r => r._segmento === "az" && r._prodotto !== "rcprof" && r.poChi !== "persona" && r.doChi !== "persona", dom: "Referente in azienda" },
         { id: "piva", tipo: "testo", almenoUno: "idFiscale", se: r => r._segmento !== "pf", dom: "Partita IVA", tastiera: "numeric" },
         { id: "cf", tipo: "testo", almenoUno: "idFiscale", dom: "Codice fiscale", maiuscolo: true, deriva: derivaDaCF,
           avviso: (v, r) => {
@@ -552,14 +531,17 @@ const DOMANDA_ALTRA_POLIZZA = { id: "altraPolizza", tipo: "sino", obbl: true, do
             { id: "altraMassimale", tipo: "euro", dom: "Massimale o somma assicurata" } ] } };
 
 const DOC_UTILI = {
-  rcprof: "Polizza in corso, visura camerale, dichiarazione IVA o Modello Unico",
+  rcprof: r => r.copertura === "progetto" ? "Delibera o lettera d'incarico, bando di gara, relazione sul progetto" : "Polizza in corso, visura camerale, dichiarazione IVA o Modello Unico",
+  do: r => r.doChi === "persona" ? "Ultimo bilancio delle società in cui ha incarichi, polizza in corso" : "Ultimo bilancio approvato, visura camerale, polizza in corso",
+  po: r => r.poChi === "ente" ? "Elenco dei dipendenti da assicurare, polizza in corso" : r.poChi === "progetto" ? "Delibera d'incarico, bando, relazione sul progetto" : "Atto di nomina o incarico, polizza in corso",
+  sanita: r => r.tipoSan === "casacura" ? "Proposta DUAL case di cura compilata, ultimo bilancio, polizza RC sanitaria in corso, statistica sinistri" : "Polizza RC sanitaria in corso, autorizzazione o accreditamento, elenco delle sedi, ultimo bilancio",
   casa: "Polizza in corso, planimetria o visura catastale, foto dell'immobile",
   ufficio: "Polizza in corso, visura camerale, planimetria, contratto d'affitto"
 };
 
 const PASSO_CHIUSURA = { id: "chiusura", titolo: "Documenti e compliance", sotto: "Ultimi controlli prima dell'invio.", campi: [
         { id: "altriDoc", tipo: "allegato", dom: "Altri documenti utili",
-          aiuto: r => (DOC_UTILI[r._prodotto] || "Polizza in corso e altri documenti utili") + ". Non obbligatori, ma se ci sono allegali.",
+          aiuto: r => (valore(DOC_UTILI[r._prodotto], r) || "Polizza in corso e altri documenti utili") + ". Non obbligatori, ma se ci sono allegali.",
           avvisoVuoto: r => r.altraPolizza === "si"
             ? { livello: "ambra", testo: "Hai indicato che il cliente ha già un'altra polizza: se puoi, allegala." }
             : { livello: "blu", testo: "Nessun documento allegato. Se ne hai, aggiungili: il backoffice risparmia una richiesta al cliente." } },
@@ -576,84 +558,7 @@ const PASSO_CHIUSURA = { id: "chiusura", titolo: "Documenti e compliance", sotto
         { id: "note", tipo: "nota", dom: "Note per il backoffice" }
       ]};
 
-const QUESTIONARI = {
-  rcprof: {
-    titolo: "RC Professionale",
-    ramo: "rcprof",
-    passi: [
-      { id: "prof", titolo: "Professione", sotto: "Da qui dipendono le domande successive.", campi: [
-        { id: "professione", tipo: "scelta", verticale: true, obbl: true, dom: "Che professione svolge il cliente?",
-          opzioni: () => Object.entries(PROFESSIONI).map(([v, p]) => ({ v, t: p.nome, n: p.nota })) },
-        { id: "forma", tipo: "scelta", obbl: true, dom: "In che forma lavora?",
-          opzioni: [{ v: "singolo", t: "Singolo professionista" }, { v: "studio", t: "Studio associato" }, { v: "societa", t: "Società" }] },
-        { id: "settoreAmb", tipo: "scelta", verticale: true, obbl: true, se: r => g(r, "ambiente"), dom: "Settore di attività",
-          opzioni: [{ v: "tecnici", t: "Servizi tecnici", n: "disegno meccanico, grafica, project management edile, prove materiali, messe a terra, EGE, rilievi, interior design" },
-                    { v: "ambiente", t: "Consulenza ambientale" },
-                    { v: "sicurezza", t: "D.Lgs. 81/2008 e sicurezza cantieri" },
-                    { v: "altro", t: "Altro" }] },
-        { id: "settoreAltro", tipo: "testo", obbl: true, se: r => r.settoreAmb === "altro", dom: "Descrivi l'attività" }
-      ]},
-      PASSO_CLIENTE,
-      { id: "attivita", titolo: "Attività", sotto: "Fatturato e altre coperture.", campi: [
-        { id: "neo", tipo: "sino", dom: "Attività avviata da meno di un anno?" },
-        { id: "fatturato", tipo: "euro", obbl: true,
-          dom: r => r.neo === "si" ? "Fatturato previsto per il primo anno" : "Fatturato dell'ultimo anno",
-          aiuto: "Volume d'affari dall'ultimo Modello Unico o dall'ultima Comunicazione Dati IVA. Includi anche il fatturato delle estensioni che chiederai.",
-          avviso: (v, r) => { const R = regoleRC(r.professione); return R && v > R.fattMax ? { livello: "ambra", testo: `Oltre ${euro(R.fattMax)} il modulo standard non si applica: la pratica va come tailor made.` } : null; } },
-        DOMANDA_ALTRA_POLIZZA
-      ]},
-      { id: "precedenti", titolo: "Precedenti", sotto: "Dichiarazioni che finiscono in polizza: leggile al cliente.", campi: [
-        { id: "noRichieste", tipo: "conferma", obbl: true, dom: "Negli ultimi 5 anni non sono mai state avanzate richieste di risarcimento nei confronti di:",
-          elenco: SOGGETTI_DICH, avvisoNo: AVVISO_TAILOR, figli: { quando: "no", campi: DETTAGLIO_EVENTO.map(c => ({ ...c, id: "ric_" + c.id })) } },
-        { id: "noCircostanze", tipo: "conferma", obbl: true, dom: "Non ci sono circostanze note che possano portare a una perdita o a una richiesta di risarcimento nei confronti di:",
-          elenco: SOGGETTI_DICH, avvisoNo: AVVISO_TAILOR, figli: { quando: "no", campi: DETTAGLIO_EVENTO.map(c => ({ ...c, id: "circ_" + c.id, dom: c.id === "importo" ? "Danno potenziale stimato" : c.dom })) } },
-        { id: "noProcedure", tipo: "conferma", obbl: true, se: r => g(r, "economica"), avvisoNo: AVVISO_TAILOR,
-          dom: "Né il cliente né i collaboratori sono o sono stati sindaci, revisori o amministratori di società o enti in procedura concorsuale, insolvenza, crisi d'impresa o liquidazione." },
-        { id: "noPerdite25", tipo: "conferma", obbl: true, se: r => g(r, "economica"), avvisoNo: AVVISO_TAILOR,
-          dom: "Il cliente non è sindaco o revisore di società o enti con perdita ante imposte superiore al 25% del patrimonio netto nell'ultimo bilancio." },
-        { id: "noAlbo", tipo: "conferma", obbl: true, se: r => g(r, "ambiente"), avvisoNo: AVVISO_TAILOR,
-          dom: "Il cliente e i collaboratori non sono iscritti ad albi professionali (salvo l'albo degli Esperti in Innovazione Tecnologica)." },
-        { id: "noCostruzione", tipo: "conferma", obbl: true, se: r => g(r, "ambiente"), avvisoNo: AVVISO_TAILOR,
-          dom: "Non sono coinvolti in processi di costruzione." },
-        { id: "noTrasporti", tipo: "conferma", obbl: true, se: r => g(r, "ambiente"), avvisoNo: AVVISO_TAILOR,
-          dom: "Non progettano in ambito navale, aeronautico, automotive, ferroviario, autostradale (gallerie e ponti compresi)." },
-        { id: "noSorveglianza", tipo: "conferma", obbl: true, se: r => g(r, "ambiente"), avvisoNo: AVVISO_TAILOR,
-          dom: "Non si occupano di sorveglianza sanitaria (art. 41 D.Lgs. 81/2008)." }
-      ]},
-      { id: "estensioni", titolo: "Estensioni", sotto: "Attiva solo quelle incluse nel fatturato dichiarato.", campi: [
-        { id: "estPersonale", tipo: "sino", se: r => r.forma !== "singolo" && !g(r, "agro"), dom: "Attività personale dei singoli professionisti" },
-        { id: "estAssociati", tipo: "sino", se: r => g(r, "agro"), dom: "Studi associati o società" },
-        { id: "estCondominio", tipo: "sino", se: r => g(r, "agro"), dom: "Amministratore condominiale" },
-        { id: "escDL", tipo: "sino", se: r => g(r, "tecnici"), dom: "Esclusione della direzione lavori", aiuto: "Riduce il premio del 25%." },
-        { id: "chiaviMano", tipo: "sino", se: r => g(r, "tecnici"), dom: "Incarichi \"chiavi in mano\"" },
-        { id: "estSindaco", tipo: "sino", se: r => g(r, "economica"), dom: "Revisore, sindaco, attestatore, amministratore",
-          figli: { quando: "si", campi: [{ id: "quota35", tipo: "conferma", obbl: true, avvisoNo: AVVISO_TAILOR, dom: "Il fatturato da queste attività non supera il 35% del totale." }] } },
-        { id: "estOdv", tipo: "sino", se: r => g(r, "economica"), dom: "Organismo di vigilanza (OdV)" },
-        { id: "estEdp", tipo: "sino", se: r => g(r, "economica"), dom: "Società di servizi contabili (EDP)" },
-        { id: "estVisto", tipo: "scelta", se: r => g(r, "economica"), dom: "Visto di conformità",
-          opzioni: [{ v: "no", t: "No" }, { v: "ordinario", t: "Ordinario" }, { v: "730", t: "Ordinario + 730" }, { v: "pesante", t: "Certificazione tributaria" }] },
-        { id: "estRct", tipo: "sino", se: r => g(r, "ambiente"), dom: "Estensione RC verso terzi", aiuto: "Aumenta il premio del 15%." },
-        { id: "estUsa", tipo: "sino", se: r => !g(r, "agro"), dom: "Attività nel mondo intero, compresi USA e Canada",
-          figli: { quando: "si", campi: [
-            { id: "usaFatt", tipo: "euro", obbl: true, dom: "Fatturato USA e Canada" },
-            { id: "usaAtt", tipo: "testo", dom: "Attività svolta all'estero" },
-            { id: "usaClienti", tipo: "testo", dom: "Clienti principali" } ] } }
-      ]},
-      { id: "garanzie", titolo: "Massimale", sotto: "Scelta del limite di indennizzo e della franchigia.", campi: [
-        { id: "massimale", tipo: "scelta", obbl: true, dom: "Massimale richiesto",
-          opzioni: r => { const R = regoleRC(r.professione); if (!R) return [];
-            return R.massimali.filter(m => massimaleAmmesso(r.professione, Number(r.fatturato), m))
-                              .map(m => ({ v: String(m), t: m >= 1000 ? (m / 1000).toLocaleString("it-IT") + " mln" : m + " mila" })); },
-          aiuto: "Compaiono solo i massimali ammessi per la professione e il fatturato indicati." },
-        { id: "altroMassimale", tipo: "sino", dom: "Il cliente vuole anche un preventivo con un secondo massimale?",
-          figli: { quando: "si", campi: [{ id: "massimale2", tipo: "testo", dom: "Secondo massimale" }] } },
-        { id: "franchigia", tipo: "scelta", verticale: true, se: r => { const R = regoleRC(r.professione); return R && R.franchigie.length; },
-          dom: "Franchigia", opzioni: r => [{ v: "standard", t: "Standard" }].concat(regoleRC(r.professione).franchigie.map(f => ({ v: f, t: "€ " + f }))) }
-      ]},
-      PASSO_CHIUSURA
-    ]
-  }
-};
+const QUESTIONARI = {};   /* RC professionale e altre RC: 21_dati_rc.js */
 
 /* =====================================================================
    IMMOBILI: Casa (persona fisica) e Ufficio (azienda).
@@ -828,6 +733,534 @@ QUESTIONARI.casa = questionarioImmobile("casa");
 QUESTIONARI.ufficio = questionarioImmobile("ufficio");
 
 function euro(n) { return "€ " + Number(n).toLocaleString("it-IT"); }
+
+/* ---- 21_dati_rc.js ---- */
+/* =====================================================================
+   RC PROFESSIONALE — moduli e proposte DUAL accorpati in un solo questionario.
+   Il commerciale sceglie prima l'area (6 voci), poi la professione:
+   così l'elenco resta corto e le domande specifiche compaiono da sole.
+   Un "singolo progetto" (opere pubbliche, verifica, ATI) usa lo stesso
+   questionario con un percorso dedicato.
+   ===================================================================== */
+
+const AREE_PROF = [
+  { v: "tecnica",     t: "Area tecnica", n: "architetti, ingegneri, geometri, geologi, periti, agronomi" },
+  { v: "economica",   t: "Area economica e fiscale", n: "commercialisti, tributaristi, EDP, consulenti del lavoro, revisione, visto di conformità" },
+  { v: "legale",      t: "Area legale", n: "avvocati, organismi di mediazione, OCC" },
+  { v: "immobiliare", t: "Immobiliare e intermediazione", n: "agenti immobiliari, amministratori di condominio, mediatori creditizi, periti assicurativi" },
+  { v: "consulenza",  t: "Consulenza, informatica e certificazione", n: "IT e web, consulenza aziendale, marketing, privacy, enti di certificazione" },
+  { v: "ambiente",    t: "Ambiente e sicurezza", n: "consulenti ambientali, sicurezza sul lavoro, servizi tecnici senza albo" }
+];
+
+/* gruppo: decide le domande specifiche. proposta: per la compagnia serve la proposta completa. */
+const PROFESSIONI = {
+  architetto:    { area: "tecnica", nome: "Architetto", gruppo: "tecnici" },
+  ingegnere:     { area: "tecnica", nome: "Ingegnere", gruppo: "tecnici", nota: "escluso l'ingegnere dell'informazione: è in Consulenza e informatica" },
+  geometra:      { area: "tecnica", nome: "Geometra", gruppo: "tecnici" },
+  geologo:       { area: "tecnica", nome: "Geologo", gruppo: "tecnici" },
+  perito:        { area: "tecnica", nome: "Perito industriale", gruppo: "tecnici" },
+  agro:          { area: "tecnica", nome: "Agronomo, agrotecnico, perito agrario", gruppo: "agro" },
+  commerc:       { area: "economica", nome: "Commercialista, tributarista, EDP", gruppo: "economica" },
+  cdl:           { area: "economica", nome: "Consulente del lavoro", gruppo: "economica" },
+  visto:         { area: "economica", nome: "Solo visto di conformità", gruppo: "visto", nota: "polizza a sé, per chi ha già la RC professionale" },
+  revisione:     { area: "economica", nome: "Società di revisione", gruppo: "revisione", proposta: true },
+  avvocato:      { area: "legale", nome: "Avvocato", gruppo: "avvocati" },
+  conciliazione: { area: "legale", nome: "Organismo di mediazione o conciliazione", gruppo: "conciliazione", proposta: true },
+  occ:           { area: "legale", nome: "Organismo di composizione della crisi (OCC)", gruppo: "occ", proposta: true },
+  agenteImm:     { area: "immobiliare", nome: "Agente immobiliare", gruppo: "agenteImm", proposta: true },
+  ammCond:       { area: "immobiliare", nome: "Amministratore di condominio", gruppo: "immobiliare" },
+  mediatore:     { area: "immobiliare", nome: "Mediatore creditizio", gruppo: "immobiliare" },
+  peritoAss:     { area: "immobiliare", nome: "Perito assicurativo", gruppo: "immobiliare" },
+  it:            { area: "consulenza", nome: "Informatica e web", gruppo: "digitale", nota: "consulenza IT, software, siti, ingegneri dell'informazione" },
+  consulenza:    { area: "consulenza", nome: "Consulenza aziendale, marketing, privacy", gruppo: "digitale" },
+  certificazione:{ area: "consulenza", nome: "Ente di certificazione", gruppo: "certificazione", proposta: true },
+  ambiente:      { area: "ambiente", nome: "Ambiente, sicurezza, tecnici non iscritti ad albi", gruppo: "ambiente" }
+};
+const P_ = r => PROFESSIONI[r.professione];
+const g = (r, ...gruppi) => !!P_(r) && gruppi.includes(P_(r).gruppo);
+const prof = (r, ...nomi) => nomi.includes(r.professione);
+const annuale = r => r.copertura === "annuale";
+const progetto = r => r.copertura === "progetto";
+
+/* Regole per professione: fatturato massimo del modulo standard, massimali
+   (migliaia di €), opzioni di franchigia. "altro": si può chiedere un massimale diverso. */
+const REGOLE_RC = {
+  architetto: { fattMax: 1000000, massimali: [250,500,1000,1500,2000,2500,3000], franchigie: ["1.000 (+20% premio, solo massimali fino a 1,5 mln)","5.000 (−15% premio)","10.000 (−25%, fatturato > 150.000)","25.000 (−35%, fatturato > 150.000)"] },
+  ingegnere:  "architetto", geometra: "architetto", geologo: "architetto",
+  perito:     { fattMax: 1000000, massimali: [250,500,1000,1500,2000,2500,3000], franchigie: ["2.500 (−10% premio)","5.000 (−20% premio)","10.000 (−25%, fatturato > 150.000)","25.000 (−35%, fatturato > 150.000)"] },
+  agro:       { fattMax: 200000,  massimali: [250,500,1000,1500], franchigie: [] },
+  commerc:    { fattMax: 1000000, massimali: [500,1000,1500,2000,2500,3000], franchigie: ["2.500 (−10% premio)","5.000 (−25% premio)"] },
+  cdl:        { fattMax: 1000000, massimali: [500,1000,1500,2000,2500,3000], franchigie: ["1.000 (+15% premio)","5.000 (−30% premio)"] },
+  visto:      { fattMax: 100000,  massimali: [3000], franchigie: ["500 invece di 1.000 (+30% premio, con 730)"] },
+  revisione:  { massimali: [250,500,1000,1500,2000], franchigie: [], altro: true },
+  avvocato:   { fattMax: 200000,  massimali: [350,500,1000,1500,2000,2500,3000], franchigie: ["Abbattimento della franchigia di 1.000 (+10% premio)"] },
+  conciliazione: { massimali: [500,1000,1500], franchigie: [], altro: true },
+  occ:        { massimali: [1000,2000,3000], franchigie: [], altro: true },
+  agenteImm:  { massimali: [260,520,1550], franchigie: [], altro: true },
+  ammCond:    { fattMax: 200000,  massimali: [500,1000,1500], franchigie: [] },
+  mediatore:  { fattMax: 200000,  massimali: [500,750], franchigie: [] },
+  peritoAss:  { fattMax: 200000,  massimali: [500,1000,1500], franchigie: [] },
+  it:         { fattMax: 500000,  massimali: [250,500,1000,1500,2000,2500,3000], franchigie: [] },
+  consulenza: "it",
+  certificazione: { massimali: [250,500,1000,1500,2000], franchigie: [], altro: true },
+  ambiente:   { fattMax: 500000,  massimali: [250,500,1000,1500,2000,2500,3000], franchigie: [] }
+};
+function regoleRC(p) { let r = REGOLE_RC[p]; return typeof r === "string" ? REGOLE_RC[r] : r; }
+
+/* Massimali non disponibili (RD nei moduli) in base al fatturato e alla forma. */
+function massimaleAmmesso(p, fatt, m, forma) {
+  if (p === "mediatore") return !fatt || (fatt <= 100000 ? m === 500 : m === 750);
+  if (p === "agenteImm" && forma) return m === { singolo: 260, snc: 520, srl: 1550 }[forma];
+  const grp = PROFESSIONI[p] && PROFESSIONI[p].gruppo;
+  if (grp !== "tecnici" || !fatt) return true;
+  if (p === "perito") return !(m === 250 && fatt > 150000);
+  if (m === 250 && fatt > 100000) return false;
+  if (m === 250 && fatt > 50000 && p !== "geometra") return false;
+  if (m === 500 && fatt > 500000) return false;
+  return true;
+}
+const etichettaMassimale = m => m >= 1000 ? (m / 1000).toLocaleString("it-IT") + " mln" : m + " mila";
+
+/* Quando la compagnia vuole la proposta completa (tailor made) */
+function motiviProposta(r) {
+  const out = [], p = P_(r), R = regoleRC(r.professione);
+  if (!p) return out;
+  if (p.proposta) out.push(`Per ${p.nome.toLowerCase()} la compagnia valuta sempre su proposta completa.`);
+  if (R && R.fattMax && Number(r.fatturato) > R.fattMax) out.push(`Il fatturato supera ${euro(R.fattMax)}, il limite del modulo standard.`);
+  const nonConf = QUESTIONARI.rcprof.passi.filter(x => x.id !== "proposta" && (!x.se || x.se(r)))
+    .some(x => campiAttivi(x, r).some(c => c.tipo === "conferma" && r[c.id] === "no"));
+  if (nonConf) out.push("C'è almeno una dichiarazione non confermata.");
+  return out;
+}
+
+const CONF_IT = [
+  ["noMedicale", "Il cliente e i collaboratori non lavorano per servizi medici, biomedici, bioingegneristici, di ricerca medica o nel settore sanitario."],
+  ["noMilitare", "Non lavorano nel settore militare."],
+  ["noGiochi", "Non lavorano per giochi a premi in denaro, lotterie, lotto o scommesse."],
+  ["noSwFinanza", "Non si occupano di software per bilanci, per il calcolo delle imposte o per pagamenti (carte, bancomat, PayPal e simili)."],
+  ["noProdotti", "Non fabbricano, costruiscono, modificano, riparano, vendono o forniscono prodotti."]
+];
+const CONF_CONSULENZA = [
+  ["noInvestimenti", "Il cliente e i collaboratori non fanno consulenza sugli investimenti finanziari."],
+  ["noPromotori", "Non sono iscritti all'albo dei consulenti finanziari né abilitati TUF o Consob."],
+  ["noSanitario", "Non lavorano nel settore medico, paramedico, sanitario o della ricerca sperimentale."],
+  ["noFormMedica", "Non si occupano di formazione in campo medico."],
+  ["noTraduzioni", "Non traducono testi medici, sanitari, scientifici, finanziari, bancari, assicurativi o giuridici."]
+];
+const confermaRC = (id, dom, se) => ({ id, tipo: "conferma", obbl: true, se, avvisoNo: AVVISO_TAILOR, dom });
+
+const ATTIVITA_PROGETTO = [{ v: "preliminare", t: "Progettazione di fattibilità o preliminare" }, { v: "definitiva", t: "Progettazione definitiva" }, { v: "esecutiva", t: "Progettazione esecutiva" }];
+
+QUESTIONARI.rcprof = {
+  titolo: "RC Professionale",
+  ramo: "rcprof",
+  passi: [
+    { id: "prof", titolo: "Professione", sotto: "Da qui dipendono le domande successive.", campi: [
+      { id: "copertura", tipo: "scelta", verticale: true, obbl: true, dom: "Cosa vuole assicurare?",
+        opzioni: [{ v: "annuale", t: "Tutta l'attività professionale", n: "polizza annuale: il caso più comune" },
+                  { v: "progetto", t: "Un singolo progetto o incarico", n: "opera pubblica (progettista), verifica di un progetto, progetto in ATI" }] },
+      { id: "area", tipo: "scelta", verticale: true, obbl: true, se: annuale, dom: "In che area lavora?", opzioni: AREE_PROF },
+      { id: "professione", tipo: "scelta", verticale: true, obbl: true, se: r => annuale(r) && !!r.area, dom: "Professione",
+        opzioni: r => Object.entries(PROFESSIONI).filter(([, p]) => p.area === r.area).map(([v, p]) => ({ v, t: p.nome, n: p.nota })) },
+      { id: "forma", tipo: "scelta", obbl: true, se: r => annuale(r) && !!P_(r), dom: "In che forma lavora?",
+        opzioni: r => prof(r, "agenteImm")
+          ? [{ v: "singolo", t: "Ditta individuale" }, { v: "snc", t: "Snc o Sas" }, { v: "srl", t: "Srl o Spa" }]
+          : [{ v: "singolo", t: "Singolo professionista" }, { v: "studio", t: "Studio associato" }, { v: "societa", t: "Società" }] },
+      { id: "settoreAmb", tipo: "scelta", verticale: true, obbl: true, se: r => annuale(r) && g(r, "ambiente"), dom: "Settore di attività",
+        opzioni: [{ v: "tecnici", t: "Servizi tecnici", n: "disegno meccanico, grafica, project management edile, prove materiali, messe a terra, EGE, rilievi, interior design" },
+                  { v: "ambiente", t: "Consulenza ambientale" },
+                  { v: "sicurezza", t: "D.Lgs. 81/2008 e sicurezza cantieri" },
+                  { v: "altro", t: "Altro" }] },
+      { id: "settoreIt", tipo: "scelta", verticale: true, obbl: true, se: r => annuale(r) && prof(r, "it"), dom: "Settore di attività",
+        opzioni: [{ v: "consulenza", t: "Consulenza informatica e sviluppo software" }, { v: "web", t: "Web design e siti internet" },
+                  { v: "ingInfo", t: "Ingegnere dell'informazione", n: "iscritto all'albo: i danni materiali sono già compresi" }, { v: "altro", t: "Altro" }] },
+      { id: "settoreCons", tipo: "multipla", obbl: true, se: r => annuale(r) && prof(r, "consulenza"), dom: "Di cosa si occupa? (anche più voci)",
+        opzioni: [{ v: "aziendale", t: "Consulenza aziendale e direzione" }, { v: "agevolata", t: "Finanza agevolata, bandi e gare" },
+                  { v: "privacy", t: "Privacy e DPO" }, { v: "crediti", t: "Recupero crediti" }, { v: "formazione", t: "Formazione" },
+                  { v: "traduzioni", t: "Traduzioni" }, { v: "selezione", t: "Selezione del personale" }, { v: "odv", t: "Organismo di vigilanza (OdV)" },
+                  { v: "marketing", t: "Marketing, comunicazione, eventi" }, { v: "ricerche", t: "Ricerche di mercato" }, { v: "altro", t: "Altro" }] },
+      { id: "settoreAltro", tipo: "testo", obbl: true, largo: true, dom: "Descrivi l'attività",
+        se: r => annuale(r) && ((g(r, "ambiente") && r.settoreAmb === "altro") || (prof(r, "it") && r.settoreIt === "altro") || (prof(r, "consulenza") && (r.settoreCons || []).includes("altro"))) }
+    ]},
+    PASSO_CLIENTE,
+
+    /* ---------- singolo progetto ---------- */
+    { id: "progetto", titolo: "Progetto", sotto: "La copertura vale per questa opera, per tutta la sua durata.", se: progetto, campi: [
+      { id: "tipoProgetto", tipo: "scelta", verticale: true, obbl: true, dom: "Di che incarico si tratta?",
+        opzioni: [{ v: "merloni", t: "Progettazione di un'opera pubblica", n: "la polizza del progettista chiesta dalla stazione appaltante" },
+                  { v: "verifica", t: "Verifica di un progetto", n: "verificatore esterno incaricato dalla stazione appaltante" },
+                  { v: "ati", t: "Progetto singolo, anche in ATI", n: "copertura dedicata a un'opera, pubblica o privata" }] },
+      { id: "raggruppamento", tipo: "nota", obbl: r => r.tipoProgetto === "ati", dom: "Componenti del raggruppamento (ATI, RTP): nome, codice fiscale o P. IVA, ruolo nel progetto",
+        aiuto: "Se il cliente lavora da solo, lascia vuoto." },
+      { id: "committente", tipo: "testo", obbl: true, largo: true, dom: r => r.tipoProgetto === "ati" ? "Committente" : "Stazione appaltante o committente" },
+      { id: "sedeCommittente", tipo: "testo", dom: "Sede del committente" },
+      { id: "descrProgetto", tipo: "nota", obbl: true, dom: "Descrizione dell'opera e luogo di realizzazione" },
+      { id: "attivitaProgetto", tipo: "multipla", obbl: true, se: r => r.tipoProgetto === "merloni", dom: "Attività affidata", opzioni: ATTIVITA_PROGETTO },
+      { id: "valoreOpere", tipo: "euro", obbl: true, dom: r => r.tipoProgetto === "verifica" ? "Valore complessivo del progetto" : "Valore delle opere" },
+      { id: "parcella", tipo: "euro", obbl: true, dom: r => r.tipoProgetto === "verifica" ? "Compenso per la verifica" : r.tipoProgetto === "ati" ? "Fatturato dall'opera" : "Importo della parcella" },
+      { id: "dataIncarico", tipo: "data", se: r => r.tipoProgetto === "verifica", dom: "Data di accettazione dell'incarico" },
+      { id: "verificaDal", tipo: "data", obbl: true, se: r => r.tipoProgetto === "verifica", dom: "Verifica: dal" },
+      { id: "verificaAl", tipo: "data", obbl: true, se: r => r.tipoProgetto === "verifica", dom: "Verifica: al" },
+      { id: "inizioLavori", tipo: "data", obbl: true, dom: "Inizio lavori previsto" },
+      { id: "fineLavori", tipo: "data", obbl: true, dom: "Fine lavori prevista",
+        verifica: (v, r) => r.inizioLavori && v < r.inizioLavori ? "La fine dei lavori è prima dell'inizio" : null },
+      { id: "consegnaProgetto", tipo: "data", obbl: true, se: r => r.tipoProgetto === "merloni", dom: "Consegna prevista del progetto" },
+      { id: "interruzioni", tipo: "sino", se: r => r.tipoProgetto === "merloni", dom: "Sono previste interruzioni dei lavori?",
+        figli: { quando: "si", campi: [{ id: "interruzioniDesc", tipo: "nota", obbl: true, dom: "Quando e per quanto" }] } },
+      { id: "letteraImpegno", tipo: "sino", se: r => r.tipoProgetto === "merloni", dom: "Serve la lettera di impegno della compagnia per la gara?",
+        figli: { quando: "si", campi: [{ id: "letteraEntro", tipo: "data", obbl: true, dom: "Da presentare entro il" }] } },
+      { id: "ripartizioneAti", tipo: "nota", se: r => r.tipoProgetto === "ati", dom: "Fatturato diviso per attività",
+        aiuto: "Per esempio: direzione lavori, progettazione architettonica, strutture, impianti, sicurezza, acustica ed energia." },
+      { id: "massimaleProgetto", tipo: "euro", obbl: true, dom: "Massimale richiesto", aiuto: "Di solito lo indicano il bando o il contratto d'incarico." }
+    ]},
+
+    /* ---------- attività (polizza annuale) ---------- */
+    { id: "attivita", titolo: "Attività", sotto: "Fatturato e altre coperture.", se: annuale, campi: [
+      { id: "neo", tipo: "sino", dom: "Attività avviata da meno di un anno?" },
+      { id: "fatturato", tipo: "euro", obbl: true,
+        dom: r => g(r, "visto") ? "Fatturato dal solo visto di conformità" : r.neo === "si" ? "Fatturato previsto per il primo anno" : "Fatturato dell'ultimo anno",
+        aiuto: "Volume d'affari dall'ultimo Modello Unico o dall'ultima Comunicazione Dati IVA. Includi anche il fatturato delle estensioni che chiederai.",
+        avviso: (v, r) => { const R = regoleRC(r.professione); return R && R.fattMax && v > R.fattMax ? { livello: "ambra", testo: `Oltre ${euro(R.fattMax)} il modulo standard non si applica: la pratica va come proposta completa.` } : null; } },
+      { id: "fattCorrente", tipo: "euro", se: r => !!P_(r) && P_(r).proposta && r.neo !== "si", dom: "Fatturato stimato per l'anno in corso" },
+      { id: "con730", tipo: "sino", obbl: true, se: r => g(r, "visto"), dom: "Comprende anche l'assistenza sui modelli 730?" }
+    ]},
+
+    { id: "precedenti", titolo: "Precedenti", sotto: "Dichiarazioni che finiscono in polizza: leggile al cliente.", campi: [
+      { id: "noRichieste", tipo: "conferma", obbl: true, dom: "Negli ultimi 5 anni non sono mai state avanzate richieste di risarcimento nei confronti di:",
+        elenco: SOGGETTI_DICH, avvisoNo: AVVISO_TAILOR, figli: { quando: "no", campi: DETTAGLIO_EVENTO.map(c => ({ ...c, id: "ric_" + c.id })) } },
+      { id: "noCircostanze", tipo: "conferma", obbl: true, dom: "Non ci sono circostanze note che possano portare a una perdita o a una richiesta di risarcimento nei confronti di:",
+        elenco: SOGGETTI_DICH, avvisoNo: AVVISO_TAILOR, figli: { quando: "no", campi: DETTAGLIO_EVENTO.map(c => ({ ...c, id: "circ_" + c.id, dom: c.id === "importo" ? "Danno potenziale stimato" : c.dom })) } },
+      confermaRC("noProcedure", "Né il cliente né i collaboratori sono o sono stati sindaci, revisori, membri di OdV, attestatori o amministratori di società o enti in procedura concorsuale, insolvenza, crisi d'impresa o liquidazione.",
+        r => annuale(r) && g(r, "economica", "avvocati")),
+      confermaRC("noPerdite25", "Il cliente non è sindaco o revisore di società o enti con perdita ante imposte superiore al 25% del patrimonio netto nell'ultimo bilancio.", r => annuale(r) && g(r, "economica")),
+      confermaRC("noCertTributaria", "Il cliente non svolge certificazione tributaria (il cosiddetto visto pesante).", r => annuale(r) && g(r, "avvocati")),
+      confermaRC("noIndagini", "Il cliente non è mai stato sottoposto a indagini, verifiche, contestazioni o sanzioni da parte di autorità di vigilanza o dell'autorità giudiziaria.", r => annuale(r) && prof(r, "mediatore")),
+      confermaRC("noAutonomia25", "Il cliente non ha autonomia di liquidazione dei danni oltre 25.000 €.", r => annuale(r) && prof(r, "peritoAss")),
+      confermaRC("noPrivati35", "Gli incarichi da privati o società diverse dalle compagnie non superano il 35% del fatturato.", r => annuale(r) && prof(r, "peritoAss")),
+      ...CONF_IT.map(([id, dom]) => confermaRC(id, dom, r => annuale(r) && prof(r, "it"))),
+      ...CONF_CONSULENZA.map(([id, dom]) => confermaRC(id, dom, r => annuale(r) && prof(r, "consulenza"))),
+      confermaRC("noAlbo", "Il cliente e i collaboratori non sono iscritti ad albi professionali (salvo l'albo degli Esperti in Innovazione Tecnologica).", r => annuale(r) && g(r, "ambiente")),
+      confermaRC("noCostruzione", "Non sono coinvolti in processi di costruzione.", r => annuale(r) && g(r, "ambiente")),
+      confermaRC("noTrasporti", "Non progettano in ambito navale, aeronautico, automotive, ferroviario, autostradale (gallerie e ponti compresi).", r => annuale(r) && g(r, "ambiente")),
+      confermaRC("noSorveglianza", "Non si occupano di sorveglianza sanitaria (art. 41 D.Lgs. 81/2008).", r => annuale(r) && g(r, "ambiente")),
+      confermaRC("noPrototipi", "L'opera non prevede prototipi né materiali o tecniche costruttive sperimentali.", r => progetto(r) && r.tipoProgetto === "ati"),
+      confermaRC("subappaltatoriRC", "Ai subappaltatori, se previsti, si chiede una propria polizza di RC professionale.", r => progetto(r) && r.tipoProgetto === "ati"),
+      confermaRC("noVertenze", "Nessun componente dell'ATI ha vertenze in corso con la stazione appaltante.", r => progetto(r) && r.tipoProgetto === "ati"),
+      { id: "annullata", tipo: "sino", obbl: true, se: r => progetto(r) || (!!P_(r) && P_(r).proposta), dom: "Negli ultimi 5 anni una compagnia ha annullato, rifiutato o non rinnovato la sua RC professionale?",
+        avvisoSe: v => v === "si" ? { livello: "ambra", testo: "La compagnia vorrà sapere perché: descrivi sotto." } : null,
+        figli: { quando: "si", campi: [{ id: "annullataDesc", tipo: "nota", obbl: true, dom: "Compagnia, anno e motivo" }] } },
+      DOMANDA_ALTRA_POLIZZA
+    ]},
+
+    { id: "estensioni", titolo: "Estensioni", sotto: "Attiva solo quelle incluse nel fatturato dichiarato.", se: r => annuale(r) && !g(r, "visto"), campi: [
+      { id: "estPersonale", tipo: "sino", se: r => r.forma !== "singolo" && g(r, "tecnici", "economica", "avvocati", "immobiliare", "digitale", "ambiente"), dom: "Attività personale dei singoli professionisti",
+        aiuto: "Senza costo in più, ma il loro fatturato va sommato a quello dichiarato." },
+      { id: "estAssociati", tipo: "sino", se: r => g(r, "agro"), dom: "Studi associati o società" },
+      { id: "estCondominio", tipo: "sino", se: r => g(r, "agro", "avvocati") || prof(r, "mediatore", "peritoAss"), dom: "Amministratore condominiale" },
+      { id: "escDL", tipo: "sino", se: r => g(r, "tecnici"), dom: "Esclusione della direzione lavori", aiuto: "Riduce il premio del 25%." },
+      { id: "chiaviMano", tipo: "sino", se: r => g(r, "tecnici"), dom: "Incarichi \"chiavi in mano\"" },
+      { id: "superbonus", tipo: "sino", se: r => g(r, "tecnici"), dom: "Rilascia asseverazioni per Superbonus, Ecobonus o Sismabonus (art. 119 DL 34/2020)?",
+        aiuto: "Serve una polizza dedicata, oltre alla RC professionale.",
+        figli: { quando: "si", campi: [
+          { id: "sbFatturato", tipo: "euro", obbl: true, dom: "Fatturato dalle sole asseverazioni",
+            avviso: v => v > 200000 ? { livello: "ambra", testo: "Oltre 200.000 € la polizza asseverazioni va su proposta completa." } : null },
+          { id: "sbAsseveratori", tipo: "nota", obbl: true, se: r => r.forma !== "singolo", dom: "Nomi dei professionisti che asseverano" },
+          { id: "sbMassimale", tipo: "scelta", obbl: true, dom: "Massimale della polizza asseverazioni",
+            aiuto: "Con più professionisti assicurati, almeno 500.000 € per ciascuno.",
+            opzioni: [500,1000,1500,2000,2500,3000].map(m => ({ v: String(m), t: etichettaMassimale(m) })) } ] } },
+      { id: "estSindaco", tipo: "sino", se: r => g(r, "economica", "avvocati"), dom: "Revisore, sindaco, OdV, attestatore, amministratore",
+        figli: { quando: "si", campi: [{ id: "quota35", tipo: "conferma", obbl: true, avvisoNo: AVVISO_TAILOR, dom: "Il fatturato da queste attività non supera il 35% del totale." }] } },
+      { id: "estOdv", tipo: "sino", se: r => g(r, "economica"), dom: "Organismo di vigilanza (OdV)" },
+      { id: "estEdp", tipo: "sino", se: r => g(r, "economica"), dom: "Società di servizi contabili (EDP)" },
+      { id: "estVisto", tipo: "scelta", se: r => g(r, "economica"), dom: "Visto di conformità",
+        opzioni: [{ v: "no", t: "No" }, { v: "ordinario", t: "Ordinario" }, { v: "730", t: "Ordinario + 730" }, { v: "pesante", t: "Certificazione tributaria" }] },
+      { id: "estCollabOAM", tipo: "sino", se: r => prof(r, "mediatore"), dom: "Collaboratori iscritti all'OAM con lo stesso massimale",
+        aiuto: "Aumenta il premio del 30%, qualunque sia il numero dei collaboratori.",
+        figli: { quando: "si", campi: [{ id: "collabOAMNomi", tipo: "nota", obbl: true, dom: "Nomi dei collaboratori" }] } },
+      { id: "estRct", tipo: "sino", se: r => g(r, "ambiente"), dom: "Estensione RC verso terzi", aiuto: "Aumenta il premio del 15%." },
+      { id: "estDanni", tipo: "sino", se: r => g(r, "digitale"), dom: "Pacchetto danni: RC verso terzi e verso dipendenti (RCT/RCO)", aiuto: "Aumenta il premio del 15%." },
+      { id: "estMateriali", tipo: "sino", se: r => prof(r, "it") && r.settoreIt !== "ingInfo", dom: "Danni materiali", aiuto: "Aumenta il premio del 10%." },
+      { id: "estUsa", tipo: "sino", se: r => g(r, "tecnici", "economica", "ambiente", "digitale", "certificazione"),
+        dom: r => g(r, "certificazione") ? "Lavora anche per clienti in USA o Canada?" : "Attività nel mondo intero, compresi USA e Canada",
+        figli: { quando: "si", campi: [
+          { id: "usaFatt", tipo: "euro", obbl: true, dom: "Fatturato USA e Canada" },
+          { id: "usaAtt", tipo: "testo", dom: "Attività svolta all'estero" },
+          { id: "usaClienti", tipo: "testo", dom: "Clienti principali" } ] } }
+    ]},
+
+    /* ---------- dati in più quando serve la proposta completa ---------- */
+    { id: "proposta", titolo: "Proposta completa", sotto: "La compagnia valuta caso per caso: questi dati evitano una seconda richiesta al cliente.",
+      se: r => annuale(r) && motiviProposta(r).length > 0, campi: [
+      { id: "motiviProposta", tipo: "info", dom: "Perché servono", elenco: motiviProposta },
+      { id: "soci", tipo: "nota", obbl: true, dom: "Soci, professionisti associati e collaboratori: quanti sono e come si chiamano" },
+      { id: "clientiPrincipali", tipo: "nota", obbl: true, dom: "I tre clienti principali e il fatturato da ciascuno" },
+      { id: "ripartizione", tipo: "nota", se: r => !prof(r, "agenteImm"), dom: "Fatturato diviso per tipo di attività",
+        aiuto: r => g(r, "tecnici") ? "Per esempio: direzione lavori, progettazione architettonica, strutture, impianti, sicurezza, acustica ed energia." : "Le attività principali e la quota di fatturato di ciascuna." },
+      { id: "quotate", tipo: "sino", obbl: true, se: r => prof(r, "revisione"), dom: "Tra i clienti ci sono società quotate in borsa?" },
+      { id: "accreditamento", tipo: "sino", obbl: true, se: r => prof(r, "certificazione"), dom: "È accreditato presso un organismo di accreditamento?",
+        figli: { quando: "si", campi: [{ id: "accreditamentoDa", tipo: "testo", dom: "Quale (es. Accredia)" }] } },
+      { id: "laboratori", tipo: "sino", obbl: true, se: r => prof(r, "certificazione"), dom: "Si avvale di laboratori per i test sui prodotti?" },
+      { id: "schemiCert", tipo: "nota", obbl: true, se: r => prof(r, "certificazione"), dom: "Schemi di certificazione e fatturato per ciascuno",
+        aiuto: "Per esempio: ISO 9001, ISO 14001, ISO 45001, prodotti (DOP, IGP, BRC-IFS, HACCP), direttive CE." },
+      { id: "occIscrizione", tipo: "data", obbl: true, se: r => prof(r, "occ"), dom: "Data di iscrizione al registro degli OCC" },
+      { id: "occReferente", tipo: "testo", obbl: true, se: r => prof(r, "occ"), dom: "Referente dell'organismo" },
+      { id: "occGestori", tipo: "testo", obbl: true, tastiera: "numeric", se: r => prof(r, "occ"), dom: "Numero dei gestori della crisi" },
+      { id: "occEstGestori", tipo: "sino", obbl: true, se: r => prof(r, "occ"), dom: "Si vuole estendere la copertura ai gestori della crisi?" },
+      { id: "occProcedure", tipo: "nota", se: r => prof(r, "occ"), dom: "Tipi di procedure gestite (consumatori, professionisti, piccoli imprenditori…) e compensi" },
+      { id: "concMediatori", tipo: "testo", obbl: true, tastiera: "numeric", se: r => prof(r, "conciliazione"), dom: "Numero dei mediatori" },
+      { id: "concPerConto", tipo: "scelta", obbl: true, se: r => prof(r, "conciliazione"), dom: "Attività svolta per conto di", opzioni: [{ v: "privato", t: "Ente privato" }, { v: "pubblico", t: "Ente pubblico" }] },
+      { id: "concMaterie", tipo: "nota", se: r => prof(r, "conciliazione"), dom: "Materie e tipi di mediazione" }
+    ]},
+
+    { id: "garanzie", titolo: "Massimale", sotto: "Scelta del limite di indennizzo e della franchigia.", se: annuale, campi: [
+      { id: "massimale", tipo: "scelta", obbl: true, dom: "Massimale richiesto",
+        opzioni: r => { const R = regoleRC(r.professione); if (!R) return [];
+          return R.massimali.filter(m => massimaleAmmesso(r.professione, Number(r.fatturato), m, r.forma))
+                            .map(m => ({ v: String(m), t: etichettaMassimale(m) }))
+                            .concat(R.altro ? [{ v: "altro", t: "Altro" }] : []); },
+        aiuto: r => g(r, "visto") ? "Il visto di conformità ha un massimale unico di 3 milioni." : "Compaiono solo i massimali ammessi per la professione e il fatturato indicati.",
+        figli: { quando: "altro", campi: [{ id: "massimaleAltro", tipo: "euro", obbl: true, dom: "Massimale desiderato" }] } },
+      { id: "altroMassimale", tipo: "sino", se: r => !g(r, "visto"), dom: "Il cliente vuole anche un preventivo con un secondo massimale?",
+        figli: { quando: "si", campi: [{ id: "massimale2", tipo: "testo", dom: "Secondo massimale" }] } },
+      { id: "franchigia", tipo: "scelta", verticale: true,
+        se: r => { const R = regoleRC(r.professione); return R && R.franchigie.length && (!g(r, "visto") || r.con730 === "si"); },
+        dom: "Franchigia", opzioni: r => [{ v: "standard", t: "Standard" }].concat(regoleRC(r.professione).franchigie.map(f => ({ v: f, t: /^\d/.test(f) ? "€ " + f : f }))) }
+    ]},
+    PASSO_CHIUSURA
+  ]
+};
+
+
+/* =====================================================================
+   RC ENTI PUBBLICI E DIPENDENTI (DUAL P.O.): accorpa P.O. Plus Individual,
+   P.O. Plus Group, P.O. Ente (per dipendenti o per retribuzioni),
+   Merloni e Verificatore di progetto per i dipendenti pubblici.
+   ===================================================================== */
+const poChi = (r, ...x) => x.includes(r.poChi);
+const INCARICHI_PO = [
+  { v: "A1", t: "Amministrativo con ruolo apicale", n: "sindaco, vicesindaco, segretario, direttore, dirigente, funzionario, RUP, OIV, responsabile anticorruzione; in società: amministratore, consigliere, membro del CdA" },
+  { v: "A2", t: "Amministrativo non apicale", n: "assessore, consigliere, istruttore direttivo, impiegato amministrativo o di polizia municipale, capoufficio" },
+  { v: "T1", t: "Tecnico con ruolo apicale", n: "direttore, dirigente, funzionario tecnico, responsabile unico del progetto, elevata qualificazione tecnica" },
+  { v: "T2", t: "Tecnico non apicale", n: "istruttore direttivo tecnico, dipendente tecnico, capoufficio" }
+];
+const ENTI_PO = [["comune5", "Comune fino a 5.000 abitanti"], ["comune", "Comune oltre 5.000 abitanti"], ["provincia", "Provincia"], ["regione", "Regione"],
+  ["ministero", "Ministero"], ["universita", "Università"], ["istruzione", "Istruzione (non universitaria)"], ["sanita", "Settore sanitario"],
+  ["idrici", "Servizi idrici"], ["rifiuti", "Rifiuti"], ["strade", "Strade e autostrade"], ["trasporti", "Trasporti"], ["aero", "Aeronautico"],
+  ["porti", "Portuale"], ["forze", "Forze armate e di polizia"], ["vvf", "Vigili del fuoco"], ["altro", "Altro"]].map(([v, t]) => ({ v, t }));
+const SETTORI_ESCLUSI = ["tabacco, amianto", "revisione e certificazione di bilanci", "fondi pensione, assicurazioni", "sport professionistico",
+  "servizi finanziari (banche, gestione del risparmio, intermediazione, credito, leasing)", "telecomunicazioni", "gioco d'azzardo, pornografia, armi nucleari"];
+const conSocieta = r => ["societa", "entrambi"].includes(r.tipoEntePO);
+const amministrativo = r => poChi(r, "persona") ? ["A1", "A2"].includes(r.incarico) : Number(r.numAmm) > 0;
+const nonApicale = r => poChi(r, "persona") ? ["A2", "T2"].includes(r.incarico) : true;
+
+QUESTIONARI.po = {
+  titolo: "RC enti pubblici e dipendenti",
+  passi: [
+    { id: "chi", titolo: "Chi assicurare", sotto: "Da qui dipendono le domande successive.", campi: [
+      { id: "poChi", tipo: "scelta", verticale: true, obbl: true, dom: "Chi va assicurato?",
+        opzioni: [{ v: "persona", t: "Un amministratore o dipendente pubblico", n: "copertura personale, anche per colpa grave davanti alla Corte dei conti" },
+                  { v: "gruppo", t: "Più dipendenti dello stesso ente", n: "adesione collettiva tramite un mandatario" },
+                  { v: "ente", t: "L'ente, per i propri dipendenti", n: "a premio per numero di dipendenti o per retribuzioni" },
+                  { v: "progetto", t: "Un progetto di opera pubblica", n: "progettista o verificatore interno, dipendente dell'ente" }] }
+    ]},
+    PASSO_CLIENTE,
+    { id: "incarichi", titolo: "Incarichi", sotto: "Dove lavora e con che ruolo.", se: r => poChi(r, "persona", "gruppo"), campi: [
+      { id: "incarico", tipo: "scelta", verticale: true, obbl: true, se: r => poChi(r, "persona"), dom: "Tipo di incarico",
+        aiuto: "Con più incarichi scegli quello di livello più alto.", opzioni: INCARICHI_PO },
+      { id: "numAderenti", tipo: "testo", obbl: true, tastiera: "numeric", se: r => poChi(r, "gruppo"), dom: "Numero di aderenti" },
+      { id: "numAmm", tipo: "testo", obbl: true, tastiera: "numeric", se: r => poChi(r, "gruppo"), dom: "Di cui con incarichi amministrativi" },
+      { id: "numTec", tipo: "testo", obbl: true, tastiera: "numeric", se: r => poChi(r, "gruppo"), dom: "Di cui con incarichi tecnici" },
+      { id: "tipoEntePO", tipo: "scelta", verticale: true, obbl: true, dom: "Presso chi svolge gli incarichi?",
+        opzioni: [{ v: "pubblico", t: "Ente pubblico", n: "di costituzione interamente pubblica" },
+                  { v: "societa", t: "Società", n: "anche se di proprietà interamente pubblica" },
+                  { v: "entrambi", t: "Sia enti pubblici sia società" }] },
+      { id: "entePub", tipo: "scelta", obbl: true, se: r => ["pubblico", "entrambi"].includes(r.tipoEntePO), dom: "Tipo di ente pubblico",
+        aiuto: "Con più enti scegli quello a rischio più alto (di solito il più grande).", opzioni: ENTI_PO,
+        figli: { quando: "altro", campi: [{ id: "entePubAltro", tipo: "testo", obbl: true, dom: "Quale" }] } },
+      { id: "elencoIncarichi", tipo: "nota", obbl: true,
+        dom: r => poChi(r, "gruppo") ? "Ente o società presso cui lavorano gli aderenti" : "Enti e società in cui ha incarichi, con l'incarico svolto",
+        aiuto: r => conSocieta(r) ? "Per le società indica anche partita IVA e settore di attività." : "" },
+      { id: "attivoSoc", tipo: "scelta", obbl: true, se: conSocieta, dom: "Totale attivo della società (il più alto, se più di una)",
+        opzioni: [{ v: "50", t: "Fino a 50 mln" }, { v: "100", t: "Da 50 a 100 mln" }, { v: "oltre", t: "Oltre 100 mln" }],
+        avvisoSe: v => v === "oltre" ? { livello: "ambra", testo: "Oltre 100 milioni la compagnia valuta caso per caso." } : null },
+      { id: "socBilancio", tipo: "conferma", obbl: true, se: conSocieta, avvisoNo: AVVISO_TAILOR,
+        dom: "Nell'ultimo bilancio delle società: totale attivo non oltre 100 milioni, nessuna perdita ante imposte oltre il 25% del patrimonio netto, patrimonio netto non negativo." },
+      { id: "socInsolvenza", tipo: "conferma", obbl: true, se: conSocieta, avvisoNo: AVVISO_TAILOR,
+        dom: "Le società non sono insolventi né in procedure concorsuali, liquidazione, commissariamento o composizione negoziata della crisi." },
+      { id: "socSettori", tipo: "conferma", obbl: true, se: conSocieta, avvisoNo: AVVISO_TAILOR, dom: "Le società non operano in questi settori:", elenco: SETTORI_ESCLUSI },
+      { id: "noCaricheStato", tipo: "conferma", obbl: true, se: r => poChi(r, "persona"), avvisoNo: AVVISO_TAILOR,
+        dom: "Non ricopre le massime cariche dello Stato (Presidente della Repubblica o del Consiglio, ministri, parlamentari, presidenti delle Camere, giudici delle giurisdizioni superiori)." },
+      { id: "max7", tipo: "conferma", obbl: true, se: r => poChi(r, "persona"), avvisoNo: AVVISO_TAILOR, dom: "Non ha più di 7 incarichi." }
+    ]},
+    { id: "ente", titolo: "Ente", sotto: "Dati dell'ente da assicurare.", se: r => poChi(r, "ente"), campi: [
+      { id: "enteTipo", tipo: "scelta", obbl: true, dom: "Tipo di ente", opzioni: ENTI_PO,
+        figli: { quando: "altro", campi: [{ id: "enteTipoAltro", tipo: "testo", obbl: true, dom: "Quale" }] } },
+      { id: "abitanti", tipo: "scelta", obbl: true, se: r => ["comune5", "comune"].includes(r.enteTipo), dom: "Abitanti del Comune",
+        opzioni: r => r.enteTipo === "comune5" ? [{ v: "5", t: "Fino a 5.000" }] : [{ v: "60", t: "Da 5.000 a 60.000" }, { v: "oltre", t: "Oltre 60.000" }] },
+      { id: "fusioniPassate", tipo: "sino", obbl: true, dom: "Fusioni o incorporazioni con altri enti negli ultimi 5 anni?",
+        figli: { quando: "si", campi: [{ id: "fusioniPassateDesc", tipo: "nota", obbl: true, dom: "Dettagli" }] } },
+      { id: "fusioniFuture", tipo: "sino", obbl: true, dom: "Fusioni o incorporazioni in programma?",
+        figli: { quando: "si", campi: [{ id: "fusioniFutureDesc", tipo: "nota", obbl: true, dom: "Dettagli" }] } },
+      { id: "criterio", tipo: "scelta", obbl: true, dom: "Il premio si calcola su", opzioni: [{ v: "dipendenti", t: "Numero di dipendenti" }, { v: "retribuzioni", t: "Retribuzioni annue" }] },
+      { id: "retribuzioni", tipo: "euro", obbl: true, se: r => r.criterio === "retribuzioni", dom: "Retribuzioni annue totali" },
+      { id: "elencoDip", tipo: "nota", obbl: true, dom: "Dipendenti da assicurare: nome, mansione, eventuali altre mansioni",
+        aiuto: "Se è lungo, scrivi il numero e allega l'elenco nell'ultimo passo." }
+    ]},
+    { id: "progettoPO", titolo: "Progetto", sotto: "Opera pubblica progettata o verificata da dipendenti dell'ente.", se: r => poChi(r, "progetto"), campi: [
+      { id: "tipoProgettoPO", tipo: "scelta", verticale: true, obbl: true, dom: "Chi va assicurato?",
+        opzioni: [{ v: "merloni", t: "I progettisti interni" }, { v: "verifica", t: "Il verificatore interno del progetto" }] },
+      { id: "committente", tipo: "testo", obbl: true, largo: true, dom: "Stazione appaltante" },
+      { id: "assicuratiProg", tipo: "nota", obbl: true, dom: r => r.tipoProgettoPO === "verifica" ? "Verificatore interno: nome, qualifica, codice fiscale" : "Progettisti da assicurare: nome e codice fiscale" },
+      { id: "descrProgetto", tipo: "nota", obbl: true, dom: "Descrizione dell'opera e luogo di realizzazione",
+        aiuto: "Allega nell'ultimo passo la delibera d'incarico della stazione appaltante." },
+      { id: "attivitaProgetto", tipo: "multipla", obbl: true, se: r => r.tipoProgettoPO === "merloni", dom: "Attività affidata", opzioni: ATTIVITA_PROGETTO },
+      { id: "valoreOpere", tipo: "euro", obbl: true, dom: "Valore delle opere" },
+      { id: "dataIncarico", tipo: "data", se: r => r.tipoProgettoPO === "verifica", dom: "Data di accettazione dell'incarico di verifica" },
+      { id: "verificaDal", tipo: "data", obbl: true, se: r => r.tipoProgettoPO === "verifica", dom: "Verifica: dal" },
+      { id: "verificaAl", tipo: "data", obbl: true, se: r => r.tipoProgettoPO === "verifica", dom: "Verifica: al" },
+      { id: "inizioLavori", tipo: "data", obbl: true, dom: "Inizio lavori previsto" },
+      { id: "fineLavori", tipo: "data", obbl: true, dom: "Fine lavori prevista",
+        verifica: (v, r) => r.inizioLavori && v < r.inizioLavori ? "La fine dei lavori è prima dell'inizio" : null },
+      { id: "consegnaProgetto", tipo: "data", se: r => r.tipoProgettoPO === "merloni", dom: "Consegna prevista del progetto" },
+      { id: "interruzioni", tipo: "sino", se: r => r.tipoProgettoPO === "merloni", dom: "Sono previste interruzioni dei lavori?",
+        figli: { quando: "si", campi: [{ id: "interruzioniDesc", tipo: "nota", obbl: true, dom: "Quando e per quanto" }] } }
+    ]},
+    { id: "precedentiPO", titolo: "Precedenti", sotto: "Ultimi 5 anni. Dichiarazioni che finiscono in polizza.", campi: [
+      { id: "noRichieste", tipo: "conferma", obbl: true, avvisoNo: AVVISO_TAILOR,
+        dom: r => poChi(r, "ente") ? "Negli ultimi 5 anni non ci sono state perdite né richieste di risarcimento verso l'ente o i dipendenti da assicurare." : "Negli ultimi 5 anni non ci sono state richieste di risarcimento verso gli assicurati.",
+        figli: { quando: "no", campi: DETTAGLIO_EVENTO.map(c => ({ ...c, id: "ric_" + c.id })) } },
+      { id: "noCircostanze", tipo: "conferma", obbl: true, avvisoNo: AVVISO_TAILOR,
+        dom: "Non ci sono fatti o circostanze note che possano portare a una perdita o a una richiesta di risarcimento.",
+        figli: { quando: "no", campi: DETTAGLIO_EVENTO.map(c => ({ ...c, id: "circ_" + c.id, dom: c.id === "importo" ? "Danno potenziale stimato" : c.dom })) } },
+      { id: "annullata", tipo: "sino", obbl: true, se: r => poChi(r, "ente"), dom: "Negli ultimi 5 anni una compagnia ha annullato, rifiutato o non rinnovato la copertura?",
+        figli: { quando: "si", campi: [{ id: "annullataDesc", tipo: "nota", obbl: true, dom: "Compagnia, anno e motivo" }] } },
+      { ...DOMANDA_ALTRA_POLIZZA, se: r => poChi(r, "ente", "progetto") },
+      { id: "giaRcEnte", tipo: "sino", se: r => poChi(r, "persona", "gruppo"), dom: "L'ente o la società ha già una polizza RC patrimoniale o D&O?",
+        figli: { quando: "si", campi: [{ id: "giaRcEnteComp", tipo: "testo", dom: "Con quale compagnia" }] } }
+    ]},
+    { id: "garanziePO", titolo: "Garanzie", sotto: "Estensioni e massimale.", campi: [
+      { id: "estCessati", tipo: "sino", se: r => poChi(r, "persona"), dom: "Estensione agli incarichi cessati nel periodo di retroattività", aiuto: "Aumenta il premio del 20%." },
+      { id: "estDanniAmm", tipo: "sino", se: r => poChi(r, "persona", "gruppo") && amministrativo(r), dom: "Danni materiali e corporali per incarichi amministrativi",
+        aiuto: r => poChi(r, "persona") ? "Aumenta il premio del 20%." : "" },
+      { id: "estVeicoli", tipo: "sino", se: r => poChi(r, "persona", "gruppo"), dom: "Danni materiali ai veicoli in uso all'assicurato",
+        aiuto: r => poChi(r, "persona") ? "Aumenta il premio del 20%." : "" },
+      { id: "rinunciaRC", tipo: "sino", se: r => poChi(r, "persona", "gruppo") && nonApicale(r), dom: "Rinuncia alla RC davanti al giudice ordinario?",
+        aiuto: "Resta solo la responsabilità amministrativa e contabile davanti alla Corte dei conti. Solo per incarichi non apicali." },
+      { id: "massimalePO", tipo: "scelta", obbl: true, se: r => poChi(r, "persona"), dom: "Massimale",
+        opzioni: [500,1000,1500,2000,2500,3000,3500,4000,4500,5000].map(m => ({ v: String(m), t: etichettaMassimale(m) })) },
+      { id: "massimaliGruppo", tipo: "multipla", obbl: true, se: r => poChi(r, "gruppo"), dom: "Massimali per sinistro da quotare (anche più di uno)",
+        opzioni: [500,1000,1500,2000,2500,3000,3500,4000,4500,5000].map(m => ({ v: String(m), t: etichettaMassimale(m) })) },
+      { id: "aggregatoGruppo", tipo: "multipla", obbl: true, se: r => poChi(r, "gruppo"), dom: "Massimali annui complessivi da quotare",
+        opzioni: [1000,2000,3000,4000,5000].map(m => ({ v: String(m), t: etichettaMassimale(m) })) },
+      { id: "massimaleEnte", tipo: "scelta", obbl: true, se: r => poChi(r, "ente"), dom: "Massimale",
+        opzioni: [250,500,1000,1500,2000,2500].map(m => ({ v: String(m), t: etichettaMassimale(m) })).concat({ v: "altro", t: "Altro" }),
+        figli: { quando: "altro", campi: [{ id: "massimaleEnteAltro", tipo: "euro", obbl: true, dom: "Massimale desiderato" }] } },
+      { id: "aggregatoEnte", tipo: "euro", se: r => poChi(r, "ente") && r.criterio === "retribuzioni", dom: "Massimale annuo complessivo" },
+      { id: "corresponsabilita", tipo: "euro", se: r => poChi(r, "ente") && r.criterio === "retribuzioni", dom: "Massimale per corresponsabilità" },
+      { id: "massimaleProgetto", tipo: "euro", obbl: true, se: r => poChi(r, "progetto"), dom: "Massimale richiesto", aiuto: "Di solito lo indicano il bando o la delibera." }
+    ]},
+    PASSO_CHIUSURA
+  ]
+};
+
+
+/* =====================================================================
+   RC STRUTTURE SANITARIE (DUAL Healthcare): accorpa il modulo per
+   strutture sanitarie private (residenziali e ambulatoriali) e la proposta
+   per case di cura. Per le case di cura con chirurgia si raccolgono i dati
+   principali e si allega la proposta completa.
+   ===================================================================== */
+const san = (r, ...x) => x.includes(r.tipoSan);
+const ambulatoriale = r => san(r, "ambulatoriale", "entrambe");
+const residenziale = r => san(r, "residenziale", "entrambe");
+const standardSan = r => !!r.tipoSan && !san(r, "casacura");
+const PRESTAZIONI_AMB = [
+  ["visite", "Visite specialistiche (non invasive)"], ["chirAmb", "Chirurgia ambulatoriale e attività invasiva"], ["medEst", "Medicina estetica"],
+  ["chirEst", "Chirurgia estetica"], ["pma", "Procreazione medicalmente assistita"], ["fisio", "Fisioterapia e riabilitazione"],
+  ["immagini", "Diagnostica per immagini e radiologia"], ["laboratorio", "Laboratorio analisi"], ["nucleare", "Medicina nucleare"],
+  ["prenatale", "Diagnostica prenatale"], ["odonto", "Odontoiatria e igiene (senza implantologia)"], ["implanto", "Implantologia"],
+  ["psico", "Psicologia e psicoterapia"], ["dipendenze", "Trattamento delle dipendenze"]];
+const POSTI_RES = [["intensive", "Cure intensive e centri specializzati"], ["nonAuto", "Pazienti non autosufficienti"], ["auto", "Autosufficienti, casa di riposo"], ["diurno", "Centro diurno"]];
+const confSan = (id, dom, elenco) => ({ id, tipo: "conferma", obbl: true, se: standardSan, avvisoNo: AVVISO_TAILOR, dom, elenco });
+
+QUESTIONARI.sanita = {
+  titolo: "RC strutture sanitarie",
+  passi: [
+    PASSO_CLIENTE,
+    { id: "struttura", titolo: "Struttura", sotto: "Che attività svolge.", campi: [
+      { id: "nomeStruttura", tipo: "testo", largo: true, dom: "Nome della struttura, se diverso dalla ragione sociale" },
+      { id: "tipoSan", tipo: "scelta", verticale: true, obbl: true, dom: "Tipo di struttura",
+        opzioni: [{ v: "residenziale", t: "Residenziale, con posti letto", n: "RSA, RSD, hospice, riabilitazione, centri Alzheimer" },
+                  { v: "ambulatoriale", t: "Ambulatoriale", n: "poliambulatori, centri medici, odontoiatria, diagnostica, analisi, prelievi" },
+                  { v: "entrambe", t: "Residenziale e ambulatoriale" },
+                  { v: "casacura", t: "Casa di cura o clinica con ricovero", n: "con attività chirurgica, anestesiologica o punto nascita" }],
+        avvisoSe: v => v === "casacura" ? { livello: "ambra", testo: "Per le case di cura la compagnia vuole la proposta completa (reparti, sale operatorie, gestione del rischio): raccogli qui i dati principali e allega la proposta compilata." } : null },
+      { id: "prevRes", tipo: "scelta", obbl: true, se: residenziale, dom: "Attività residenziale prevalente",
+        opzioni: ["RSA", "RSD", "Hospice", "Lungodegenza psichiatrica", "Riabilitazione", "Centro Alzheimer", "Centro specializzato", "Cooperativa", "Onlus", "Altro"].map(t => ({ v: t, t })) },
+      { id: "prevAmb", tipo: "scelta", obbl: true, se: ambulatoriale, dom: "Attività ambulatoriale prevalente",
+        opzioni: ["Ambulatorio o poliambulatorio", "Centro medico", "Studio o centro odontoiatrico", "Studio medico associato", "Centro diagnostico", "Centro analisi", "Centro prelievi", "Altro"].map(t => ({ v: t, t })) },
+      { id: "prevAltro", tipo: "testo", obbl: true, largo: true, se: r => (residenziale(r) && r.prevRes === "Altro") || (ambulatoriale(r) && r.prevAmb === "Altro"), dom: "Descrivi struttura e attività" },
+      { id: "ssn", tipo: "sino", obbl: true, dom: "È accreditata con il Servizio sanitario nazionale?" },
+      { id: "fatturato", tipo: "euro", obbl: true, dom: "Fatturato dell'ultimo anno completo", aiuto: "Se è un gruppo con più sedi, il totale." },
+      { id: "piuSedi", tipo: "sino", obbl: true, dom: "Ha più strutture o sedi operative?",
+        figli: { quando: "si", campi: [{ id: "sediElenco", tipo: "nota", obbl: true, dom: "Per ogni sede: nome, indirizzo, P. IVA, tipo, fatturato" }] } },
+      { id: "dipSanitari", tipo: "scelta", obbl: true, dom: "Dipendenti che esercitano una professione sanitaria", opzioni: [{ v: "20", t: "Fino a 20" }, { v: "50", t: "Da 21 a 50" }, { v: "oltre", t: "Oltre 50" }] },
+      { id: "liberiProf", tipo: "scelta", obbl: true, dom: "Medici strutturati e liberi professionisti", opzioni: [{ v: "50", t: "Fino a 50" }, { v: "oltre", t: "Oltre 50" }] }
+    ]},
+    { id: "casaCura", titolo: "Casa di cura", sotto: "Dati principali: il resto è nella proposta completa da allegare.", se: r => san(r, "casacura"), campi: [
+      { id: "ccPostiLetto", tipo: "testo", obbl: true, tastiera: "numeric", dom: "Posti letto" },
+      { id: "ccOccupazione", tipo: "testo", tastiera: "numeric", dom: "Occupazione media dei posti letto (%)" },
+      { id: "ccAree", tipo: "nota", obbl: true, dom: "Le 5 aree principali (chirurgia generale, ortopedia, cardiologia…) e la quota di fatturato di ciascuna" },
+      { id: "ccSale", tipo: "testo", tastiera: "numeric", dom: "Sale operatorie" },
+      { id: "ccInterventi", tipo: "testo", tastiera: "numeric", dom: "Interventi chirurgici nell'ultimo anno" },
+      { id: "ccProntoSoccorso", tipo: "sino", obbl: true, dom: "Ha un pronto soccorso o un reparto di urgenza?" },
+      { id: "ccPuntoNascita", tipo: "sino", obbl: true, dom: "Ha un punto nascita?",
+        figli: { quando: "si", campi: [{ id: "ccParti", tipo: "testo", tastiera: "numeric", dom: "Parti nell'ultimo anno" }] } },
+      { id: "ccRiskManager", tipo: "sino", obbl: true, dom: "C'è un risk manager a tempo pieno?" },
+      { id: "ccUfficioSinistri", tipo: "sino", obbl: true, dom: "C'è un ufficio interno che gestisce i sinistri?" },
+      { id: "ccCoperture", tipo: "nota", obbl: true, dom: "Coperture RC sanitaria degli ultimi 5 anni: compagnia, massimale, franchigia, premio" },
+      { id: "ccSinistri", tipo: "nota", obbl: true, dom: "Sinistri degli ultimi 5 anni: numero, importi pagati e riservati" },
+      { id: "ccProposta", tipo: "allegato", dom: "Proposta DUAL case di cura compilata",
+        avvisoVuoto: () => ({ livello: "ambra", testo: "Senza la proposta completa la compagnia non quota: allegala appena il cliente la compila." }) }
+    ]},
+    { id: "dichiarazioniSan", titolo: "Dichiarazioni", sotto: "Finiscono in polizza: leggile al cliente.", se: standardSan, campi: [
+      confSan("noRevoca", "Negli ultimi 10 anni la struttura non ha mai avuto la revoca dell'accreditamento al Servizio sanitario nazionale."),
+      confSan("costituita12", "La struttura esiste da più di 12 mesi."),
+      confSan("noVeterinaria", "Non è una struttura veterinaria."),
+      confSan("noAumento30", "Il fatturato non è cresciuto più del 30% rispetto all'anno prima."),
+      confSan("noCambiamenti", "Non sono previsti cambiamenti strutturali nei prossimi 24 mesi."),
+      confSan("noFusioni", "Negli ultimi 5 anni non ci sono state fusioni, scissioni, acquisizioni o cessioni di ramo d'azienda."),
+      confSan("nonSanitarie25", "Le attività non sanitarie (asilo, trasporto pazienti, mensa, bar e simili) non superano il 25% del fatturato."),
+      confSan("assicurata3", "Negli ultimi 3 anni la struttura è stata assicurata per la RC sanitaria senza interruzioni."),
+      { ...confSan("noRichieste", "Negli ultimi 5 anni non sono mai state avanzate richieste di risarcimento."), figli: { quando: "no", campi: DETTAGLIO_EVENTO.map(c => ({ ...c, id: "ric_" + c.id })) } },
+      confSan("noRicoveroChir", "Non svolge prestazioni in ricovero di tipo chirurgico, anestesiologico o legate al parto."),
+      confSan("noBariatrica", "Non svolge chirurgia bariatrica né camera iperbarica."),
+      confSan("incidenze", "Sul fatturato, queste attività rispettano i limiti:", ["medicina o chirurgia estetica, diagnostica prenatale, trattamento delle dipendenze: non oltre il 30%", "procreazione medicalmente assistita, telemedicina: non oltre il 10%"]),
+      { ...DOMANDA_ALTRA_POLIZZA, se: standardSan }
+    ]},
+    { id: "prestazioni", titolo: "Prestazioni", sotto: "Ultimo anno completo, tutte le sedi insieme. Lascia vuoto ciò che non fanno.", se: r => standardSan(r) && (ambulatoriale(r) || residenziale(r)), campi: [
+      ...PRESTAZIONI_AMB.map(([k, t]) => ({ id: "prest_" + k, tipo: "testo", tastiera: "numeric", se: ambulatoriale, dom: t, corto: true })),
+      ...POSTI_RES.map(([k, t]) => ({ id: "letti_" + k, tipo: "testo", tastiera: "numeric", se: residenziale, dom: "Posti letto: " + t.toLowerCase(), corto: true })),
+      { id: "occupazione", tipo: "testo", tastiera: "numeric", se: residenziale, dom: "Occupazione media dei posti letto (%)" },
+      { id: "noPostiSpeciali", tipo: "conferma", obbl: true, se: residenziale, avvisoNo: AVVISO_TAILOR, dom: "Non ha posti letto per:", elenco: ["pazienti disabili", "pazienti psichiatrici", "riabilitazione (lungodegenza)"] },
+      { id: "covid", tipo: "conferma", obbl: true, se: residenziale, avvisoNo: AVVISO_TAILOR, dom: "Dal 2020 i casi di Covid-19 registrati non hanno superato 10 tra i dipendenti e 10 tra i pazienti." }
+    ]},
+    { id: "garanzieSan", titolo: "Garanzie", sotto: "Massimale, retroattività e franchigia.", campi: [
+      { id: "massimaleSan", tipo: "scelta", verticale: true, obbl: true, dom: "Massimale",
+        opzioni: [{ v: "1-3", t: "1 mln per sinistro, 3 mln all'anno", n: "minimo di legge per chi non esegue prestazioni da ambulatorio protetto, laboratori compresi" },
+                  { v: "2-6", t: "2 mln per sinistro, 6 mln all'anno", n: "minimo di legge per strutture residenziali, odontoiatria, ambulatori protetti, sociosanitarie" },
+                  { v: "altro", t: "Altro" }],
+        figli: { quando: "altro", campi: [{ id: "massimaleSanAltro", tipo: "testo", obbl: true, dom: "Massimale desiderato (per sinistro e annuo)" }] } },
+      { id: "retroattivita", tipo: "sino", obbl: true, dom: "Retroattività oltre i 10 anni previsti dalla legge Gelli?",
+        figli: { quando: "si", campi: [{ id: "retroattivitaDal", tipo: "data", obbl: true, dom: "Dal" }] } },
+      { id: "sir", tipo: "scelta", obbl: true, dom: "Franchigia a carico della struttura (SIR)",
+        aiuto: "Parte di ogni danno che la struttura paga da sé: più è alta, più scende il premio.",
+        opzioni: r => (san(r, "ambulatoriale") ? [{ v: "2500", t: "€ 2.500" }] : []).concat([5000, 10000, 25000, 50000].map(n => ({ v: String(n), t: euro(n) }))) },
+      { id: "estetica", tipo: "sino", se: r => Number(r.prest_medEst) > 0 || Number(r.prest_chirEst) > 0, dom: "Estensione a medicina e chirurgia estetica" }
+    ]},
+    PASSO_CHIUSURA
+  ]
+};
 
 /* ---- 22_dati_property.js ---- */
 /* =====================================================================
@@ -1259,11 +1692,51 @@ const MASSIMALI_DO = [500, 1000, 1500, 2000, 2500, 3000, 3500, 4000, 4500, 5000,
 const FRANCHIGIE_DO = [{ v: "0", t: "Nessuna" }, { v: "2500", t: "€ 2.500" }, { v: "5000", t: "€ 5.000" }, { v: "7500", t: "€ 7.500" }, { v: "10000", t: "€ 10.000" }];
 const migliaia = m => m >= 1000 ? (m / 1000).toLocaleString("it-IT") + " mln" : m + " mila";
 
+const societaDo = r => r.doChi !== "persona";
+const personaDo = r => r.doChi === "persona";
+const INCARICHI_DO = [
+  { v: "consigliere", t: "Consigliere di amministrazione" }, { v: "dirigente", t: "Dirigente" }, { v: "quadro", t: "Quadro o funzionario" },
+  { v: "legale", t: "Rappresentante legale" }, { v: "unico", t: "Amministratore unico" }, { v: "revisore", t: "Revisore legale dei conti" },
+  { v: "sindaco", t: "Sindaco (collegio sindacale)" }, { v: "odv", t: "Membro dell'organismo di vigilanza" }, { v: "altro", t: "Altro" }];
+
 QUESTIONARI.do = {
-  titolo: "D&O",
+  titolo: "RC amministratori (D&O)",
   passi: [
+    { id: "chiDo", titolo: "Chi assicurare", sotto: "Da qui dipendono le domande successive.", campi: [
+      { id: "doChi", tipo: "scelta", verticale: true, obbl: true, dom: "Chi va assicurato?",
+        opzioni: [{ v: "societa", t: "La società o l'ente", n: "copre tutti gli amministratori e i dirigenti" },
+                  { v: "persona", t: "Un singolo amministratore o dirigente", n: "copertura personale, per incarichi fino a 3 società" }] }
+    ]},
     PASSO_CLIENTE,
-    { id: "ente", titolo: "Ente", sotto: "Che tipo di organizzazione è.", campi: [
+    { id: "incarichiDo", titolo: "Incarichi", sotto: "Società in cui ha incarichi.", se: personaDo, campi: [
+      { id: "elencoIncDo", tipo: "nota", obbl: true, dom: "Per ogni società: nome, P. IVA, totale attivo, incarico, settore di attività",
+        aiuto: "Il prodotto standard copre fino a 3 società." },
+      { id: "tipoIncDo", tipo: "multipla", obbl: true, dom: "Incarichi da coprire", opzioni: INCARICHI_DO,
+        avviso: v => v.some(x => ["revisore", "sindaco", "odv"].includes(x)) ? { livello: "rosso", testo: "Revisore, sindaco e membro dell'OdV non sono assicurabili con questo prodotto: valuta la RC professionale." }
+          : v.some(x => ["unico", "altro"].includes(x)) ? { livello: "ambra", testo: "Amministratore unico e altri incarichi: la compagnia valuta caso per caso." } : null },
+      { id: "incDoAltro", tipo: "testo", obbl: true, se: r => (r.tipoIncDo || []).includes("altro"), dom: "Quale altro incarico" },
+      { id: "totAttivoInd", tipo: "euro", obbl: true, dom: "Totale attivo dall'ultimo bilancio (somma delle società)",
+        aiuto: "Senza bilancio: il totale delle entrate dal rendiconto o dalla dichiarazione IRAP.",
+        avviso: v => v > 100e6 ? { livello: "ambra", testo: "Oltre 100 milioni il prodotto standard non si applica." } : null },
+      { id: "partecipataInd", tipo: "sino", obbl: true, dom: "Qualche società è partecipata da enti pubblici?",
+        figli: { quando: "si", campi: [{ id: "respAmmInd", tipo: "sino", dom: "Estensione alla responsabilità amministrativo-contabile (colpa grave)?", aiuto: "Aumenta il premio del 20%." }] } },
+      { id: "neoInd", tipo: "sino", obbl: true, dom: "Qualche società è stata costituita da meno di 12 mesi?",
+        avvisoSe: v => v === "si" ? { livello: "blu", testo: "Si emette lo stesso, ma senza copertura per insolvenza e procedure concorsuali della società." } : null },
+      { id: "indSettoriRef", tipo: "conferma", obbl: true, dom: "Nessun incarico in società di questi settori:",
+        elenco: ["edilizia, costruzioni e impianti", "energia", "rifiuti, fognature, risanamento", "sindacati e rappresentanza di interessi", "partiti e movimenti politici", "sanità e sociosanitario", "tecnologia, media e telecomunicazioni"],
+        avvisoNo: { livello: "ambra", testo: "Settore da valutare: la compagnia quota caso per caso." } },
+      { id: "indSettoriEsc", tipo: "conferma", obbl: true, avvisoNo: AVVISO_TAILOR, dom: "Le società non operano in questi settori:",
+        elenco: ["tabacco, amianto", "revisione e certificazione di bilanci", "fondi pensione, assicurazioni", "sport professionistico", "servizi finanziari", "gioco d'azzardo, pornografia, armi e nucleare"] },
+      { id: "indItalia", tipo: "conferma", obbl: true, avvisoNo: AVVISO_TAILOR, dom: "Nessun incarico in società con sede legale fuori dall'Italia." },
+      { id: "indBilancio", tipo: "conferma", obbl: true, avvisoNo: AVVISO_TAILOR,
+        dom: "Nessun incarico in società con perdita oltre il 25% del patrimonio netto o patrimonio netto negativo, né in società insolventi o in procedure concorsuali o di composizione negoziata della crisi." },
+      { id: "indOfferta", tipo: "conferma", obbl: true, avvisoNo: AVVISO_TAILOR, dom: "Nessun incarico in società che hanno deliberato un'offerta al pubblico di azioni." },
+      { id: "indPrecedenti", tipo: "conferma", obbl: true, avvisoNo: AVVISO_TAILOR, dom: "Negli ultimi 5 anni, per le società e per il cliente:",
+        elenco: ["nessuna richiesta di risarcimento, anche di lavoro, per infortuni o per danni a persone e cose", "nessun fatto o circostanza noti che possano portarne", "nessun procedimento penale per incarichi aziendali"],
+        figli: { quando: "no", campi: DETTAGLIO_EVENTO.map(c => ({ ...c, id: "ind_" + c.id })) } },
+      { id: "massimaleInd", tipo: "scelta", obbl: true, dom: "Massimale", opzioni: [500, 1000, 1500, 2000, 2500].map(m => ({ v: String(m), t: migliaia(m) })) }
+    ]},
+    { id: "ente", titolo: "Ente", sotto: "Che tipo di organizzazione è.", se: societaDo, campi: [
       { id: "tipoEnte", tipo: "scelta", verticale: true, obbl: true, dom: "Tipo di ente",
         opzioni: [{ v: "societa", t: "Società" }, { v: "noprofit", t: "Ente no profit", n: "associazioni, fondazioni, cooperative sociali" }, { v: "ordine", t: "Ordine o collegio professionale" }] },
       { id: "dataCost", tipo: "data", obbl: true, dom: "Data di costituzione",
@@ -1278,7 +1751,7 @@ QUESTIONARI.do = {
             avvisoSe: v => v === "si" ? { livello: "rosso", testo: "Esposizione a Lehman / Madoff / Stanford: la compagnia valuterà caso per caso." } : null } ] } },
       { id: "agevolateNP", tipo: "sino", se: r => ente(r, "noprofit"), dom: "Si vogliono le condizioni agevolate per enti no profit?" }
     ]},
-    { id: "bilancio", titolo: "Bilancio", sotto: "Dall'ultimo bilancio approvato (o rendiconto).", campi: [
+    { id: "bilancio", titolo: "Bilancio", sotto: "Dall'ultimo bilancio approvato (o rendiconto).", se: societaDo, campi: [
       { id: "chiusuraBil", tipo: "data", dom: "Data di chiusura del bilancio" },
       { id: "totAttivo", tipo: "euro", obbl: true, dom: r => ente(r, "ordine") ? "Totale attivo o totale delle entrate" : "Totale attivo",
         aiuto: "Dallo stato patrimoniale. Per gli ordini senza bilancio: totale entrate del rendiconto.",
@@ -1300,7 +1773,7 @@ QUESTIONARI.do = {
         figli: { quando: "si", campi: [{ id: "tacitoRinnovo", tipo: "sino", dom: "Si chiede il tacito rinnovo?" }] } },
       { id: "respAmm", tipo: "sino", se: r => ente(r, "ordine") || r.partecipataPA === "si", dom: "Estensione alla responsabilità amministrativa e amministrativo-contabile (colpa grave)?" }
     ]},
-    { id: "operazioni", titolo: "Operazioni e personale", sotto: "Ultimi 3 anni e prossimi 12 mesi.", campi: [
+    { id: "operazioni", titolo: "Operazioni e personale", sotto: "Ultimi 3 anni e prossimi 12 mesi.", se: societaDo, campi: [
       { id: "fusioni", tipo: "sino", obbl: true, se: r => !ente(r, "ordine"), dom: "Fusioni, acquisizioni o cambi di ragione sociale?",
         figli: { quando: "si", campi: [{ id: "fusioniDesc", tipo: "nota", obbl: true, dom: "Tipo di operazione, società coinvolte, data e motivazioni" }] } },
       { id: "personale", tipo: "sino", obbl: true, dom: "Licenziamenti, prepensionamenti o variazioni del personale oltre il 25% in un anno?",
@@ -1313,18 +1786,18 @@ QUESTIONARI.do = {
           { id: "controllateUSA", tipo: "sino", obbl: true, dom: "Qualcuna ha sede in USA o Canada?",
             avvisoSe: v => v === "si" ? { livello: "ambra", testo: "Controllate in Nord America: servono totale attivo e quotazione di ciascuna." } : null } ] } }
     ]},
-    { id: "precedenti", titolo: "Precedenti", sotto: "Ultimi 5 anni: società, controllate e amministratori.", campi: [
-      { id: "eventiDo", tipo: "multipla", dom: "Barra ciò che si è verificato (lascia vuoto se niente)",
+    { id: "precedenti", titolo: "Precedenti e altre polizze", sotto: "Ultimi 5 anni e coperture in corso.", campi: [
+      { id: "eventiDo", tipo: "multipla", se: societaDo, dom: "Barra ciò che si è verificato (lascia vuoto se niente)",
         opzioni: r => EVENTI_DO.filter(o => o.v !== "annullate" || ente(r, "ordine")),
         avviso: v => v && v.length ? { livello: "rosso", testo: "Con precedenti la compagnia valuta caso per caso: descrivi ogni evento sotto." } : null },
-      { id: "eventiDoDesc", tipo: "nota", obbl: true, se: r => (r.eventiDo || []).length > 0, dom: "Per ciascun evento: data, chi ha reclamato, importo (anche stimato), breve descrizione" },
+      { id: "eventiDoDesc", tipo: "nota", obbl: true, se: r => societaDo(r) && (r.eventiDo || []).length > 0, dom: "Per ciascun evento: data, chi ha reclamato, importo (anche stimato), breve descrizione" },
       DOMANDA_ALTRA_POLIZZA,
-      { id: "cyberInCorso", tipo: "sino", se: r => !ente(r, "ordine"), dom: "Ha già una polizza cyber?",
+      { id: "cyberInCorso", tipo: "sino", se: r => societaDo(r) && !ente(r, "ordine"), dom: "Ha già una polizza cyber?",
         figli: { quando: "si", campi: [{ id: "cyberAss", tipo: "testo", dom: "Assicuratore e scadenza" }] } },
-      { id: "vuoleCyber", tipo: "sino", se: r => !ente(r, "ordine") && r.cyberInCorso !== "si", dom: "Il cliente vuole anche un preventivo Cyber?",
+      { id: "vuoleCyber", tipo: "sino", se: r => societaDo(r) && !ente(r, "ordine") && r.cyberInCorso !== "si", dom: "Il cliente vuole anche un preventivo Cyber?",
         avvisoSe: v => v === "si" ? { livello: "blu", testo: "Ricordati di aprire anche una pratica Cyber risk." } : null }
     ]},
-    { id: "garanzie", titolo: "Garanzie", sotto: "Massimali e opzioni.", campi: [
+    { id: "garanzie", titolo: "Garanzie", sotto: "Massimali e opzioni.", se: societaDo, campi: [
       { id: "massimaliDo", tipo: "multipla", obbl: true, dom: "Massimali da quotare (anche più di uno)",
         opzioni: MASSIMALI_DO.map(m => ({ v: String(m), t: migliaia(m) })).concat({ v: "altro", t: "Altro" }) },
       { id: "massimaleAltro", tipo: "testo", obbl: true, se: r => (r.massimaliDo || []).includes("altro"), dom: "Altro massimale" },
@@ -1464,10 +1937,17 @@ const COMPLIANCE = [
 
 const GUIDA = [
   { titolo: "RC professionale (DUAL)", voci: [
-    "Fatturato massimo per il modulo standard: 1 milione (tecnici e area economica), 500.000 (ambiente e sicurezza), 200.000 (agronomi).",
-    "Un solo \"Non confermo\" nelle dichiarazioni porta alla proposta tailor made.",
+    "Fatturato massimo per il modulo standard: 1 milione (tecnici, area economica), 500.000 (informatica, consulenza, ambiente e sicurezza), 200.000 (avvocati, agronomi, amministratori di condominio, mediatori creditizi, periti assicurativi), 100.000 (solo visto di conformità).",
+    "Agenti immobiliari, società di revisione, enti di certificazione, OCC e organismi di mediazione vanno sempre su proposta completa: l'app chiede i dati in più.",
+    "Un solo \"Non confermo\" nelle dichiarazioni porta alla proposta completa (tailor made).",
     "Architetti e ingegneri con fatturato oltre 100.000 €: massimale minimo 500.000 €.",
-    "Commercialisti: il fatturato da incarichi di sindaco, revisore o amministratore non deve superare il 35% del totale."
+    "Commercialisti e avvocati: il fatturato da incarichi di sindaco, revisore o amministratore non deve superare il 35% del totale.",
+    "Asseverazioni Superbonus, Ecobonus, Sismabonus: polizza dedicata, almeno 500.000 € per ogni professionista che assevera."
+  ]},
+  { titolo: "Altre RC per aziende ed enti", voci: [
+    "D&O del singolo amministratore: fino a 3 società; revisori, sindaci e membri dell'OdV non sono assicurabili con questo prodotto.",
+    "Dipendenti pubblici: con più incarichi conta quello di livello più alto; oltre 7 incarichi la compagnia valuta caso per caso.",
+    "Strutture sanitarie: la legge Gelli fissa massimali minimi e 10 anni di retroattività; le case di cura con chirurgia richiedono la proposta completa."
   ]},
   { titolo: "Casa e Ufficio", voci: [
     "Il valore del fabbricato è quello di ricostruzione a nuovo, non quello di mercato.",
@@ -1487,6 +1967,25 @@ const GUIDA = [
     "Prima di riparare, fotografa il danno e conserva le parti sostituite."
   ]}
 ];
+
+/* Dati dell'agenzia mostrati nella Guida (il sito è pubblico: niente credenziali qui). */
+const COORDINATE_AGENZIA = {
+  intestatario: "Lloyd Varesino Srl",
+  indirizzo: "Via Cavour 27, 21100 Varese (VA)",
+  iban: "IT85U0840410801000000003944",
+  bic: "ICRAITRRB80",
+  banca: "Banca di Credito Cooperativo di Busto Garolfo e Buguggiate, filiale di Varese"
+};
+
+const DOC_POG = {
+  titolo: "Presa visione della documentazione POG",
+  testo: "Regolamento IVASS 45/2020: chi distribuisce i prodotti deve conoscere policy POG, target market e schede prodotto, procedure di vendita e aggiornamenti delle compagnie. Non si vendono prodotti fuori dal target market; per restringerlo serve una comunicazione scritta all'agenzia.",
+  quando: ["all'ingresso in agenzia o all'inizio della collaborazione", "ogni 12 mesi", "entro 15 giorni dall'arrivo di un nuovo prodotto"],
+  link: "https://cloud.lloydvaresino.it",
+  accesso: "Si entra con le credenziali fornite dall'agenzia. Al primo accesso conviene reimpostare la password.",
+  contatti: ["abianchi@lloydvaresino.it", "mcastoldi@lloydvaresino.it"],
+  nota: "La presa visione non sostituisce la formazione obbligatoria sui prodotti."
+};
 
 /* ---- 30_logica.js ---- */
 /* =====================================================================
@@ -1948,14 +2447,18 @@ function creaPDF(p, commerciale) {
     o.push(`BT /F1 8 Tf ${GRIGIO} rg ${(W - M - pdfLarghezza(n, false, 8)).toFixed(2)} ${M - 18} Td (${n}) Tj ET`);
   });
 
-  /* ---- scrittura del file: oggetti, tabella xref, trailer ---- */
+  return scriviPDF(pagine, `${R.tipo} - ${R.prodotto} - ${R.cliente}`, W, H);
+}
+
+/* ---- scrittura del file: oggetti, tabella xref, trailer ---- */
+function scriviPDF(pagine, titolo, W, H) {
   const oggetti = [];
   const agg = s => { oggetti.push(s); return oggetti.length; };
   const idCatalogo = agg(null), idPagine = agg(null);
   const idF1 = agg("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>");
   const idF2 = agg("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>");
   let idLogo = 0;
-  if (LOGO_JPG) {
+  if (LOGO_JPG && pagine.some(o => o.some(x => x.includes("/Logo Do")))) {
     const bin = atob(LOGO_JPG.dati);
     idLogo = agg(`<< /Type /XObject /Subtype /Image /Width ${LOGO_JPG.l} /Height ${LOGO_JPG.a} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${bin.length} >>\nstream\n${bin}\nendstream`);
   }
@@ -1966,8 +2469,7 @@ function creaPDF(p, commerciale) {
   });
   oggetti[idCatalogo - 1] = `<< /Type /Catalog /Pages ${idPagine} 0 R >>`;
   oggetti[idPagine - 1] = `<< /Type /Pages /Kids [${idsPagina.map(i => i + " 0 R").join(" ")}] /Count ${idsPagina.length} >>`;
-  const titoloDoc = pdfEsc(`${R.tipo} - ${R.prodotto} - ${R.cliente}`);
-  const idInfo = agg(`<< /Title (${titoloDoc}) /Producer (Bussola) /CreationDate (D:${new Date().toISOString().replace(/[-:T]/g, "").slice(0, 14)}) >>`);
+  const idInfo = agg(`<< /Title (${pdfEsc(titolo)}) /Producer (Bussola) /CreationDate (D:${new Date().toISOString().replace(/[-:T]/g, "").slice(0, 14)}) >>`);
   let out = "%PDF-1.4\n%\xE2\xE3\xCF\xD3\n";
   const pos = [];
   oggetti.forEach((o, i) => { pos.push(out.length); out += `${i + 1} 0 obj\n${o}\nendobj\n`; });
@@ -1977,6 +2479,33 @@ function creaPDF(p, commerciale) {
   const byte = new Uint8Array(out.length);
   for (let i = 0; i < out.length; i++) byte[i] = out.charCodeAt(i) & 255;
   return new Blob([byte], { type: "application/pdf" });
+}
+
+/* ---- lettera di disdetta del cliente (Documenti utili della Guida) ---- */
+const TESTO_DISDETTA = [
+  "Con la presente intendo presentare disdetta, a termine delle Condizioni Generali di assicurazione della polizza in oggetto, comprese eventuali successive sostituzioni della medesima.",
+  "Revoco inoltre il consenso all'utilizzo dei miei dati personali, ad eccezione dei dati personali che il titolare è obbligato a conservare al fine di adempiere a un obbligo legale."
+];
+function dataIt(v) { const [a, m, g] = String(v || "").split("-"); return g ? `${g}/${m}/${a}` : (v || ""); }
+function creaDisdettaPDF(d) {
+  const W = 595.28, H = 841.89, M = 64, LARGH = W - 2 * M, NERO = "0.1 0.1 0.1";
+  const ops = []; let y = H - 80;
+  const testo = (t, x, yy, b, corpo) => { if (t) ops.push(`BT /${b ? "F2" : "F1"} ${corpo} Tf ${NERO} rg ${x.toFixed(2)} ${yy.toFixed(2)} Td (${pdfEsc(t)}) Tj ET`); };
+  const blocco = (righe, x, larg, b) => { for (const riga of righe) for (const t of pdfACapo(riga, larg, b, 11)) { testo(t, x, y, b, 11); y -= 15; } };
+  blocco([d.nome, d.indirizzo, d.cf ? "Codice fiscale: " + d.cf : ""].filter(Boolean), M, 260, false);
+  y -= 22;
+  const xDest = M + LARGH / 2;
+  testo("Spett.le", xDest, y, false, 11); y -= 15;
+  blocco([d.compagnia, d.indComp].filter(Boolean), xDest, LARGH / 2, true);
+  y -= 30;
+  testo(`${d.luogo || ""}${d.luogo ? ", " : ""}${dataIt(d.data)}`, M, y, false, 11); y -= 34;
+  blocco([`Oggetto: disdetta della polizza n. ${d.polizza} alla prossima scadenza del ${dataIt(d.scadenza)}`], M, LARGH, true);
+  y -= 16;
+  for (const par of TESTO_DISDETTA) { blocco([par], M, LARGH, false); y -= 10; }
+  y -= 14; testo("Distinti saluti.", M, y, false, 11); y -= 60;
+  testo("Firma", xDest, y, false, 11); y -= 26;
+  ops.push(`0.4 0.4 0.4 RG 0.6 w ${xDest} ${y.toFixed(2)} m ${W - M} ${y.toFixed(2)} l S`);
+  return scriviPDF([ops], `Disdetta polizza ${d.polizza}`, W, H);
 }
 
 /* ---- 40_interfaccia.js ---- */
@@ -2467,8 +2996,48 @@ function vistaSchede() {
   $("#vista").innerHTML = `
     <div class="passo-titolo">${d.tipo === "compliance" ? "Adempimenti dell'intermediario" : "Regole e buone pratiche"}</div>
     <p class="passo-sotto">Bozza da validare in agenzia: sono promemoria, non pareri.</p>
-    <div class="schede">${schede.map(s => `<div class="campo"><div class="dom">${esc(s.titolo)}</div>
+    <div class="schede">${d.tipo === "guida" ? htmlAgenzia() : ""}${schede.map(s => `<div class="campo"><div class="dom">${esc(s.titolo)}</div>
       <ul class="lista-schede">${s.voci.map(v => `<li>${esc(v)}</li>`).join("")}</ul></div>`).join("")}</div>`;
+}
+
+/* Guida: coordinate bancarie e documenti utili */
+/* IBAN italiano diviso come sui documenti bancari: paese+controllo, CIN, ABI, CAB, conto */
+const ibanLeggibile = x => /^IT\w{25}$/.test(x) ? [x.slice(0, 4), x[4], x.slice(5, 10), x.slice(10, 15), x.slice(15)].join(" ") : x.replace(/(.{4})/g, "$1 ").trim();
+function htmlAgenzia() {
+  const C = COORDINATE_AGENZIA, P = DOC_POG, D = Stato.disdetta || (Stato.disdetta = { data: new Date().toISOString().slice(0, 10) });
+  const riga = (t, v, copia) => `<div class="riga-dato"><span>${esc(t)}</span><b>${esc(v)}</b>${copia ? `<button class="btn piccolo" data-copia="${esc(copia)}">Copia</button>` : ""}</div>`;
+  const campo = (id, t, tipo, obbl) => `<label class="dis-campo"><span>${esc(t)}${obbl ? "" : " <small>(facoltativo)</small>"}</span>
+      <input type="${tipo || "text"}" data-dis="${id}" value="${esc(D[id] || "")}" autocomplete="off"></label>`;
+  return `<div class="campo"><div class="dom">Coordinate bancarie dell'agenzia</div>
+      ${riga("Intestatario", C.intestatario)}${riga("IBAN", ibanLeggibile(C.iban), C.iban)}${riga("BIC", C.bic, C.bic)}
+      ${riga("Banca", C.banca)}${riga("Sede", C.indirizzo)}
+      <div data-esito-copia class="aiuto" style="min-height:1.2em;margin:6px 0 0"></div></div>
+    <div class="campo"><div class="dom">Documenti utili</div>
+      <details class="doc-utile"><summary>Lettera di disdetta del cliente</summary>
+        <p class="aiuto">Compila e scarica il PDF: il cliente lo firma e lo invia alla compagnia con raccomandata A/R o PEC, rispettando il preavviso scritto nelle condizioni di polizza. I dati non vengono salvati.</p>
+        <div class="dis-griglia">${campo("nome", "Nome e cognome del cliente", "", true)}${campo("cf", "Codice fiscale")}
+          ${campo("indirizzo", "Indirizzo del cliente")}${campo("compagnia", "Compagnia", "", true)}
+          ${campo("indComp", "Indirizzo o PEC della compagnia")}${campo("polizza", "Numero di polizza", "", true)}
+          ${campo("scadenza", "Scadenza della polizza", "date", true)}${campo("luogo", "Luogo")}${campo("data", "Data", "date", true)}</div>
+        <div class="errore" data-dis-errore></div>
+        <button class="btn primario" data-az="disdettaPDF">Crea il PDF</button></details>
+      <details class="doc-utile"><summary>${esc(P.titolo)}</summary>
+        <p>${esc(P.testo)}</p>
+        <p class="aiuto" style="margin-bottom:4px">Quando va fatta:</p>
+        <ul class="lista-schede">${P.quando.map(x => `<li>${esc(x)}</li>`).join("")}</ul>
+        <p>${esc(P.accesso)} ${esc(P.nota)}</p>
+        <p><a class="btn link" href="${esc(P.link)}" target="_blank" rel="noopener">Apri il cloud dell'agenzia</a></p>
+        <p class="aiuto">Problemi di accesso: ${P.contatti.map(esc).join(" o ")}</p></details></div>`;
+}
+async function creaDisdetta() {
+  const D = Stato.disdetta || {}, box = document.querySelector("[data-dis-errore]");
+  const mancano = [["nome", "nome del cliente"], ["compagnia", "compagnia"], ["polizza", "numero di polizza"], ["scadenza", "scadenza"], ["data", "data"]].filter(([k]) => !String(D[k] || "").trim()).map(([, t]) => t);
+  if (mancano.length) { box.textContent = "Manca: " + mancano.join(", "); return; }
+  box.textContent = "";
+  const blob = creaDisdettaPDF(D), nome = `Disdetta ${D.polizza} ${D.nome}`.replace(/[\\/:*?"<>|]/g, "").trim() + ".pdf";
+  const file = new File([blob], nome, { type: "application/pdf" });
+  if (navigator.canShare && navigator.canShare({ files: [file] })) { try { await navigator.share({ files: [file], title: nome }); return; } catch (e) { if (e.name === "AbortError") return; } }
+  scaricaBlob(blob, nome);
 }
 
 /* ================= ANALISI PATRIMONIALE (Mini Family Office in un riquadro) ================= */
@@ -2527,6 +3096,13 @@ function collegaEventi() {
     if (b.dataset.vaiPasso !== undefined) { Stato.pratica.passo = Number(b.dataset.vaiPasso); Stato.errori = {}; Pratiche.salva(Stato.pratica); history.back(); window.scrollTo(0, 0); return; }
     if (b.id === "btnHome") return vaiHome();
     if (b.dataset.elimina) return chiediElimina(b);
+    if (b.dataset.az === "disdettaPDF") return creaDisdetta();
+    if (b.dataset.copia) {
+      const out = document.querySelector("[data-esito-copia]");
+      (navigator.clipboard ? navigator.clipboard.writeText(b.dataset.copia) : Promise.reject()).then(
+        () => { if (out) out.textContent = "Copiato: " + b.dataset.copia; }, () => { if (out) out.textContent = "Copia non riuscita: selezionalo a mano."; });
+      return;
+    }
     if (b.dataset.az === "avanti") return avanti();
     if (b.dataset.az === "indietro") return $("#btnIndietro").click();
     if (b.dataset.passo !== undefined) { Stato.pratica.passo = Number(b.dataset.passo); Stato.errori = {}; Pratiche.salva(Stato.pratica); disegna(); window.scrollTo(0, 0); return; }
@@ -2560,6 +3136,7 @@ function collegaEventi() {
 
   document.addEventListener("input", e => {
     const t = e.target;
+    if (t.dataset && t.dataset.dis) { (Stato.disdetta = Stato.disdetta || {})[t.dataset.dis] = t.value; return; }
     if (t.dataset && t.dataset.profilo) { const pr = Memoria.leggi("bussola.profilo", {}); pr[t.dataset.profilo] = t.value.trim(); Memoria.scrivi("bussola.profilo", pr); return; } if (!t.dataset || !t.dataset.campo) return;
     if (t.dataset.euro) {
       const n = t.value.replace(/\D/g, "");
@@ -2591,7 +3168,11 @@ collegaEventi();
 disegna();
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(misura);
 if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) {
-  navigator.serviceWorker.register("sw.js").catch(() => {});
+  /* quando arriva una versione nuova, si ricarica una volta da sola (solo se c'era già una versione installata) */
+  const giaInstallata = !!navigator.serviceWorker.controller;
+  let ricaricata = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => { if (giaInstallata && !ricaricata) { ricaricata = true; location.reload(); } });
+  navigator.serviceWorker.register("sw.js", { updateViaCache: "none" }).then(reg => reg.update()).catch(() => {});
 }
 
 </script>
