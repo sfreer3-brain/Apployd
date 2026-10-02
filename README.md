@@ -1,6 +1,6 @@
 # Bussola · Lloyd Varesino
 
-**Versione 0.15** · strumento interno della rete commerciale
+**Versione 0.17** · strumento interno della rete commerciale
 
 Bussola guida il commerciale nella raccolta dei dati per i preventivi, nella denuncia dei sinistri e negli adempimenti di compliance. Alla fine prepara un riepilogo in PDF da inviare al backoffice giusto.
 
@@ -46,7 +46,7 @@ Gli altri prodotti compaiono con l'etichetta *presto*.
 Il percorso è unico per tutti i rami. Per ogni tipo di evento l'app indica i documenti da raccogliere. Controlla l'IBAN e avvisa quando la denuncia è in ritardo rispetto ai 3 giorni previsti dall'art. 1913 del codice civile.
 
 ### Compliance e Guida
-La **Compliance** riporta le regole del fascicolo compliance addetto dell'agenzia (prima della vendita, identificazione e firma OTP, antiriciclaggio, incasso premi e conto separato, privacy, sicurezza informatica, consulenze, siti e social, collaboratori, normativa, segnalazione di violazioni), i moduli (dichiarazione proposta personalizzata, informativa privacy), la data dell'ultima presa visione POG con avviso di scadenza e le segnalazioni di ritorno POG all'agenzia. La **Guida** contiene i collegamenti a Omniaweb e al cloud e regole operative per ramo, in bozza da validare.
+La **Compliance** riporta le regole del fascicolo compliance addetto dell'agenzia (prima della vendita, identificazione e firma OTP, antiriciclaggio, incasso premi e conto separato, privacy, sicurezza informatica, consulenze, siti e social, collaboratori, normativa, segnalazione di violazioni), il numero RUI con il collegamento alla verifica sul registro ufficiale IVASS, i moduli (dichiarazione proposta personalizzata, informativa privacy) e le segnalazioni di ritorno POG all'agenzia. La **Guida** contiene i collegamenti a Omniaweb e al cloud e regole operative per ramo, in bozza da validare.
 
 La Guida contiene anche le coordinate bancarie dell'agenzia (con i tasti per copiare IBAN, BIC o tutte le coordinate) e i **documenti utili**: il modulo privacy in bianco da stampare, la lettera di disdetta del cliente, che si compila e diventa un PDF da firmare (i dati non vengono salvati), e la procedura per la presa visione della documentazione POG con il collegamento al cloud dell'agenzia. Le credenziali di accesso al cloud non sono nell'app, perché il sito è pubblico.
 
@@ -54,8 +54,8 @@ La Guida contiene anche le coordinate bancarie dell'agenzia (con i tasti per cop
 1. Il commerciale controlla il riepilogo e sceglie il destinatario. L'app propone i destinatari a turno per distribuire il lavoro.
 2. L'app crea il PDF con logo, dati, segnalazioni e allegati.
 3. L'invio cambia in base al dispositivo:
-   - **telefono e Mac:** si condividono PDF e allegati con l'app di posta;
-   - **PC Windows:** si scaricano i file e si apre l'email già compilata.
+   - **telefono e tablet:** si condividono PDF e allegati con l'app di posta;
+   - **computer (Windows e Mac):** si scaricano i file nella cartella Download (con il tasto per riscaricarli) e si apre l'email già compilata, in cui trascinare i file. Se il programma di posta non si apre (posta usata dal browser), ci sono i tasti per copiare destinatario, oggetto e testo.
 4. Si tocca **Ho inviato**: la pratica e gli allegati vengono cancellati dal dispositivo.
 
 Le pratiche non inviate si cancellano da sole dopo 7 giorni. Si possono eliminare prima con il cestino accanto alla pratica (due tocchi, per evitare errori) o con «Elimina questa pratica» in fondo al questionario. Dopo l'invio, un pulsante permette di aprire una nuova esigenza per lo stesso cliente con i dati già compilati. Il pulsante con la casetta, in alto a destra, riporta alla home: la pratica iniziata resta salvata, quella aperta e lasciata vuota non viene conservata.
@@ -129,6 +129,15 @@ Le prove nel browser richiedono Playwright e un server locale avviato dentro `di
 ---
 
 ## Versioni
+
+### 0.17 — 02/10/2026
+- Invio dal computer: niente più pannello di condivisione (su Windows spesso non offre la posta e i file non restano da nessuna parte). Si scaricano i file nella cartella Download, con l'elenco e il tasto «Scarica di nuovo», poi si apre l'email già compilata.
+- Ripiego per chi usa la posta dal browser: tasti per copiare destinatario, oggetto e testo dell'email.
+- Stessa regola per la copia al cliente di privacy e dichiarazione, per la disdetta e per il messaggio dei documenti al cliente.
+
+### 0.16 — 02/10/2026
+- Visura RUI: collegamento al registro ufficiale IVASS (anche nel riquadro dell'agenzia in Compliance).
+- Tolta la presa visione POG con scadenza dalla Compliance: la gestisce già un altro programma. Restano le segnalazioni di ritorno POG.
 
 ### 0.15 — 02/10/2026
 - **Vita investimento**: due voci, *Analisi patrimoniale* (piano di accumulo, fondo pensione) e *Dichiarazione proposta personalizzata*, compilata e firmata da cliente e intermediario nell'app; il modulo firmato è in fondo al PDF per il backoffice vita e si può mandare in copia al cliente.

@@ -295,7 +295,7 @@ body.esperto .campo > .aiuto, body.esperto .perche, body.esperto .testo-spunta s
 const AGENZIA = {
   nome: "Lloyd Varesino",
   app: "Bussola",
-  versione: "0.15",       // scritta da ricomponi.py (file VERSIONE)
+  versione: "0.17",       // scritta da ricomponi.py (file VERSIONE)
   dataBuild: "02/10/2026",
   giorniConservazioneBozze: 7   // le bozze non inviate si cancellano da sole dopo N giorni
 };
@@ -2162,7 +2162,7 @@ DOC_UTILI.cyber = "Polizza cyber in corso, certificazioni (es. ISO 27001), ultim
 
 /* Compliance: regole tratte dal Fascicolo compliance addetto dell'agenzia (ed. 2025.01 e 2026.01,
    a cura di K Partners) e dai kit delle compagnie. Promemoria operativi, non pareri. */
-const COMPLIANCE_AGENZIA = { rui: "A000561068 del 21-11-2016", mail: "mail@lloydvaresino.it", tel: "0332 289520", fonte: "Fascicolo compliance addetto, ed. 2026.01" };
+const COMPLIANCE_AGENZIA = { rui: "A000561068 del 21-11-2016", mail: "mail@lloydvaresino.it", tel: "0332 289520", ruiLink: "https://ruipubblico.ivass.it/rui-pubblica/ng/#/workspace/registro-unico-intermediari", fonte: "Fascicolo compliance addetto, ed. 2026.01" };
 const COMPLIANCE = [
   { titolo: "Prima di proporre un prodotto", voci: [
     "Fai il corso di formazione sul prodotto prima di distribuirlo (procedura POG).",
@@ -2211,7 +2211,7 @@ const COMPLIANCE = [
     "Chi lavora con te va comunicato prima all'agenzia, che lo iscrive al RUI.",
     "Un collaboratore non comunicato non può fare nulla, nemmeno supporto: sarebbe esercizio abusivo dell'attività.",
     "Per essere coperti dalla RC professionale i collaboratori devono avere un regolare contratto."
-  ], link: [{ t: "Visura RUI", url: "https://www.kpartners.it/visura-rui/" }] },
+  ], link: [{ t: "Visura RUI", url: COMPLIANCE_AGENZIA.ruiLink }] },
   { titolo: "Normativa e procedure di riferimento", voci: [
     "D.Lgs. 209/2005 (Codice delle assicurazioni private); Reg. IVASS 40/2018 (distribuzione), 41/2018 (informativa e prodotti); regole sulla gestione dei reclami.",
     "Circolari delle compagnie mandanti: da leggere regolarmente sulle loro intranet. Codice etico e modello organizzativo (D.Lgs. 231/2001) sui siti delle compagnie."
@@ -4100,18 +4100,38 @@ function vistaRiepilogo() {
              <li>Poi torna qui e tocca <b>Ho inviato</b>: la pratica si cancella dal dispositivo.</li></ol>
            <div class="bottoni-invio"><button class="btn primario" data-az="condividi">Condividi PDF e allegati</button>
              <button class="btn" data-az="email">Solo email con il testo</button></div>`
-        : `<ol class="passi-invio"><li><b>Scarica</b> il PDF${R.allegati.length ? " e gli allegati" : ""}.</li>
+        : `<ol class="passi-invio"><li><b>Scarica</b> il PDF${R.allegati.length ? " e gli allegati" : ""}: finiscono nella cartella Download.</li>
              <li><b>Apri l'email</b> già compilata (destinatario, oggetto, testo) e trascina dentro i file scaricati.</li>
              <li>Invia e torna qui: <b>Ho inviato</b> cancella la pratica dal dispositivo.</li></ol>
            <div class="bottoni-invio"><button class="btn primario" data-az="scarica">Scarica PDF${R.allegati.length ? ` e ${R.allegati.length} allegat${R.allegati.length === 1 ? "o" : "i"}` : ""}</button>
-             <button class="btn" data-az="email">Apri email già compilata</button></div>`}
+             <button class="btn" data-az="email">Apri email già compilata</button></div>
+           <details class="doc-utile" style="margin-top:10px"><summary>Il programma di posta non si apre? (posta via web)</summary>
+             <p class="aiuto">Apri la tua posta nel browser, crea un nuovo messaggio e incolla questi tre dati, poi allega i file scaricati.</p>
+             <div class="bottoni-msg"><button class="btn piccolo" data-copia="${esc(p.destinatari.join(", "))}" data-copia-nome="indirizzo del backoffice">Copia destinatario</button>
+               <button class="btn piccolo" data-copia="${esc(oggettoEmail(p))}" data-copia-nome="oggetto">Copia oggetto</button>
+               <button class="btn piccolo" data-az="copiaTestoEmail">Copia testo</button></div>
+             <div data-esito-copia class="aiuto" style="min-height:1.2em;margin:6px 0 0"></div></details>`}
       <div class="stato-file" id="statoInvio"></div>
     </div>
     <button class="elimina-pratica" data-elimina="${p.id}" data-dentro="1">Elimina questa pratica</button>`;
 }
 
-function puoCondividereFile() {
-  try { return !!(navigator.canShare && navigator.canShare({ files: [new File(["x"], "x.pdf", { type: "application/pdf" })] })); } catch (e) { return false; }
+/* Condivisione dei file solo su telefono e tablet: sul PC (Windows in particolare) il pannello di
+   condivisione spesso non offre il programma di posta e i file non restano in nessuna cartella. */
+function suTelefono() {
+  try { if (navigator.userAgentData && typeof navigator.userAgentData.mobile === "boolean" && navigator.userAgentData.mobile) return true; } catch (e) {}
+  return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1)
+    || (window.matchMedia && matchMedia("(pointer: coarse)").matches && !matchMedia("(pointer: fine)").matches);
+}
+function puoCondividereFile(f) {
+  if (!suTelefono()) return false;
+  try { return !!(navigator.canShare && navigator.canShare({ files: [f || new File(["x"], "x.pdf", { type: "application/pdf" })] })); } catch (e) { return false; }
+}
+/* Dopo lo scarico sul PC: elenco dei file con il tasto per riscaricarli (un clic per file, mai bloccato dal browser) */
+function elencoScaricati(files) {
+  Stato.scaricati = files;
+  return `<p>File salvati nella cartella <b>Download</b> del computer (o dove il browser salva i file):</p>
+    <ul class="lista-schede">${files.map((f, i) => `<li>${esc(f.name)} <button class="btn piccolo" data-riscarica="${i}">Scarica di nuovo</button></li>`).join("")}</ul>`;
 }
 function profiloValido() {
   const pr = Memoria.leggi("bussola.profilo", {});
@@ -4125,7 +4145,7 @@ function oggettoEmail(p) { return `[${p.tipo === "sinistro" ? "Sinistro" : "Prev
 function segnaInviato(msg) {
   Stato.pratica.invioTentato = true; Pratiche.salva(Stato.pratica);
   const b = document.querySelector('[data-az="inviato"]'); if (b) b.disabled = false;
-  const st = $("#statoInvio"); if (st) st.textContent = msg;
+  const st = $("#statoInvio"); if (st && msg) st.textContent = msg;
 }
 function scaricaBlob(blob, nome) {
   const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = nome;
@@ -4145,14 +4165,16 @@ async function azioneInvio(tipo) {
   if (tipo === "email") {
     const url = `mailto:${to}?subject=${encodeURIComponent(oggettoEmail(p))}&body=${encodeURIComponent(testoEmail(p, pr, 1700))}`;
     location.href = url;
-    return segnaInviato("Email aperta nel programma di posta. Ricorda di allegare il PDF se l'hai scaricato.");
+    return segnaInviato("Se non si è aperto nessun programma di posta, usa «Il programma di posta non si apre?» qui sotto. Ricorda di allegare i file scaricati.");
   }
   const pdf = new File([creaPDF(p, pr)], nomeFile(p, "pdf"), { type: "application/pdf" });
   const allegati = await fileAllegati(p);
   if (tipo === "scarica") {
     scaricaBlob(pdf, pdf.name);
     allegati.forEach((f, i) => setTimeout(() => scaricaBlob(f, f.name), 400 * (i + 1)));
-    return segnaInviato(`Scaricati: ${[pdf.name].concat(allegati.map(f => f.name)).join(", ")}. Ora apri l'email già compilata.`);
+    segnaInviato("");
+    const st = $("#statoInvio"); if (st) st.innerHTML = elencoScaricati([pdf].concat(allegati)) + `<p>Ora tocca <b>Apri email già compilata</b> e trascina i file nel messaggio.${allegati.length ? " Se il browser chiede di consentire più download, rispondi Consenti." : ""}</p>`;
+    return;
   }
   if (tipo === "condividi") {
     try { await navigator.clipboard.writeText(to); } catch (e) {}
@@ -4174,10 +4196,10 @@ async function copiaPrivacyCliente() {
     ? new File([creaDichiarazionePDF(p, pr)], nomeFile(p, "pdf").replace(/^[^_]+_/, "Dichiarazione_"), { type: "application/pdf" })
     : filePrivacy(p, pr);
   if (!f) return;
-  if (navigator.canShare && navigator.canShare({ files: [f] })) { try { await navigator.share({ files: [f], title: "Informativa privacy firmata" }); return; } catch (e) { if (e.name === "AbortError") return; } }
+  if (puoCondividereFile(f)) { try { await navigator.share({ files: [f], title: "Informativa privacy firmata" }); return; } catch (e) { if (e.name === "AbortError") return; } }
   scaricaBlob(f, f.name);
   if (p.risposte.email) location.href = `mailto:${encodeURIComponent(p.risposte.email)}?subject=${encodeURIComponent((p.questionario === "dichiarazione" ? "Dichiarazione proposta personalizzata – " : "Informativa privacy firmata – ") + AGENZIA.nome)}&body=${encodeURIComponent("Buongiorno,\nin allegato la copia del documento firmato.\n\nCordiali saluti\n" + [pr.nome, AGENZIA.nome].filter(Boolean).join("\n"))}`;
-  if (out) out.textContent = `Scaricato ${f.name}: allegalo all'email per il cliente.`;
+  if (out) out.textContent = `Scaricato ${f.name} nella cartella Download: allegalo all'email per il cliente.`;
 }
 function chiudiPratica() {
   const p = Stato.pratica, gruppo = p.tipo === "sinistro" ? "sinistri" : invioPer(p.prodotto);
@@ -4237,28 +4259,17 @@ function vistaSchede() {
       ${s.link ? `<div class="bottoni-msg">${s.link.map(l => `<a class="btn link piccolo" href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.t)}</a>`).join("")}</div>` : ""}</div>`).join("")}</div>`;
 }
 
-/* Compliance: moduli, presa visione POG e segnalazioni di ritorno */
+/* Compliance: dati agenzia, moduli e segnalazioni di ritorno POG */
 function htmlStrumentiCompliance() {
-  const A = COMPLIANCE_AGENZIA, pog = Memoria.leggi("bussola.pogVisto", ""), S = Stato.segnalaPog || {};
-  let statoPog = `<div class="avviso ambra">${ICONE.attenzione}<span>Segna la data della tua ultima presa visione: l'app ti avvisa quando va rifatta.</span></div>`;
-  if (pog) {
-    const scad = new Date(pog); scad.setFullYear(scad.getFullYear() + 1);
-    const giorni = Math.ceil((scad - new Date()) / 864e5);
-    statoPog = giorni < 0 ? `<div class="avviso rosso">${ICONE.attenzione}<span>Presa visione scaduta il ${scad.toLocaleDateString("it-IT")}: rifalla sul cloud dell'agenzia.</span></div>`
-      : `<div class="avviso ${giorni <= 30 ? "ambra" : "verde"}">${giorni <= 30 ? ICONE.attenzione : "✓"}<span>Valida fino al ${scad.toLocaleDateString("it-IT")}. Va rifatta anche entro 15 giorni dall'arrivo di un nuovo prodotto.</span></div>`;
-  }
+  const A = COMPLIANCE_AGENZIA, S = Stato.segnalaPog || {};
   return `<div class="campo"><div class="dom">${esc(AGENZIA.nome)}</div>
       <div class="riga-dato"><span>RUI</span><b>${esc(A.rui)}</b></div><div class="riga-dato"><span>Email</span><b>${esc(A.mail)}</b></div><div class="riga-dato"><span>Telefono</span><b>${esc(A.tel)}</b></div>
-      <p class="aiuto" style="margin-top:8px">Fonte: ${esc(A.fonte)}.</p></div>
+      <p class="aiuto" style="margin-top:8px">Fonte: ${esc(A.fonte)}.</p>
+      <div class="bottoni-msg"><a class="btn link piccolo" href="${esc(A.ruiLink)}" target="_blank" rel="noopener">Verifica sul RUI (IVASS)</a></div></div>
     <div class="campo"><div class="dom">Moduli</div>
       <div class="bottoni-msg"><button class="btn piccolo" data-az="dichiarazioneBianco">Dichiarazione proposta personalizzata (PDF)</button>
         <button class="btn piccolo primario" data-prodotto="dichiarazione">Compila e firma nell'app</button></div>
       <div class="bottoni-msg"><button class="btn piccolo" data-az="privacyBianco">Informativa privacy (PDF)</button></div></div>
-    <div class="campo"><div class="dom">Presa visione POG</div>
-      <p class="aiuto">Ogni 12 mesi ed entro 15 giorni da un nuovo prodotto, sul cloud dell'agenzia. La data resta solo su questo dispositivo.</p>
-      <label class="dis-campo"><span>Ultima presa visione</span><input type="date" data-pog value="${esc(pog)}"></label>
-      <div style="margin-top:8px">${statoPog}</div>
-      <div class="bottoni-msg"><a class="btn link piccolo" href="${esc(DOC_POG.link)}" target="_blank" rel="noopener">Apri il cloud dell'agenzia</a></div></div>
     <div class="campo"><div class="dom">Segnalazioni di ritorno POG</div>
       <p class="aiuto">Se un prodotto ti sembra inadatto al suo mercato di riferimento, o sai di qualcosa che può danneggiare i clienti, scrivilo all'agenzia.</p>
       <label class="dis-campo"><span>Prodotto e compagnia</span><input type="text" data-segnala="prodotto" value="${esc(S.prodotto || "")}"></label>
@@ -4311,7 +4322,7 @@ async function creaDisdetta() {
   box.textContent = "";
   const blob = creaDisdettaPDF(D), nome = `Disdetta ${D.polizza} ${D.nome}`.replace(/[\\/:*?"<>|]/g, "").trim() + ".pdf";
   const file = new File([blob], nome, { type: "application/pdf" });
-  if (navigator.canShare && navigator.canShare({ files: [file] })) { try { await navigator.share({ files: [file], title: nome }); return; } catch (e) { if (e.name === "AbortError") return; } }
+  if (puoCondividereFile(file)) { try { await navigator.share({ files: [file], title: nome }); return; } catch (e) { if (e.name === "AbortError") return; } }
   scaricaBlob(blob, nome);
 }
 
@@ -4366,6 +4377,13 @@ function collegaEventi() {
     if (b.dataset.az === "guida") return vai("schede", { tipo: "guida" });
     if (b.dataset.az === "anteprima") { const pr = Memoria.leggi("bussola.profilo", {}); const w = window.open(URL.createObjectURL(creaPDF(Stato.pratica, pr)), "_blank"); if (!w) scaricaBlob(creaPDF(Stato.pratica, pr), nomeFile(Stato.pratica, "pdf")); return; }
     if (["condividi", "scarica", "email"].includes(b.dataset.az)) return azioneInvio(b.dataset.az);
+    if (b.dataset.riscarica !== undefined) { const f = (Stato.scaricati || [])[+b.dataset.riscarica]; if (f) scaricaBlob(f, f.name); return; }
+    if (b.dataset.az === "copiaTestoEmail") {
+      const pr = Memoria.leggi("bussola.profilo", {}), out = b.closest("details").querySelector("[data-esito-copia]");
+      (navigator.clipboard ? navigator.clipboard.writeText(testoEmail(Stato.pratica, pr)) : Promise.reject()).then(
+        () => { out.textContent = "Copiato il testo dell'email."; segnaInviato(""); }, () => { out.textContent = "Copia non riuscita."; });
+      return;
+    }
     if (b.dataset.az === "inviato") return chiudiPratica();
     if (b.dataset.dest) { Stato.pratica.destinatari = [b.dataset.dest]; Pratiche.salva(Stato.pratica); document.querySelectorAll("[data-dest]").forEach(x => x.setAttribute("aria-pressed", x === b)); return; }
     if (b.dataset.vaiPasso !== undefined) { Stato.pratica.passo = Number(b.dataset.vaiPasso); Stato.errori = {}; Pratiche.salva(Stato.pratica); history.back(); window.scrollTo(0, 0); return; }
@@ -4388,8 +4406,8 @@ function collegaEventi() {
     if (b.dataset.az === "nuovaEsigenza") { const seg = Stato.clienteRiuso && Stato.clienteRiuso._segmento; return vai("albero", seg ? { nodo: seg } : {}); }
     if (b.dataset.condividiTesto !== undefined) {
       const t = b.dataset.condividiTesto, out = document.querySelector("[data-esito-copia]");
-      if (navigator.share) { navigator.share({ text: t }).catch(() => {}); return; }
-      (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => { if (out) out.textContent = "Condivisione non disponibile qui: messaggio copiato."; }, () => {});
+      if (navigator.share && suTelefono()) { navigator.share({ text: t }).catch(() => {}); return; }
+      (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => { if (out) out.textContent = "Messaggio copiato: incollalo nell'email o in WhatsApp Web."; }, () => {});
       return;
     }
     if (b.dataset.iban) return PromemoriaIban.invia(b.dataset.iban);
@@ -4437,7 +4455,6 @@ function collegaEventi() {
   document.addEventListener("input", e => {
     const t = e.target;
     if (t.dataset && t.dataset.segnala) { (Stato.segnalaPog = Stato.segnalaPog || {})[t.dataset.segnala] = t.value; return; }
-    if (t.dataset && t.dataset.pog !== undefined) { Memoria.scrivi("bussola.pogVisto", t.value); return; }
     if (t.dataset && t.dataset.dis) { (Stato.disdetta = Stato.disdetta || {})[t.dataset.dis] = t.value; return; }
     if (t.dataset && t.dataset.profilo) { const pr = Memoria.leggi("bussola.profilo", {}); pr[t.dataset.profilo] = t.value.trim(); Memoria.scrivi("bussola.profilo", pr); return; } if (!t.dataset || !t.dataset.campo) return;
     if (t.dataset.euro) {
@@ -4450,7 +4467,6 @@ function collegaEventi() {
   });
   document.addEventListener("change", e => {
     const t = e.target;
-    if (t.dataset && t.dataset.pog !== undefined) { Memoria.scrivi("bussola.pogVisto", t.value); return disegna(); }
     if (t.dataset && t.dataset.allegato) { const fl = Array.from(t.files || []); t.value = ""; if (fl.length) aggiungiFile(t.dataset.allegato, fl); return; } if (!t.dataset || !t.dataset.campo) return;
     if (t.dataset.euro) { const n = t.value.replace(/\D/g, ""); t.value = n ? Number(n).toLocaleString("it-IT") : ""; rispondi(t.dataset.campo, n ? Number(n) : ""); }
     else rispondi(t.dataset.campo, t.value);
@@ -4465,6 +4481,7 @@ function collegaEventi() {
    AVVIO
    ===================================================================== */
 Pratiche.pulisciVecchie();
+try { localStorage.removeItem("bussola.pogVisto"); } catch (e) {} /* presa visione POG tolta nella 0.16 */
 Stato.pila.push({ schermo: "home", dati: {} });
 try { history.replaceState({ n: 1 }, ""); } catch (e) {}
 collegaEventi();
