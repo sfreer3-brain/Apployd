@@ -1,6 +1,6 @@
 # Bussola · Lloyd Varesino
 
-**Versione 0.13** · strumento interno della rete commerciale
+**Versione 0.14** · strumento interno della rete commerciale
 
 Bussola guida il commerciale nella raccolta dei dati per i preventivi, nella denuncia dei sinistri e negli adempimenti di compliance. Alla fine prepara un riepilogo in PDF da inviare al backoffice giusto.
 
@@ -19,6 +19,8 @@ La navigazione segue l'albero dei prodotti dell'agenzia: **Persona fisica / Azie
 | Persona fisica · Rami elementari | **Casa** | Questionario interno, neutro rispetto alle compagnie: ogni garanzia ha la spiegazione da dare al cliente ed è consigliata in base alle caratteristiche della casa |
 | Persona fisica · Rami elementari | **Infortuni** | Infortuni e, a scelta, malattia: garanzie neutre (dai DIP AXA, Unipol, Helvetia) consigliate in base a lavoro e sport, somme assicurate, domande sanitarie quando servono |
 | Persona fisica · Rami elementari | **Protection** | Caso morte (TCM), non autosufficienza (LTC), malattie gravi (critical illness) in un'unica scheda: anagrafica una volta, domande comuni una volta. Va al backoffice vita |
+| Persona fisica · Rami elementari | **Viaggio** | Destinazione, partenza e rientro, data di nascita di ogni partecipante, annullamento con l'importo da assicurare |
+| Persona fisica · Rami elementari | **Pet** | Nome, cane o gatto, razza (facoltativa), età; garanzie RC, tutela legale, spese veterinarie |
 | Persona fisica · Vita investimento | **Piano di accumulo**, **Fondo pensione** | Con l'analisi patrimoniale (Mini Family Office) integrata |
 | Azienda · Rami elementari | **Commercio**, **Azienda**, **Industria** | Sezioni A–G (incendio, danni indiretti, furto, guasti macchine, assistenza informatica, RC, tutela legale), con garanzie aggiuntive consigliate |
 | Azienda · Rami elementari | **Impresa edile: RC, CAR, Postuma** | Fedeli ai questionari delle compagnie (CAR e decennale postuma per ristrutturazioni; RCT/RCO impresa con malattie professionali; RC del committente). Elenco dei documenti richiesti e messaggio pronto per chiedere al cliente quelli mancanti |
@@ -126,6 +128,11 @@ Le prove nel browser richiedono Playwright e un server locale avviato dentro `di
 ---
 
 ## Versioni
+
+### 0.14 — 02/10/2026
+- **Viaggio**: destinazione, date di partenza e rientro (con la durata in giorni), numero di partecipanti e data di nascita di ognuno, annullamento sì/no con l'importo da assicurare.
+- **Pet**: nome dell'animale, cane o gatto, razza (facoltativa), età, garanzie RC, tutela legale, spese veterinarie; eventuali altri animali.
+- Correzione: un numero scritto a mano che fa comparire altre domande (partecipanti, assicurati…) ora le mostra subito appena si esce dal campo.
 
 ### 0.13 — 02/10/2026
 - Privacy firmata nell'app: l'informativa con consensi e firma è **in fondo al PDF della richiesta** per il backoffice (un solo documento). Il PDF separato resta per la copia al cliente.

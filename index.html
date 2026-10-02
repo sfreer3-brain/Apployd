@@ -295,7 +295,7 @@ body.esperto .campo > .aiuto, body.esperto .perche, body.esperto .testo-spunta s
 const AGENZIA = {
   nome: "Lloyd Varesino",
   app: "Bussola",
-  versione: "0.13",       // scritta da ricomponi.py (file VERSIONE)
+  versione: "0.14",       // scritta da ricomponi.py (file VERSIONE)
   dataBuild: "02/10/2026",
   giorniConservazioneBozze: 7   // le bozze non inviate si cancellano da sole dopo N giorni
 };
@@ -324,8 +324,8 @@ const ALBERO = [
       { id: "pf-inf",    nome: "Infortuni", nota: "Anche malattia", questionario: "infortuni" },
       { id: "salute",    nome: "Salute", questionario: null },
       { id: "protection", nome: "Protection", nota: "Caso morte, non autosufficienza, malattie gravi", invio: "vita", questionario: "protection" },
-      { id: "pet",       nome: "Pet", nota: "Cani e gatti", questionario: null },
-      { id: "viaggio",   nome: "Viaggio", questionario: null } ] },
+      { id: "pet",       nome: "Pet", nota: "Cani e gatti", questionario: "pet" },
+      { id: "viaggio",   nome: "Viaggio", nota: "Assistenza, spese mediche, annullamento", questionario: "viaggio" } ] },
     { id: "pf-vita", nome: "Vita investimento", invio: "vita", figli: [
       { id: "pac",       nome: "Piano di accumulo", nota: "Con analisi patrimoniale", questionario: "vita" },
       { id: "fpens",     nome: "Fondo pensione", nota: "Con analisi patrimoniale", questionario: "vita" } ] } ] },
@@ -684,6 +684,8 @@ const DOC_UTILI = {
   postuma: "Contratto di appalto, relazione geotecnica, computo metrico, planimetria del cantiere, titolo edilizio",
   auto: "Attestato di rischio o polizza in corso, libretto dell'altro veicolo in caso di Bersani",
   protection: "Eventuale polizza in corso; per un capitale decrescente, piano di ammortamento del mutuo",
+  viaggio: "Conferma di prenotazione o estratto conto del viaggio, se c'è l'annullamento",
+  pet: "Libretto sanitario o certificato di iscrizione all'anagrafe degli animali, se disponibili",
   casa: "Polizza in corso, planimetria o visura catastale, foto dell'immobile",
   ufficio: "Polizza in corso, visura camerale, planimetria, contratto d'affitto"
 };
@@ -2746,6 +2748,62 @@ QUESTIONARI.auto = {
   ]
 };
 
+/* ---- 29b_dati_viaggio.js ---- */
+/* =====================================================================
+   VIAGGIO (persona fisica): destinazione, date, partecipanti, annullamento.
+   ===================================================================== */
+const MAX_PARTECIPANTI = 10;
+const giorniViaggio = r => r.dataPartenza && r.dataRientro ? Math.round((new Date(r.dataRientro) - new Date(r.dataPartenza)) / 864e5) + 1 : 0;
+
+QUESTIONARI.viaggio = {
+  titolo: "Viaggio",
+  passi: [
+    PASSO_CLIENTE,
+    { id: "viaggioDati", titolo: "Viaggio", sotto: "Dove, quando e chi parte.", campi: [
+      { id: "destinazione", tipo: "testo", obbl: true, largo: true, dom: "Destinazione", aiuto: "Paese o paesi; per i viaggi itineranti indicali tutti." },
+      { id: "dataPartenza", tipo: "data", obbl: true, dom: "Data di partenza",
+        avviso: v => v < new Date().toISOString().slice(0, 10) ? { livello: "ambra", testo: "La partenza è già passata: la polizza va fatta prima di partire." } : null },
+      { id: "dataRientro", tipo: "data", obbl: true, dom: "Data di rientro",
+        verifica: (v, r) => r.dataPartenza && v < r.dataPartenza ? "Il rientro è prima della partenza" : null,
+        avviso: (v, r) => giorniViaggio(r) > 0 ? { livello: "blu", testo: `Viaggio di ${giorniViaggio(r)} giorni.` } : null },
+      { id: "numPartecipanti", tipo: "testo", tastiera: "numeric", obbl: true, corto: true, dom: "Numero di partecipanti",
+        verifica: v => Number(v) >= 1 ? null : "Indica almeno un partecipante" },
+      ...Array.from({ length: MAX_PARTECIPANTI }, (_, i) => ({ id: "nascita_" + (i + 1), tipo: "data", obbl: true,
+        se: r => Number(r.numPartecipanti) > i, dom: `Data di nascita del partecipante ${i + 1}`, aiuto: i === 0 ? "Il primo di solito è il cliente." : "" })),
+      { id: "altriPartecipanti", tipo: "nota", obbl: true, se: r => Number(r.numPartecipanti) > MAX_PARTECIPANTI,
+        dom: `Date di nascita degli altri partecipanti (dall'${MAX_PARTECIPANTI + 1}° in poi), una per riga` },
+      { id: "annullamento", tipo: "sino", obbl: true, dom: "Vuole la garanzia annullamento viaggio?",
+        figli: { quando: "si", campi: [{ id: "importoAnnullamento", tipo: "euro", obbl: true, dom: "Importo da assicurare (costo del viaggio)" }] } }
+    ]},
+    PASSO_CHIUSURA
+  ]
+};
+
+/* ---- 29c_dati_pet.js ---- */
+/* =====================================================================
+   PET (persona fisica): cane o gatto, garanzie RC, tutela legale, spese veterinarie.
+   ===================================================================== */
+QUESTIONARI.pet = {
+  titolo: "Pet",
+  passi: [
+    PASSO_CLIENTE,
+    { id: "animale", titolo: "Animale", sotto: "Chi assicurare e cosa coprire.", campi: [
+      { id: "nomeAnimale", tipo: "testo", obbl: true, dom: "Nome dell'animale" },
+      { id: "specie", tipo: "scelta", obbl: true, dom: "Cane o gatto?", opzioni: [{ v: "cane", t: "Cane" }, { v: "gatto", t: "Gatto" }] },
+      { id: "razza", tipo: "testo", dom: "Razza", aiuto: "Se non la conosce o è un meticcio, va bene lasciarla vuota." },
+      { id: "etaAnimale", tipo: "testo", tastiera: "numeric", obbl: true, corto: true, dom: "Età (anni)", aiuto: "Sotto l'anno scrivi 0.",
+        verifica: v => /^\d{1,2}$/.test(String(v).trim()) ? null : "Indica l'età in anni" },
+      { id: "garanziePet", tipo: "multipla", verticale: true, obbl: true, dom: "Garanzie da quotare",
+        opzioni: [{ v: "rc", t: "Responsabilità civile", n: "danni causati dall'animale ad altre persone, animali o cose" },
+                  { v: "tutela", t: "Tutela legale", n: "spese legali per controversie legate all'animale" },
+                  { v: "veterinarie", t: "Spese veterinarie", n: "visite, interventi e cure per malattia o infortunio" }] },
+      { id: "altriAnimali", tipo: "sino", dom: "Ci sono altri animali da assicurare?",
+        figli: { quando: "si", campi: [{ id: "altriAnimaliDett", tipo: "nota", obbl: true, dom: "Per ognuno: nome, cane o gatto, razza, età" }] } }
+    ]},
+    PASSO_CHIUSURA
+  ]
+};
+
 /* ---- 30_logica.js ---- */
 /* =====================================================================
    LOGICA: memoria locale, pratiche, visibilità dei campi, controlli.
@@ -3608,6 +3666,7 @@ function vistaQuestionario() {
   caricaAnteprime();
   avviaMFO();
   attivaFirme();
+  Stato.firmaDisegno = firmaPasso();
 }
 
 /* ---------- firma su schermo: tratto con dito, penna o mouse; salvata come JPEG ---------- */
@@ -3781,7 +3840,9 @@ function rispondi(id, val, ridisegnaSempre) {
   const c0 = trovaCampo(id);
   if (c0 && c0.almenoUno && !vuoto(val)) for (const k of Object.keys(Stato.errori)) { const x = trovaCampo(k); if (x && x.almenoUno === c0.almenoUno) delete Stato.errori[k]; }
   Pratiche.salva(Stato.pratica);
-  if (ridisegnaSempre || (cDer && cDer.deriva) || firmaPasso() !== prima) {
+  /* si confronta anche con la forma del passo all'ultimo disegno: il testo digitato è già salvato
+     dall'evento "input", quindi "prima" può essere già aggiornato (es. numero di partecipanti) */
+  if (ridisegnaSempre || (cDer && cDer.deriva) || firmaPasso() !== prima || firmaPasso() !== Stato.firmaDisegno) {
     /* Si ridisegna subito dopo che il cursore si è spostato sul campo successivo,
        poi gli si ridà il fuoco: così chi passa da un campo all'altro non perde il punto. */
     setTimeout(() => {
