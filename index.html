@@ -295,7 +295,7 @@ body.esperto .campo > .aiuto, body.esperto .perche, body.esperto .testo-spunta s
 const AGENZIA = {
   nome: "Lloyd Varesino",
   app: "Bussola",
-  versione: "0.17",       // scritta da ricomponi.py (file VERSIONE)
+  versione: "0.18",       // scritta da ricomponi.py (file VERSIONE)
   dataBuild: "02/10/2026",
   giorniConservazioneBozze: 7   // le bozze non inviate si cancellano da sole dopo N giorni
 };
@@ -3343,7 +3343,8 @@ function pdfACapo(testo, larghezza, grassetto, corpo) {
 const pdfEsc = s => pdfCodifica(s).replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)");
 
 /* Crea il PDF del riepilogo. Restituisce un Blob "application/pdf". */
-function creaPDF(p, commerciale) {
+function creaPDF(p, commerciale, foto) {
+  foto = foto || [];
   const R = costruisciRiepilogo(p);
   const W = 595.28, H = 841.89, M = 42, LARGH = W - 2 * M;
   const BLU = "0.161 0.302 0.584", GRIGIO = "0.36 0.40 0.45", NERO = "0.16 0.16 0.16";
@@ -3404,7 +3405,8 @@ function creaPDF(p, commerciale) {
   }
   if (R.allegati.length) {
     titoloSezione(`Allegati (${R.allegati.length})`);
-    for (const a of R.allegati) coppia(a.voce, `${a.nome} · ${Math.max(1, Math.round(a.dim / 1024))} KB`);
+    const dentro = new Set(foto.map(f => f.id));
+    for (const a of R.allegati) coppia(a.voce, `${a.nome} · ${dentro.has(a.id) ? "in fondo a questo documento" : "file separato nell'email"}`);
   }
   /* nota finale solo se c'è posto: non apre una pagina quasi vuota */
   if (y - 34 > M + 20) {
@@ -3413,8 +3415,18 @@ function creaPDF(p, commerciale) {
       { testo(t, M, y, false, 8, GRIGIO); y -= 10; }
   }
 
-  /* in coda: informativa privacy firmata nell'app (stesso documento per il backoffice) */
+  /* foto allegate: una pagina ciascuna, adattata alla pagina */
   let immagini = {};
+  foto.forEach((f, i) => {
+    nuovaPagina();
+    testo(`Allegato: ${f.voce}`, M, y - 12, true, 11, BLU);
+    testo(f.nome, M, y - 26, false, 8.5, GRIGIO);
+    const top = y - 38, maxL = LARGH, maxA = top - (M + 6), k = Math.min(maxL / f.l, maxA / f.a);
+    const l = f.l * k, a = f.a * k;
+    ops.push(`q ${l.toFixed(2)} 0 0 ${a.toFixed(2)} ${(M + (maxL - l) / 2).toFixed(2)} ${(top - a).toFixed(2)} cm /Foto${i} Do Q`);
+    immagini["Foto" + i] = f;
+  });
+  /* in coda: informativa privacy firmata nell'app (stesso documento per il backoffice) */
   const rp = p.risposte;
   if (rp.privacyModo === "app" && rp.firmaPrivacy && rp.firmaPrivacy.dati) {
     const X = paginePrivacy(rp, commerciale);
@@ -3433,6 +3445,58 @@ function creaPDF(p, commerciale) {
   });
 
   return scriviPDF(pagine, `${R.tipo} - ${R.prodotto} - ${R.cliente}`, W, H, immagini);
+}
+
+/* Foto degli allegati pronte per il PDF (JPEG RGB, max 1600 px). Ciò che non si può
+   inserire (PDF, HEIC sul computer, file illeggibili) resta come file separato. */
+async function fotoPerPDF(p) {
+  const foto = [], separati = [];
+  for (const a of costruisciRiepilogo(p).allegati) {
+    const blob = await Allegati.leggi(a.id);
+    if (!blob) continue;
+    if (/^image\//.test(blob.type || a.tipo)) {
+      try {
+        const bmp = await createImageBitmap(blob);
+        const k = Math.min(1, 1600 / Math.max(bmp.width, bmp.height));
+        const c = document.createElement("canvas");
+        c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
+        const g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height); g.drawImage(bmp, 0, 0, c.width, c.height);
+        const url = c.toDataURL("image/jpeg", 0.8);
+        if (url.startsWith("data:image/jpeg")) { foto.push({ id: a.id, voce: a.voce, nome: a.nome, l: c.width, a: c.height, dati: url.split(",")[1] }); continue; }
+      } catch (e) { /* non decodificabile qui: resta separato */ }
+    }
+    separati.push(new File([blob], a.nome, { type: blob.type || a.tipo }));
+  }
+  return { foto, separati };
+}
+
+/* Testo breve dell'email: i dati sono nel PDF */
+function testoEmailBreve(p, commerciale) {
+  const R = costruisciRiepilogo(p);
+  const righe = ["Buongiorno,", `in allegato ${p.tipo === "sinistro" ? "la denuncia di sinistro" : "la richiesta di preventivo"} ${R.prodotto} per ${R.cliente}.`];
+  if (R.segnalazioni.length) { righe.push("", "Da verificare:"); R.segnalazioni.forEach(x => righe.push("- " + x.testo)); }
+  righe.push("", "Grazie", [commerciale.nome, commerciale.tel].filter(Boolean).join(" · "), AGENZIA.nome);
+  return righe.join("\n");
+}
+
+/* Email pronta (.eml) con allegati: Outlook classico, eM Client e altri la aprono come messaggio da inviare */
+async function creaEml(a, oggetto, testo, files) {
+  const b64 = s => { const u = new TextEncoder().encode(s); let x = ""; for (let i = 0; i < u.length; i += 0x8000) x += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000)); return btoa(x); };
+  const intest = s => /^[\x20-\x7e]*$/.test(s) ? s : `=?UTF-8?B?${b64(s)}?=`;
+  const righe76 = s => s.replace(/.{1,76}/g, "$&\r\n");
+  const conf = "----=_Bussola_" + Math.random().toString(36).slice(2);
+  let out = [`To: ${a}`, `Subject: ${intest(oggetto)}`, "X-Unsent: 1", "MIME-Version: 1.0", `Date: ${new Date().toUTCString().replace("GMT", "+0000")}`,
+    `Content-Type: multipart/mixed; boundary="${conf}"`, "", "This is a multi-part message in MIME format.", "",
+    `--${conf}`, "Content-Type: text/plain; charset=UTF-8", "Content-Transfer-Encoding: base64", "", righe76(b64(testo.replace(/\n/g, "\r\n")))].join("\r\n");
+  for (const f of files) {
+    const u = new Uint8Array(await f.arrayBuffer()); let x = "";
+    for (let i = 0; i < u.length; i += 0x8000) x += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000));
+    const n = f.name.replace(/"/g, "");
+    out += [``, `--${conf}`, `Content-Type: ${f.type || "application/octet-stream"}; name="${intest(n)}"`, "Content-Transfer-Encoding: base64",
+      `Content-Disposition: attachment; filename="${intest(n)}"`, "", righe76(btoa(x))].join("\r\n");
+  }
+  out += `\r\n--${conf}--\r\n`;
+  return new Blob([out], { type: "message/rfc822" });
 }
 
 /* ---- scrittura del file: oggetti, tabella xref, trailer ---- */
@@ -4045,6 +4109,10 @@ function vistaRiepilogo() {
   if (!p.destinatari) p.destinatari = destinatarioProposto(gruppo);
   const prof = Memoria.leggi("bussola.profilo", {});
   const condivisione = puoCondividereFile();
+  /* foto dentro il PDF (HEIC sul computer e PDF restano separati: stima, il conteggio esatto arriva all'invio) */
+  const heicPC = a => /heic|heif/i.test(a.tipo || "") && !suTelefono();
+  const nFoto = R.allegati.filter(a => /^image\//.test(a.tipo || "") && !heicPC(a)).length, nSep = R.allegati.length - nFoto;
+  fotoPronte(p);
   impostaBarra("Riepilogo e invio", titoloPratica(p), true, null);
   impostaAzioni(`<button class="btn secondario-largo" data-az="anteprima">Anteprima PDF</button>
     <button class="btn primario" data-az="inviato" ${p.invioTentato ? "" : "disabled"}>Ho inviato: chiudi la pratica</button>`);
@@ -4096,17 +4164,21 @@ function vistaRiepilogo() {
     <div class="campo">
       <div class="dom">Come inviare</div>
       ${condivisione
-        ? `<ol class="passi-invio"><li><b>Condividi</b> PDF e allegati e scegli la tua app di posta: l'indirizzo del backoffice viene copiato, incollalo nel destinatario.</li>
+        ? `<ol class="passi-invio"><li><b>Condividi</b> il PDF${nSep ? ` e ${nSep === 1 ? "l'allegato" : "gli allegati"}` : ""} e scegli la tua app di posta: l'indirizzo del backoffice viene copiato, incollalo nel destinatario.</li>
              <li>Poi torna qui e tocca <b>Ho inviato</b>: la pratica si cancella dal dispositivo.</li></ol>
-           <div class="bottoni-invio"><button class="btn primario" data-az="condividi">Condividi PDF e allegati</button>
+           ${nFoto ? `<p class="aiuto">${nFoto === 1 ? "La foto allegata è" : `Le ${nFoto} foto allegate sono`} dentro il PDF.</p>` : ""}
+           <div class="bottoni-invio"><button class="btn primario" data-az="condividi">Condividi PDF${nSep ? ` e ${nSep} allegat${nSep === 1 ? "o" : "i"}` : ""}</button>
              <button class="btn" data-az="email">Solo email con il testo</button></div>`
-        : `<ol class="passi-invio"><li><b>Scarica</b> il PDF${R.allegati.length ? " e gli allegati" : ""}: finiscono nella cartella Download.</li>
-             <li><b>Apri l'email</b> già compilata (destinatario, oggetto, testo) e trascina dentro i file scaricati.</li>
-             <li>Invia e torna qui: <b>Ho inviato</b> cancella la pratica dal dispositivo.</li></ol>
-           <div class="bottoni-invio"><button class="btn primario" data-az="scarica">Scarica PDF${R.allegati.length ? ` e ${R.allegati.length} allegat${R.allegati.length === 1 ? "o" : "i"}` : ""}</button>
-             <button class="btn" data-az="email">Apri email già compilata</button></div>
-           <details class="doc-utile" style="margin-top:10px"><summary>Il programma di posta non si apre? (posta via web)</summary>
-             <p class="aiuto">Apri la tua posta nel browser, crea un nuovo messaggio e incolla questi tre dati, poi allega i file scaricati.</p>
+        : `<ol class="passi-invio"><li><b>Scarica l'email pronta</b>: è un file con destinatario, oggetto, testo e PDF già allegato.</li>
+             <li><b>Aprila</b> dal riquadro dei download del browser: si apre il messaggio in Outlook o eM Client. Controlla e invia.</li>
+             <li>Torna qui: <b>Ho inviato</b> cancella la pratica dal dispositivo.</li></ol>
+           ${nFoto ? `<p class="aiuto">${nFoto === 1 ? "La foto allegata è" : `Le ${nFoto} foto allegate sono`} dentro il PDF.</p>` : ""}
+           <div class="bottoni-invio"><button class="btn primario" data-az="eml">Scarica email pronta</button></div>
+           <details class="doc-utile" style="margin-top:10px"><summary>L'email pronta non si apre come messaggio da inviare?</summary>
+             <p class="aiuto">Scarica il PDF${nSep ? " e gli allegati" : ""}, apri l'email già compilata e trascina dentro i file dal riquadro dei download.</p>
+             <div class="bottoni-msg"><button class="btn piccolo" data-az="scarica">Scarica PDF${nSep ? ` e ${nSep} allegat${nSep === 1 ? "o" : "i"}` : ""}</button>
+               <button class="btn piccolo" data-az="email">Apri email (senza allegati)</button></div>
+             <p class="aiuto" style="margin-top:10px">Posta usata dal browser: copia questi dati nel nuovo messaggio.</p>
              <div class="bottoni-msg"><button class="btn piccolo" data-copia="${esc(p.destinatari.join(", "))}" data-copia-nome="indirizzo del backoffice">Copia destinatario</button>
                <button class="btn piccolo" data-copia="${esc(oggettoEmail(p))}" data-copia-nome="oggetto">Copia oggetto</button>
                <button class="btn piccolo" data-az="copiaTestoEmail">Copia testo</button></div>
@@ -4151,37 +4223,54 @@ function scaricaBlob(blob, nome) {
   const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = nome;
   document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
 }
-async function fileAllegati(p) {
-  const out = [];
-  for (const a of costruisciRiepilogo(p).allegati) {
-    const b = await Allegati.leggi(a.id);
-    if (b) out.push(new File([b], a.nome, { type: b.type || a.tipo }));
-  }
-  return out;
+/* Foto e PDF preparati in anticipo (all'apertura del riepilogo): al tocco di «Condividi» il telefono
+   deve aprire subito il pannello, altrimenti il browser blocca la condivisione. */
+function fotoPronte(p) {
+  const chiave = p.id + ":" + costruisciRiepilogo(p).allegati.map(a => a.id).join(",");
+  if (!Stato.fotoPDF || Stato.fotoPDF.chiave !== chiave) Stato.fotoPDF = { chiave, prom: fotoPerPDF(p) };
+  return Stato.fotoPDF.prom;
+}
+async function fileInvio(p, pr) {
+  const { foto, separati } = await fotoPronte(p);
+  return { pdf: new File([creaPDF(p, pr, foto)], nomeFile(p, "pdf"), { type: "application/pdf" }), separati };
 }
 async function azioneInvio(tipo) {
   const p = Stato.pratica, pr = profiloValido(); if (!pr) return;
   const to = p.destinatari.join(",");
   if (tipo === "email") {
-    const url = `mailto:${to}?subject=${encodeURIComponent(oggettoEmail(p))}&body=${encodeURIComponent(testoEmail(p, pr, 1700))}`;
-    location.href = url;
-    return segnaInviato("Se non si è aperto nessun programma di posta, usa «Il programma di posta non si apre?» qui sotto. Ricorda di allegare i file scaricati.");
+    location.href = `mailto:${to}?subject=${encodeURIComponent(oggettoEmail(p))}&body=${encodeURIComponent(testoEmailBreve(p, pr))}`;
+    return segnaInviato("L'email si apre senza allegati: trascina dentro il PDF scaricato. Se non si apre nessun programma, usa «Il programma di posta non si apre?».");
   }
-  const pdf = new File([creaPDF(p, pr)], nomeFile(p, "pdf"), { type: "application/pdf" });
-  const allegati = await fileAllegati(p);
+  const { pdf, separati } = await fileInvio(p, pr);
+  const tutti = [pdf].concat(separati);
+  if (tipo === "eml") {
+    const eml = await creaEml(to, oggettoEmail(p), testoEmailBreve(p, pr), tutti);
+    const nome = nomeFile(p, "eml");
+    Stato.scaricati = [new File([eml], nome, { type: "message/rfc822" })];
+    scaricaBlob(eml, nome);
+    segnaInviato("");
+    const st = $("#statoInvio");
+    if (st) st.innerHTML = `<p>Scaricata <b>${esc(nome)}</b> nella cartella Download.</p>
+      <p><b>Aprila</b> (clic sul file nel riquadro dei download del browser, o doppio clic nella cartella): si apre il messaggio già pronto, con destinatario e ${tutti.length === 1 ? "PDF allegato" : tutti.length + " file allegati"}. Controlla e invia, poi torna qui.</p>
+      <p><button class="btn piccolo" data-riscarica="0">Scarica di nuovo</button></p>`;
+    return;
+  }
   if (tipo === "scarica") {
     scaricaBlob(pdf, pdf.name);
-    allegati.forEach((f, i) => setTimeout(() => scaricaBlob(f, f.name), 400 * (i + 1)));
+    separati.forEach((f, i) => setTimeout(() => scaricaBlob(f, f.name), 400 * (i + 1)));
     segnaInviato("");
-    const st = $("#statoInvio"); if (st) st.innerHTML = elencoScaricati([pdf].concat(allegati)) + `<p>Ora tocca <b>Apri email già compilata</b> e trascina i file nel messaggio.${allegati.length ? " Se il browser chiede di consentire più download, rispondi Consenti." : ""}</p>`;
+    const st = $("#statoInvio"); if (st) st.innerHTML = elencoScaricati(tutti) + `<p>Ora tocca <b>Apri email (senza allegati)</b> e trascina i file nel messaggio, anche direttamente dal riquadro dei download del browser.${separati.length ? " Se il browser chiede di consentire più download, rispondi Consenti." : ""}</p>`;
     return;
   }
   if (tipo === "condividi") {
     try { await navigator.clipboard.writeText(to); } catch (e) {}
     try {
-      await navigator.share({ files: [pdf].concat(allegati), title: oggettoEmail(p), text: `${oggettoEmail(p)}\nDestinatario: ${to}` });
-      segnaInviato(`Condiviso. Indirizzo copiato: ${to}`);
-    } catch (e) { if (e && e.name !== "AbortError") { const st = $("#statoInvio"); if (st) st.textContent = "Condivisione non riuscita: usa «Solo email» e allega il PDF a mano."; } }
+      await navigator.share({ files: tutti, title: oggettoEmail(p), text: testoEmailBreve(p, pr) });
+      segnaInviato(`Condiviso. Indirizzo del backoffice copiato: incollalo nel destinatario (${to}).`);
+    } catch (e) {
+      if (e && e.name === "AbortError") return;
+      const st = $("#statoInvio"); if (st) st.textContent = e && e.name === "NotAllowedError" ? "File pronti: tocca di nuovo «Condividi PDF»." : "Condivisione non riuscita: usa «Solo email con il testo» e allega il PDF a mano.";
+    }
   }
 }
 function filePrivacy(p, pr) {
@@ -4197,8 +4286,15 @@ async function copiaPrivacyCliente() {
     : filePrivacy(p, pr);
   if (!f) return;
   if (puoCondividereFile(f)) { try { await navigator.share({ files: [f], title: "Informativa privacy firmata" }); return; } catch (e) { if (e.name === "AbortError") return; } }
+  const ogg = (p.questionario === "dichiarazione" ? "Dichiarazione proposta personalizzata – " : "Informativa privacy firmata – ") + AGENZIA.nome;
+  const corpo = "Buongiorno,\nin allegato la copia del documento firmato.\n\nCordiali saluti\n" + [pr.nome, AGENZIA.nome].filter(Boolean).join("\n");
+  if (p.risposte.email) {
+    const nome = f.name.replace(/\.pdf$/, ".eml");
+    scaricaBlob(await creaEml(p.risposte.email, ogg, corpo, [f]), nome);
+    if (out) out.textContent = `Scaricata l'email pronta per il cliente (${nome}): aprila dal riquadro dei download, controlla e invia.`;
+    return;
+  }
   scaricaBlob(f, f.name);
-  if (p.risposte.email) location.href = `mailto:${encodeURIComponent(p.risposte.email)}?subject=${encodeURIComponent((p.questionario === "dichiarazione" ? "Dichiarazione proposta personalizzata – " : "Informativa privacy firmata – ") + AGENZIA.nome)}&body=${encodeURIComponent("Buongiorno,\nin allegato la copia del documento firmato.\n\nCordiali saluti\n" + [pr.nome, AGENZIA.nome].filter(Boolean).join("\n"))}`;
   if (out) out.textContent = `Scaricato ${f.name} nella cartella Download: allegalo all'email per il cliente.`;
 }
 function chiudiPratica() {
@@ -4375,12 +4471,16 @@ function collegaEventi() {
     if (b.dataset.az === "sinistro") { Stato.pratica = Pratiche.nuova("sinistro", "sinistro"); Stato.errori = {}; return vai("questionario"); }
     if (b.dataset.az === "compliance") return vai("schede", { tipo: "compliance" });
     if (b.dataset.az === "guida") return vai("schede", { tipo: "guida" });
-    if (b.dataset.az === "anteprima") { const pr = Memoria.leggi("bussola.profilo", {}); const w = window.open(URL.createObjectURL(creaPDF(Stato.pratica, pr)), "_blank"); if (!w) scaricaBlob(creaPDF(Stato.pratica, pr), nomeFile(Stato.pratica, "pdf")); return; }
-    if (["condividi", "scarica", "email"].includes(b.dataset.az)) return azioneInvio(b.dataset.az);
+    if (b.dataset.az === "anteprima") {
+      const pr = Memoria.leggi("bussola.profilo", {}), w = window.open("", "_blank");
+      fileInvio(Stato.pratica, pr).then(({ pdf }) => { const u = URL.createObjectURL(pdf); if (w) w.location.href = u; else scaricaBlob(pdf, pdf.name); });
+      return;
+    }
+    if (["condividi", "scarica", "email", "eml"].includes(b.dataset.az)) return azioneInvio(b.dataset.az);
     if (b.dataset.riscarica !== undefined) { const f = (Stato.scaricati || [])[+b.dataset.riscarica]; if (f) scaricaBlob(f, f.name); return; }
     if (b.dataset.az === "copiaTestoEmail") {
       const pr = Memoria.leggi("bussola.profilo", {}), out = b.closest("details").querySelector("[data-esito-copia]");
-      (navigator.clipboard ? navigator.clipboard.writeText(testoEmail(Stato.pratica, pr)) : Promise.reject()).then(
+      (navigator.clipboard ? navigator.clipboard.writeText(testoEmailBreve(Stato.pratica, pr)) : Promise.reject()).then(
         () => { out.textContent = "Copiato il testo dell'email."; segnaInviato(""); }, () => { out.textContent = "Copia non riuscita."; });
       return;
     }

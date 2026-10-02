@@ -1,6 +1,6 @@
 # Bussola · Lloyd Varesino
 
-**Versione 0.17** · strumento interno della rete commerciale
+**Versione 0.18** · strumento interno della rete commerciale
 
 Bussola guida il commerciale nella raccolta dei dati per i preventivi, nella denuncia dei sinistri e negli adempimenti di compliance. Alla fine prepara un riepilogo in PDF da inviare al backoffice giusto.
 
@@ -54,8 +54,9 @@ La Guida contiene anche le coordinate bancarie dell'agenzia (con i tasti per cop
 1. Il commerciale controlla il riepilogo e sceglie il destinatario. L'app propone i destinatari a turno per distribuire il lavoro.
 2. L'app crea il PDF con logo, dati, segnalazioni e allegati.
 3. L'invio cambia in base al dispositivo:
-   - **telefono e tablet:** si condividono PDF e allegati con l'app di posta;
-   - **computer (Windows e Mac):** si scaricano i file nella cartella Download (con il tasto per riscaricarli) e si apre l'email già compilata, in cui trascinare i file. Se il programma di posta non si apre (posta usata dal browser), ci sono i tasti per copiare destinatario, oggetto e testo.
+   - **telefono e tablet (Android, iPhone):** si condivide il PDF con l'app di posta (Outlook, Gmail, Mail, eM Client); l'indirizzo del backoffice viene copiato da incollare nel destinatario;
+   - **computer:** si scarica l'**email pronta** (file .eml) con destinatario, oggetto, testo breve e PDF già allegato; aperta dal riquadro dei download, Outlook classico (Office 365, 2021 e successivi) ed eM Client mostrano il messaggio da inviare. Come riserva: scarico del PDF ed email già compilata in cui trascinarlo, oppure copia di destinatario, oggetto e testo per la posta via browser.
+   Le foto allegate (documenti, libretto, foto del danno) finiscono dentro il PDF, una per pagina e compresse; i PDF allegati restano file separati.
 4. Si tocca **Ho inviato**: la pratica e gli allegati vengono cancellati dal dispositivo.
 
 Le pratiche non inviate si cancellano da sole dopo 7 giorni. Si possono eliminare prima con il cestino accanto alla pratica (due tocchi, per evitare errori) o con «Elimina questa pratica» in fondo al questionario. Dopo l'invio, un pulsante permette di aprire una nuova esigenza per lo stesso cliente con i dati già compilati. Il pulsante con la casetta, in alto a destra, riporta alla home: la pratica iniziata resta salvata, quella aperta e lasciata vuota non viene conservata.
@@ -129,6 +130,12 @@ Le prove nel browser richiedono Playwright e un server locale avviato dentro `di
 ---
 
 ## Versioni
+
+### 0.18 — 02/10/2026
+- Foto allegate unite al PDF del riepilogo, una pagina ciascuna, ridotte e compresse. I PDF allegati restano separati.
+- Computer: «Scarica email pronta» (.eml) con il PDF già allegato, per Outlook classico ed eM Client; scarico del PDF ed email senza allegati come riserva.
+- Testo dell'email breve (i dati sono nel PDF), con le eventuali segnalazioni da verificare.
+- Copia al cliente di privacy e dichiarazione dal computer: email pronta indirizzata al cliente.
 
 ### 0.17 — 02/10/2026
 - Invio dal computer: niente più pannello di condivisione (su Windows spesso non offre la posta e i file non restano da nessuna parte). Si scaricano i file nella cartella Download, con l'elenco e il tasto «Scarica di nuovo», poi si apre l'email già compilata.
