@@ -295,7 +295,7 @@ body.esperto .campo > .aiuto, body.esperto .perche, body.esperto .testo-spunta s
 const AGENZIA = {
   nome: "Lloyd Varesino",
   app: "Bussola",
-  versione: "0.14",       // scritta da ricomponi.py (file VERSIONE)
+  versione: "0.15",       // scritta da ricomponi.py (file VERSIONE)
   dataBuild: "02/10/2026",
   giorniConservazioneBozze: 7   // le bozze non inviate si cancellano da sole dopo N giorni
 };
@@ -327,8 +327,10 @@ const ALBERO = [
       { id: "pet",       nome: "Pet", nota: "Cani e gatti", questionario: "pet" },
       { id: "viaggio",   nome: "Viaggio", nota: "Assistenza, spese mediche, annullamento", questionario: "viaggio" } ] },
     { id: "pf-vita", nome: "Vita investimento", invio: "vita", figli: [
-      { id: "pac",       nome: "Piano di accumulo", nota: "Con analisi patrimoniale", questionario: "vita" },
-      { id: "fpens",     nome: "Fondo pensione", nota: "Con analisi patrimoniale", questionario: "vita" } ] } ] },
+      { id: "pf-analisi", nome: "Analisi patrimoniale", nota: "Piano di accumulo, fondo pensione", figli: [
+        { id: "pac",       nome: "Piano di accumulo", nota: "Con analisi patrimoniale", questionario: "vita" },
+        { id: "fpens",     nome: "Fondo pensione", nota: "Con analisi patrimoniale", questionario: "vita" } ] },
+      { id: "dichiarazione", nome: "Dichiarazione proposta personalizzata", nota: "Artt. 58-59 Reg. IVASS 40/2018, con firme", questionario: "dichiarazione" } ] } ] },
   { id: "az", nome: "Azienda", nota: "Imprese, professionisti, enti", figli: [
     { id: "az-auto", nome: "Auto", nota: "Veicoli aziendali", invio: "auto", questionario: "auto" },
     { id: "az-re", nome: "Rami elementari", nota: "Patrimonio, cantieri, persone, cyber", invio: "danni", figli: [
@@ -708,7 +710,7 @@ const PASSO_CHIUSURA = { id: "chiusura", titolo: "Documenti e compliance", sotto
         ...CONSENSI_PRIVACY.map((c, i) => ({ id: c.id, tipo: "consenso", obbl: true, se: r => r.privacyModo === "app", dom: `Consenso ${i + 1}: ${c.testo}`,
           avvisoSe: c.necessario ? (v => v === "no" ? { livello: "rosso", testo: "Senza questo consenso l'agenzia non può gestire la pratica." } : null) : undefined })),
         { id: "firmaPrivacy", tipo: "firma", obbl: true, se: r => r.privacyModo === "app", dom: "Firma del cliente",
-          msgObbl: "Fai firmare il cliente nel riquadro",
+          msgObbl: "Fai firmare il cliente nel riquadro", legame: sceltePrivacy, documento: INFORMATIVA_PRIVACY.versione,
           verifica: (v, r) => v && v.scelte !== sceltePrivacy(r) ? "Le scelte sono cambiate dopo la firma: fai firmare di nuovo" : null },
         { id: "adeguatezza", tipo: "sino", obbl: true, se: r => invioPer(r._prodotto) === "vita" && r._prodotto !== "protection", dom: "Questionario di adeguatezza (IBIP) compilato con il cliente?",
           aiuto: "L'analisi patrimoniale è uno strumento orientativo: non sostituisce la valutazione di adeguatezza prevista per i prodotti d'investimento assicurativi.",
@@ -1733,6 +1735,59 @@ QUESTIONARI.protection = {
   ]
 };
 
+/* ---- 23c_dati_dichiarazione.js ---- */
+/* =====================================================================
+   DICHIARAZIONE DI PERSONALIZZAZIONE DELLA PROPOSTA (vita, Reg. IVASS 40/2018 artt. 58-59).
+   Testo del modulo dell'agenzia; firme di cliente e intermediario sul dispositivo.
+   ===================================================================== */
+const DICHIARAZIONE_PERS = {
+  titolo: "Dichiarazione di personalizzazione della proposta assicurativa",
+  premessa: "in qualità di contraente, dichiara di essere stato informato, ai sensi del Regolamento IVASS n. 40/2018, art. 58 e 59, che:",
+  punti: [
+    "la proposta di contratto di assicurazione vita che gli è stata presentata è personalizzata in base alle proprie esigenze, caratteristiche e obiettivi finanziari, emersi nel corso del processo di consulenza;",
+    "il prodotto consigliato è stato selezionato a seguito di un'analisi comparativa delle possibili alternative disponibili, sulla base dei mandati vita di agenzia (UNIPOL Spa, AXA Assicurazioni Spa, Helvetia Vita) tenuto conto delle proprie priorità di investimento, propensione al rischio, orizzonte temporale e preferenze specifiche."
+  ],
+  compagnie: ["UNIPOL Spa", "AXA Assicurazioni Spa", "Helvetia Vita"],
+  motivi: [
+    ["fondi", "dispone di una maggiore varietà di fondi rispetto ad altri prodotti simili, consentendo una maggiore diversificazione del portafoglio;"],
+    ["costi", "presenta costi di caricamento e gestione inferiori rispetto a prodotti concorrenti;"],
+    ["algoritmo", "offre la possibilità di un'asset allocation automatica gestita tramite algoritmo della compagnia, coerente con il profilo di rischio del cliente;"],
+    ["performance", "consente di accedere a fondi interni o gestioni separate con storiche performance superiori alla media di mercato;"],
+    ["versamenti", "garantisce una maggiore flessibilità nei versamenti (liberi, programmati o aggiuntivi);"],
+    ["switch", "include opzioni di switching gratuiti o agevolati, utili in fase di ribilanciamento;"],
+    ["accessorie", "offre coperture accessorie opzionali (es. garanzie decesso, LTC, esonero dal pagamento in caso di invalidità) rispondenti alle esigenze espresse dal cliente;"],
+    ["fiscale", "risulta più adatto al target fiscale e patrimoniale del cliente (es. trasmissibilità, esenzione imposte);"],
+    ["esg", "criteri di sostenibilità ESG in linea con i principi del cliente;"],
+    ["altro", "altri motivi specifici:"]
+  ]
+};
+const legameDichiarazione = r => [r.numProposta, r.compagniaVita, (r.motiviProposta || []).slice().sort().join(","), r.motivoAltro || ""].join("|");
+const verificaFirmaDich = (v, r) => v && v.scelte !== legameDichiarazione(r) ? "I dati sono cambiati dopo la firma: fai firmare di nuovo" : null;
+
+QUESTIONARI.dichiarazione = {
+  titolo: "Dichiarazione proposta personalizzata",
+  passi: [
+    PASSO_CLIENTE,
+    { id: "dichiarazioneDati", titolo: "Dichiarazione", sotto: "Reg. IVASS 40/2018, artt. 58 e 59: perché è stato consigliato proprio questo prodotto.", campi: [
+      { id: "testoDich", tipo: "info", dom: "Il contraente dichiara di essere stato informato che", elenco: DICHIARAZIONE_PERS.punti },
+      { id: "numProposta", tipo: "testo", obbl: true, maiuscolo: true, dom: "Numero della proposta perfezionata" },
+      { id: "compagniaVita", tipo: "scelta", obbl: true, dom: "Compagnia mandante", opzioni: DICHIARAZIONE_PERS.compagnie.map(t => ({ v: t, t })) },
+      { id: "motiviProposta", tipo: "multipla", verticale: true, obbl: true, dom: "Motivazione della proposta di prodotto assicurativo consigliato",
+        opzioni: DICHIARAZIONE_PERS.motivi.map(([v, t]) => ({ v, t: t.replace(/[;:]$/, "") })) },
+      { id: "motivoAltro", tipo: "nota", obbl: true, se: r => (r.motiviProposta || []).includes("altro"), dom: "Altri motivi specifici" },
+      { id: "luogoDich", tipo: "testo", obbl: true, dom: "Luogo" }
+    ]},
+    { id: "firmeDich", titolo: "Firme", sotto: "Prima il cliente, poi l'intermediario.", campi: [
+      { id: "firmaClienteDich", tipo: "firma", obbl: true, dom: "Firma del cliente", msgObbl: "Fai firmare il cliente nel riquadro",
+        legame: legameDichiarazione, documento: "Dichiarazione proposta personalizzata", verifica: verificaFirmaDich },
+      { id: "firmaIntermDich", tipo: "firma", obbl: true, dom: "Firma dell'intermediario", msgObbl: "Firma tu nel riquadro",
+        legame: legameDichiarazione, documento: "Dichiarazione proposta personalizzata", verifica: verificaFirmaDich },
+      { id: "noteDich", tipo: "nota", dom: "Note per il backoffice" }
+    ]}
+  ]
+};
+DOC_UTILI.dichiarazione = "Proposta firmata, se non è già in agenzia";
+
 /* ---- 24_dati_sinistri.js ---- */
 /* =====================================================================
    SINISTRI: un unico percorso per tutti i rami.
@@ -2105,27 +2160,66 @@ DOC_UTILI.cyber = "Polizza cyber in corso, certificazioni (es. ISO 27001), ultim
    i testi sono schede di promemoria, non pareri.
    ===================================================================== */
 
+/* Compliance: regole tratte dal Fascicolo compliance addetto dell'agenzia (ed. 2025.01 e 2026.01,
+   a cura di K Partners) e dai kit delle compagnie. Promemoria operativi, non pareri. */
+const COMPLIANCE_AGENZIA = { rui: "A000561068 del 21-11-2016", mail: "mail@lloydvaresino.it", tel: "0332 289520", fonte: "Fascicolo compliance addetto, ed. 2026.01" };
 const COMPLIANCE = [
-  { titolo: "Prima di proporre un contratto", voci: [
-    "Consegna il MUP (Modello Unico Precontrattuale) con le informazioni sull'intermediario, prima della sottoscrizione (Reg. IVASS 40/2018).",
-    "Raccogli le esigenze del cliente e verifica che la proposta sia coerente con esse (demands & needs).",
-    "Consegna il set informativo del prodotto: DIP, DIP aggiuntivo, condizioni di assicurazione (Reg. IVASS 41/2018).",
-    "Fai firmare l'informativa privacy e i consensi; per i dati sanitari serve il consenso esplicito."
+  { titolo: "Prima di proporre un prodotto", voci: [
+    "Fai il corso di formazione sul prodotto prima di distribuirlo (procedura POG).",
+    "Compila i questionari per verificare che il cliente rientri nel mercato di riferimento del prodotto e che il contratto sia coerente con le sue esigenze.",
+    "Prodotti d'investimento assicurativi (IBIP): valutazione di adeguatezza o appropriatezza prima della proposta.",
+    "Consegna il MUP e la documentazione precontrattuale (DIP, DIP aggiuntivo, condizioni) prima della firma (Reg. IVASS 40/2018 e 41/2018).",
+    "Proposta vita personalizzata: fai firmare la dichiarazione di personalizzazione (artt. 58-59 Reg. IVASS 40/2018), anche dall'app."
   ]},
-  { titolo: "Prodotti vita e d'investimento (IBIP)", voci: [
-    "Valutazione di adeguatezza con il questionario della compagnia, prima della proposta.",
-    "Adeguata verifica antiriciclaggio del cliente e del titolare effettivo (D.Lgs. 231/2007).",
-    "L'analisi patrimoniale dell'app è uno strumento orientativo: non sostituisce l'adeguatezza e non è una raccomandazione personalizzata."
+  { titolo: "Identificazione del cliente e firma OTP", voci: [
+    "Il riconoscimento del cliente per la firma elettronica avanzata (OTP) si fa solo di persona; a distanza solo con il sistema di videoregistrazione della compagnia. Non basta il documento ricevuto via email.",
+    "Email e cellulare inseriti devono essere del contraente: è vietato mettere i propri. È un reato di falso e una responsabilità personale.",
+    "Consegna al cliente le condizioni del servizio OTP della compagnia.",
+    "Porta in agenzia il modulo di adesione firmato con la copia del documento d'identità."
   ]},
-  { titolo: "Dati del cliente", voci: [
-    "Le pratiche restano solo su questo dispositivo e si cancellano dopo l'invio o dopo 7 giorni.",
-    "Non inoltrare le email della pratica a indirizzi diversi da quelli del backoffice.",
-    "Documenti d'identità e dati sanitari: allegali solo alla pratica che li richiede."
+  { titolo: "Antiriciclaggio", voci: [
+    "Identifica e verifica cliente, beneficiario, titolari effettivi ed esecutore.",
+    "Raccogli le informazioni e i documenti che la compagnia chiede per valutare il rischio del cliente e conservali come indicato dalla compagnia.",
+    "Tieni sotto controllo il comportamento del cliente nel tempo, anche alla liquidazione, e segnala all'agenzia ogni anomalia.",
+    "Riferimenti: D.Lgs. 231/2007, Reg. IVASS 44/2019, procedura AML dell'agenzia."
+  ], link: [{ t: "Procedura AML (rev. 5)", url: "https://www.kpartners.it/wp-content/uploads/2026/02/AML-rev.-5.pdf" }] },
+  { titolo: "Incasso dei premi", voci: [
+    "Mezzi ammessi: assegni non trasferibili intestati alla compagnia o all'intermediario in quanto tale; bonifici e pagamenti elettronici a favore degli stessi.",
+    "Contanti: solo per RC auto e garanzie accessorie dello stesso veicolo, e per gli altri rami danni fino a 750 € all'anno per contratto. Limite generale per il contante: 4.999,99 € per operazione.",
+    "Puoi incassare su un tuo conto solo se è un conto separato (art. 117 D.Lgs. 209/2005), autorizzato dall'agenzia e intestato con la dicitura «intermediario assicurativo».",
+    "Versa subito sul conto separato i premi ricevuti. Senza conto separato non puoi incassare sul tuo conto e poi fare il bonifico all'agenzia."
   ]},
-  { titolo: "Dopo la sottoscrizione", voci: [
-    "Archivia proposta firmata, MUP, adeguatezza e privacy secondo le procedure dell'agenzia.",
-    "Registra eventuali reclami nel registro reclami entro i tempi previsti."
-  ]}
+  { titolo: "Privacy e riservatezza", voci: [
+    "Tratta solo i dati che servono e non comunicarli a nessuno senza autorizzazione.",
+    "Documenti con dati sanitari (infortuni, malattia, vita): mai lasciati in vista, conservati sotto chiave.",
+    "Raccogli sempre informativa e consensi del cliente; comunicazioni commerciali a distanza solo con il suo consenso.",
+    "Una richiesta di un cliente sui suoi dati (accesso, cancellazione…) va girata subito all'agenzia, entro 3 giorni.",
+    "Una violazione di dati (smarrimento, accesso non autorizzato, email sbagliata) va segnalata subito all'agenzia per iscritto, e comunque entro 72 ore."
+  ]},
+  { titolo: "Sicurezza informatica", voci: [
+    "Le credenziali sono personali: non darle a nessuno, nemmeno ai colleghi.",
+    "Password di almeno 8 caratteri, cambiata ogni 3 mesi, senza riferimenti a te (nome, data di nascita, codice fiscale, targa).",
+    "Prima di aprire un allegato controlla il mittente: indirizzi strani, errori di scrittura e toni allarmistici sono segnali di truffa.",
+    "Antivirus attivo anche su PC e telefono personali usati per lavoro. L'email aziendale si usa solo per lavoro."
+  ]},
+  { titolo: "Fatture di consulenza, siti e social", voci: [
+    "Prima di emettere una fattura di consulenza avvisa l'agenzia: va indicata nell'informativa precontrattuale e serve una raccomandazione personalizzata.",
+    "Sito internet per promuovere l'attività: serve l'autorizzazione preventiva dell'agenzia, che fa la comunicazione all'IVASS.",
+    "Social: indica numero RUI, la frase «soggetto a controllo IVASS» e il link al RUI; quando parli di prodotti aggiungi «informazione pubblicitaria – prima dell'adesione leggere il fascicolo informativo disponibile sul sito della compagnia»."
+  ]},
+  { titolo: "Collaboratori", voci: [
+    "Chi lavora con te va comunicato prima all'agenzia, che lo iscrive al RUI.",
+    "Un collaboratore non comunicato non può fare nulla, nemmeno supporto: sarebbe esercizio abusivo dell'attività.",
+    "Per essere coperti dalla RC professionale i collaboratori devono avere un regolare contratto."
+  ], link: [{ t: "Visura RUI", url: "https://www.kpartners.it/visura-rui/" }] },
+  { titolo: "Normativa e procedure di riferimento", voci: [
+    "D.Lgs. 209/2005 (Codice delle assicurazioni private); Reg. IVASS 40/2018 (distribuzione), 41/2018 (informativa e prodotti); regole sulla gestione dei reclami.",
+    "Circolari delle compagnie mandanti: da leggere regolarmente sulle loro intranet. Codice etico e modello organizzativo (D.Lgs. 231/2001) sui siti delle compagnie."
+  ], link: [{ t: "Politica e regolamento aziendale", url: "https://www.kpartners.it/wp-content/uploads/2026/02/VERBALE-rev.-8.pdf" },
+            { t: "Procedura POG (rev. 5)", url: "https://www.kpartners.it/wp-content/uploads/2026/02/POG-rev.-5.pdf" }] },
+  { titolo: "Segnalazione di violazioni (whistleblowing)", voci: [
+    "Per segnalare violazioni (D.Lgs. 24/2023) c'è una procedura dedicata, gestita dal responsabile esterno indicato dall'agenzia."
+  ], link: [{ t: "Procedura di segnalazione", url: "https://www.kpartners.it/segnalazione-delle-violazioni/" }] }
 ];
 
 const GUIDA = [
@@ -3312,16 +3406,23 @@ function creaPDF(p, commerciale) {
     titoloSezione(`Allegati (${R.allegati.length})`);
     for (const a of R.allegati) coppia(a.voce, `${a.nome} · ${Math.max(1, Math.round(a.dim / 1024))} KB`);
   }
-  spazio(40); y -= 14;
-  for (const t of pdfACapo("Documento generato dall'app Bussola per uso interno dell'agenzia. Dopo l'invio la pratica viene cancellata dal dispositivo del commerciale.", LARGH, false, 8))
-    { testo(t, M, y, false, 8, GRIGIO); y -= 10; }
+  /* nota finale solo se c'è posto: non apre una pagina quasi vuota */
+  if (y - 34 > M + 20) {
+    y -= 14;
+    for (const t of pdfACapo("Documento generato dall'app Bussola per uso interno dell'agenzia. Dopo l'invio la pratica viene cancellata dal dispositivo del commerciale.", LARGH, false, 8))
+      { testo(t, M, y, false, 8, GRIGIO); y -= 10; }
+  }
 
   /* in coda: informativa privacy firmata nell'app (stesso documento per il backoffice) */
   let immagini = {};
   const rp = p.risposte;
   if (rp.privacyModo === "app" && rp.firmaPrivacy && rp.firmaPrivacy.dati) {
     const X = paginePrivacy(rp, commerciale);
-    pagine.push(...X.pagine); immagini = X.immagini;
+    pagine.push(...X.pagine); Object.assign(immagini, X.immagini);
+  }
+  if (p.questionario === "dichiarazione") {
+    const X = pagineDichiarazione(rp, commerciale);
+    pagine.push(...X.pagine); Object.assign(immagini, X.immagini);
   }
   /* piè di pagina con numerazione */
   pagine.forEach((o, i) => {
@@ -3466,6 +3567,61 @@ function creaPrivacyPDF(p, commerciale) {
   return scriviPDF(X.pagine, r.nome ? `Privacy - ${r.nome}` : "Informativa privacy Lloyd Varesino", X.W, X.H, X.immagini);
 }
 
+/* ---- dichiarazione di personalizzazione della proposta (vita): pagina come il modulo dell'agenzia ---- */
+function pagineDichiarazione(r, commerciale) {
+  const D = DICHIARAZIONE_PERS, v = r || {}, FC = v.firmaClienteDich && v.firmaClienteDich.dati ? v.firmaClienteDich : null, FI = v.firmaIntermDich && v.firmaIntermDich.dati ? v.firmaIntermDich : null;
+  const W = 595.28, H = 841.89, M = 56, LARGH = W - 2 * M, BLU = "0.161 0.302 0.584", GRIGIO = "0.36 0.40 0.45", NERO = "0.12 0.12 0.12";
+  const ops = []; let y = H - M;
+  const testo = (t, x, yy, b, corpo, col) => { if (t) ops.push(`BT /${b ? "F2" : "F1"} ${corpo} Tf ${col || NERO} rg ${x.toFixed(2)} ${yy.toFixed(2)} Td (${pdfEsc(t)}) Tj ET`); };
+  const linea = (x1, yy, x2) => ops.push(`0.55 0.58 0.62 RG 0.6 w ${x1} ${yy.toFixed(2)} m ${x2} ${yy.toFixed(2)} l S`);
+  const par = (t, b, corpo, rientro, col) => { for (const riga of pdfACapo(t, LARGH - (rientro || 0), b, corpo)) { testo(riga, M + (rientro || 0), y - corpo, b, corpo, col); y -= corpo + 3.5; } y -= 4; };
+  if (LOGO_JPG) ops.push(`q 80 0 0 50 ${M} ${y - 50} cm /Logo Do Q`);
+  y -= 70;
+  par(D.titolo, true, 12.5, 0, BLU);
+  y -= 4;
+  testo("Il sottoscritto/a", M, y - 10, false, 10);
+  if (v.nome) testo(v.nome, M + 90, y - 10, true, 10.5); else linea(M + 90, y - 12, W - M);
+  y -= 22;
+  par(D.premessa, false, 10);
+  for (const p of D.punti) par("- " + p, false, 10, 6);
+  y -= 4;
+  testo("Numero proposta perfezionata:", M, y - 10, false, 10);
+  if (v.numProposta) testo(String(v.numProposta).toUpperCase(), M + 150, y - 10, true, 10.5); else linea(M + 150, y - 12, M + 280);
+  testo("Compagnia mandante:", M + 295, y - 10, false, 10);
+  if (v.compagniaVita) testo(v.compagniaVita, M + 400, y - 10, true, 10); else linea(M + 400, y - 12, W - M);
+  y -= 30;
+  par("Motivazione della proposta di prodotto assicurativo consigliato", true, 10.5, 0, BLU);
+  const scelti = v.motiviProposta || [];
+  for (const [k, t] of D.motivi) {
+    const x = scelti.includes(k);
+    par(`[${x ? "X" : " "}]  ${t}${k === "altro" && v.motivoAltro ? " " + v.motivoAltro : ""}`, x, 9.5, 6);
+    if (k === "altro" && !v.motivoAltro) { linea(M + 120, y + 6, W - M); y -= 4; }
+  }
+  y -= 14;
+  const quando = FC ? new Date(FC.quando) : null;
+  testo("Luogo e data:", M, y - 10, false, 10);
+  if (v.luogoDich || quando) testo([v.luogoDich, quando && quando.toLocaleDateString("it-IT")].filter(Boolean).join(", "), M + 75, y - 10, true, 10); else linea(M + 75, y - 12, M + 260);
+  y -= 34;
+  const firma = (etichetta, F, nome) => {
+    testo(etichetta, M, y - 10, false, 10);
+    if (F) { const larg = 200, alt = larg * F.a / F.l; ops.push(`q ${larg} 0 0 ${alt.toFixed(2)} ${M + 140} ${(y - 6 - alt).toFixed(2)} cm /${nome} Do Q`); y -= Math.max(alt, 20) + 14; }
+    else { linea(M + 140, y - 12, M + 360); y -= 34; }
+  };
+  firma("Firma del cliente:", FC, "FirmaCli");
+  firma("Firma dell'intermediario:", FI, "FirmaInt");
+  if (FC) {
+    y -= 6;
+    par(`Firme elettroniche semplici raccolte con l'app ${AGENZIA.app} il ${quando.toLocaleString("it-IT", { dateStyle: "short", timeStyle: "short" })}` +
+      (commerciale && commerciale.nome ? ` sul dispositivo di ${commerciale.nome}` : "") + ` (${AGENZIA.nome}).` + (FC.impronta ? ` Impronta di controllo (SHA-256): ${FC.impronta}` : ""), false, 7.5, 0, GRIGIO);
+  }
+  const immagini = {}; if (FC) immagini.FirmaCli = FC; if (FI) immagini.FirmaInt = FI;
+  return { pagine: [ops], immagini, W, H, M };
+}
+function creaDichiarazionePDF(p, commerciale) {
+  const r = p ? p.risposte : null, X = pagineDichiarazione(r, commerciale);
+  return scriviPDF(X.pagine, "Dichiarazione proposta personalizzata" + (r && r.nome ? " - " + r.nome : ""), X.W, X.H, X.immagini);
+}
+
 /* ---- 40_interfaccia.js ---- */
 /* =====================================================================
    INTERFACCIA: schermate, disegno dei campi, navigazione.
@@ -3551,7 +3707,7 @@ function vistaHome() {
         ${ICONE.freccia}
       </button>
       <button class="tessera" data-az="sinistro"><span class="ico rosso">${ICONE.sinistro}</span><span><b>Sinistro</b><small>Dati per aprire la pratica</small></span></button>
-      <button class="tessera" data-az="compliance"><span class="ico verde">${ICONE.compliance}</span><span><b>Compliance</b><small>MUP, privacy, adeguatezza</small></span></button>
+      <button class="tessera" data-az="compliance"><span class="ico verde">${ICONE.compliance}</span><span><b>Compliance</b><small>Regole, moduli, POG</small></span></button>
       <a class="tessera" href="${esc(GESTIONALE.link)}" target="_blank" rel="noopener" style="grid-column:1 / -1;min-height:0;flex-direction:row;align-items:center;text-decoration:none;color:inherit">
         <span class="ico blu">${ICONE.preventivo}</span><span style="flex:1"><b>${esc(GESTIONALE.nome)}</b><small>Apri il gestionale</small></span>${ICONE.freccia}</a>
       <button class="tessera" data-az="guida" style="grid-column:1 / -1;min-height:0;flex-direction:row;align-items:center">
@@ -3690,10 +3846,10 @@ async function salvaFirma(id) {
   const cv = document.querySelector(`canvas[data-firma="${id}"]`), r = Stato.pratica.risposte;
   if (!cv || cv.dataset.tracciata !== "1") { Stato.errori[id] = "Il riquadro è vuoto: fai firmare il cliente"; return vistaQuestionario(); }
   const dati = cv.toDataURL("image/jpeg", 0.85).split(",")[1];
-  const scelte = sceltePrivacy(r), quando = new Date().toISOString();
+  const campo = trovaCampo(id), scelte = campo && campo.legame ? campo.legame(r) : "", quando = new Date().toISOString();
   let impronta = "";
   try {
-    const testo = JSON.stringify({ versione: INFORMATIVA_PRIVACY.versione, cliente: r.nome, cf: r.cf || r.piva, scelte, quando });
+    const testo = JSON.stringify({ documento: campo && campo.documento ? valore(campo.documento, r) : "", cliente: r.nome, cf: r.cf || r.piva, scelte, quando });
     const h = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(testo));
     impronta = Array.from(new Uint8Array(h)).map(b => b.toString(16).padStart(2, "0")).join("");
   } catch (e) {}
@@ -3927,6 +4083,11 @@ function vistaRiepilogo() {
       </div>
       <div class="errore" id="erroreProfilo"></div>
     </div>
+    ${p.questionario === "dichiarazione" && p.risposte.firmaClienteDich ? `<div class="campo">
+      <div class="dom">Dichiarazione firmata</div>
+      <div class="aiuto">La dichiarazione con le firme è in fondo al PDF per il backoffice. Puoi mandarne una copia al cliente.</div>
+      <div class="bottoni-msg"><button class="btn" data-az="privacyCliente">Copia al cliente</button></div>
+      <div class="stato-file" id="statoPrivacy"></div></div>` : ""}
     ${p.risposte.privacyModo === "app" && p.risposte.firmaPrivacy ? `<div class="campo">
       <div class="dom">Privacy firmata</div>
       <div class="aiuto">L'informativa con i consensi e la firma è in fondo al PDF per il backoffice. Puoi mandarne una copia anche al cliente.</div>
@@ -4008,11 +4169,14 @@ function filePrivacy(p, pr) {
 }
 /* Copia dell'informativa firmata per il cliente: condivisione (telefono, Mac) o download + email già compilata */
 async function copiaPrivacyCliente() {
-  const p = Stato.pratica, pr = Memoria.leggi("bussola.profilo", {}), f = filePrivacy(p, pr), out = $("#statoPrivacy");
+  const p = Stato.pratica, pr = Memoria.leggi("bussola.profilo", {}), out = $("#statoPrivacy");
+  const f = p.questionario === "dichiarazione"
+    ? new File([creaDichiarazionePDF(p, pr)], nomeFile(p, "pdf").replace(/^[^_]+_/, "Dichiarazione_"), { type: "application/pdf" })
+    : filePrivacy(p, pr);
   if (!f) return;
   if (navigator.canShare && navigator.canShare({ files: [f] })) { try { await navigator.share({ files: [f], title: "Informativa privacy firmata" }); return; } catch (e) { if (e.name === "AbortError") return; } }
   scaricaBlob(f, f.name);
-  if (p.risposte.email) location.href = `mailto:${encodeURIComponent(p.risposte.email)}?subject=${encodeURIComponent("Informativa privacy firmata – " + AGENZIA.nome)}&body=${encodeURIComponent("Buongiorno,\nin allegato la copia dell'informativa privacy firmata e dei consensi espressi.\n\nCordiali saluti\n" + [pr.nome, AGENZIA.nome].filter(Boolean).join("\n"))}`;
+  if (p.risposte.email) location.href = `mailto:${encodeURIComponent(p.risposte.email)}?subject=${encodeURIComponent((p.questionario === "dichiarazione" ? "Dichiarazione proposta personalizzata – " : "Informativa privacy firmata – ") + AGENZIA.nome)}&body=${encodeURIComponent("Buongiorno,\nin allegato la copia del documento firmato.\n\nCordiali saluti\n" + [pr.nome, AGENZIA.nome].filter(Boolean).join("\n"))}`;
   if (out) out.textContent = `Scaricato ${f.name}: allegalo all'email per il cliente.`;
 }
 function chiudiPratica() {
@@ -4067,9 +4231,40 @@ function vistaSchede() {
   impostaAzioni(null);
   $("#vista").innerHTML = `
     <div class="passo-titolo">${d.tipo === "compliance" ? "Adempimenti dell'intermediario" : "Regole e buone pratiche"}</div>
-    <p class="passo-sotto">Bozza da validare in agenzia: sono promemoria, non pareri.</p>
-    <div class="schede">${d.tipo === "guida" ? htmlAgenzia() : ""}${schede.map(s => `<div class="campo"><div class="dom">${esc(s.titolo)}</div>
-      <ul class="lista-schede">${s.voci.map(v => `<li>${esc(v)}</li>`).join("")}</ul></div>`).join("")}</div>`;
+    <p class="passo-sotto">${d.tipo === "compliance" ? "Dal fascicolo compliance dell'agenzia: promemoria operativi, non pareri." : "Bozza da validare in agenzia: sono promemoria, non pareri."}</p>
+    <div class="schede">${d.tipo === "guida" ? htmlAgenzia() : htmlStrumentiCompliance()}${schede.map(s => `<div class="campo"><div class="dom">${esc(s.titolo)}</div>
+      <ul class="lista-schede">${s.voci.map(v => `<li>${esc(v)}</li>`).join("")}</ul>
+      ${s.link ? `<div class="bottoni-msg">${s.link.map(l => `<a class="btn link piccolo" href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.t)}</a>`).join("")}</div>` : ""}</div>`).join("")}</div>`;
+}
+
+/* Compliance: moduli, presa visione POG e segnalazioni di ritorno */
+function htmlStrumentiCompliance() {
+  const A = COMPLIANCE_AGENZIA, pog = Memoria.leggi("bussola.pogVisto", ""), S = Stato.segnalaPog || {};
+  let statoPog = `<div class="avviso ambra">${ICONE.attenzione}<span>Segna la data della tua ultima presa visione: l'app ti avvisa quando va rifatta.</span></div>`;
+  if (pog) {
+    const scad = new Date(pog); scad.setFullYear(scad.getFullYear() + 1);
+    const giorni = Math.ceil((scad - new Date()) / 864e5);
+    statoPog = giorni < 0 ? `<div class="avviso rosso">${ICONE.attenzione}<span>Presa visione scaduta il ${scad.toLocaleDateString("it-IT")}: rifalla sul cloud dell'agenzia.</span></div>`
+      : `<div class="avviso ${giorni <= 30 ? "ambra" : "verde"}">${giorni <= 30 ? ICONE.attenzione : "✓"}<span>Valida fino al ${scad.toLocaleDateString("it-IT")}. Va rifatta anche entro 15 giorni dall'arrivo di un nuovo prodotto.</span></div>`;
+  }
+  return `<div class="campo"><div class="dom">${esc(AGENZIA.nome)}</div>
+      <div class="riga-dato"><span>RUI</span><b>${esc(A.rui)}</b></div><div class="riga-dato"><span>Email</span><b>${esc(A.mail)}</b></div><div class="riga-dato"><span>Telefono</span><b>${esc(A.tel)}</b></div>
+      <p class="aiuto" style="margin-top:8px">Fonte: ${esc(A.fonte)}.</p></div>
+    <div class="campo"><div class="dom">Moduli</div>
+      <div class="bottoni-msg"><button class="btn piccolo" data-az="dichiarazioneBianco">Dichiarazione proposta personalizzata (PDF)</button>
+        <button class="btn piccolo primario" data-prodotto="dichiarazione">Compila e firma nell'app</button></div>
+      <div class="bottoni-msg"><button class="btn piccolo" data-az="privacyBianco">Informativa privacy (PDF)</button></div></div>
+    <div class="campo"><div class="dom">Presa visione POG</div>
+      <p class="aiuto">Ogni 12 mesi ed entro 15 giorni da un nuovo prodotto, sul cloud dell'agenzia. La data resta solo su questo dispositivo.</p>
+      <label class="dis-campo"><span>Ultima presa visione</span><input type="date" data-pog value="${esc(pog)}"></label>
+      <div style="margin-top:8px">${statoPog}</div>
+      <div class="bottoni-msg"><a class="btn link piccolo" href="${esc(DOC_POG.link)}" target="_blank" rel="noopener">Apri il cloud dell'agenzia</a></div></div>
+    <div class="campo"><div class="dom">Segnalazioni di ritorno POG</div>
+      <p class="aiuto">Se un prodotto ti sembra inadatto al suo mercato di riferimento, o sai di qualcosa che può danneggiare i clienti, scrivilo all'agenzia.</p>
+      <label class="dis-campo"><span>Prodotto e compagnia</span><input type="text" data-segnala="prodotto" value="${esc(S.prodotto || "")}"></label>
+      <label class="dis-campo" style="margin-top:8px"><span>Cosa hai notato</span><textarea data-segnala="testo" style="width:100%;min-height:90px;border:1px solid var(--bordo);border-radius:10px;padding:8px 12px;font-size:16px">${esc(S.testo || "")}</textarea></label>
+      <div class="errore" data-segnala-errore></div>
+      <div class="bottoni-msg"><button class="btn piccolo primario" data-az="segnalaPog">Prepara l'email all'agenzia</button></div></div>`;
 }
 
 /* Guida: coordinate bancarie e documenti utili */
@@ -4180,6 +4375,14 @@ function collegaEventi() {
     if (b.dataset.salvaFirma) return salvaFirma(b.dataset.salvaFirma);
     if (b.dataset.pulisciFirma || b.dataset.rifaiFirma) { const id = b.dataset.pulisciFirma || b.dataset.rifaiFirma; return rispondi(id, null, true); }
     if (b.dataset.az === "privacyCliente") return copiaPrivacyCliente();
+    if (b.dataset.az === "dichiarazioneBianco") return scaricaBlob(creaDichiarazionePDF(null), "Dichiarazione proposta personalizzata.pdf");
+    if (b.dataset.az === "segnalaPog") {
+      const S = Stato.segnalaPog || {}, err = document.querySelector("[data-segnala-errore]");
+      if (!String(S.prodotto || "").trim() || !String(S.testo || "").trim()) { if (err) err.textContent = "Indica il prodotto e cosa hai notato"; return; }
+      const pr = Memoria.leggi("bussola.profilo", {});
+      location.href = `mailto:${COMPLIANCE_AGENZIA.mail}?subject=${encodeURIComponent("Segnalazione POG – " + S.prodotto)}&body=${encodeURIComponent(`Prodotto: ${S.prodotto}\n\n${S.testo}\n\n${pr.nome || ""}`)}`;
+      return;
+    }
     if (b.dataset.az === "privacyBianco") return scaricaBlob(creaPrivacyPDF(null), "Informativa privacy Lloyd Varesino.pdf");
     if (b.dataset.az === "esperto") { Memoria.scrivi("bussola.esperto", !(Memoria.leggi("bussola.esperto", false) === true)); return disegna(); }
     if (b.dataset.az === "nuovaEsigenza") { const seg = Stato.clienteRiuso && Stato.clienteRiuso._segmento; return vai("albero", seg ? { nodo: seg } : {}); }
@@ -4233,6 +4436,8 @@ function collegaEventi() {
 
   document.addEventListener("input", e => {
     const t = e.target;
+    if (t.dataset && t.dataset.segnala) { (Stato.segnalaPog = Stato.segnalaPog || {})[t.dataset.segnala] = t.value; return; }
+    if (t.dataset && t.dataset.pog !== undefined) { Memoria.scrivi("bussola.pogVisto", t.value); return; }
     if (t.dataset && t.dataset.dis) { (Stato.disdetta = Stato.disdetta || {})[t.dataset.dis] = t.value; return; }
     if (t.dataset && t.dataset.profilo) { const pr = Memoria.leggi("bussola.profilo", {}); pr[t.dataset.profilo] = t.value.trim(); Memoria.scrivi("bussola.profilo", pr); return; } if (!t.dataset || !t.dataset.campo) return;
     if (t.dataset.euro) {
@@ -4245,6 +4450,7 @@ function collegaEventi() {
   });
   document.addEventListener("change", e => {
     const t = e.target;
+    if (t.dataset && t.dataset.pog !== undefined) { Memoria.scrivi("bussola.pogVisto", t.value); return disegna(); }
     if (t.dataset && t.dataset.allegato) { const fl = Array.from(t.files || []); t.value = ""; if (fl.length) aggiungiFile(t.dataset.allegato, fl); return; } if (!t.dataset || !t.dataset.campo) return;
     if (t.dataset.euro) { const n = t.value.replace(/\D/g, ""); t.value = n ? Number(n).toLocaleString("it-IT") : ""; rispondi(t.dataset.campo, n ? Number(n) : ""); }
     else rispondi(t.dataset.campo, t.value);
