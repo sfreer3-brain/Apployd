@@ -211,6 +211,16 @@ dd.grave{color:var(--rosso);font-weight:700}
 .interruttore[aria-pressed=true] .levetta{background:var(--blu)}
 .interruttore[aria-pressed=true] .levetta::after{left:21px}
 body.esperto .campo > .aiuto, body.esperto .perche, body.esperto .testo-spunta small, body.esperto .elenco .voce small{display:none}
+.informativa summary{cursor:pointer;color:var(--blu);font-weight:600;min-height:40px;display:flex;align-items:center}
+.informativa{max-height:none}
+.informativa[open]{max-height:50vh;overflow:auto;border:1px solid var(--bordo);border-radius:10px;padding:0 12px 12px;background:#fbfcfd}
+.informativa h4{font-size:13px;margin:14px 0 6px;color:var(--blu)}
+.informativa p{font-size:13.5px;margin:0 0 8px;line-height:1.45}
+.riquadro-firma{position:relative;border:1.5px dashed var(--bordo);border-radius:12px;background:#fff;height:180px;touch-action:none}
+.riquadro-firma canvas{width:100%;height:100%;display:block;border-radius:12px;touch-action:none;cursor:crosshair}
+.segno-firma{position:absolute;left:12px;bottom:10px;font-size:13px;color:var(--testo-2);pointer-events:none}
+.riquadro-firma.in-corso .segno-firma{display:none}
+.firma-img{display:block;max-width:100%;height:120px;object-fit:contain;border:1px solid var(--bordo);border-radius:10px;background:#fff}
 .nota-piccola{color:var(--testo-2);font-size:13px;text-align:center;margin-top:18px}
 /* ---------- passi laterali (solo schermi larghi) ---------- */
 .layout-q{display:block}
@@ -285,7 +295,7 @@ body.esperto .campo > .aiuto, body.esperto .perche, body.esperto .testo-spunta s
 const AGENZIA = {
   nome: "Lloyd Varesino",
   app: "Bussola",
-  versione: "0.11",       // scritta da ricomponi.py (file VERSIONE)
+  versione: "0.12",       // scritta da ricomponi.py (file VERSIONE)
   dataBuild: "02/10/2026",
   giorniConservazioneBozze: 7   // le bozze non inviate si cancellano da sole dopo N giorni
 };
@@ -477,6 +487,123 @@ function derivaDaCF(r) {
   return esito;
 }
 
+/* ---- 18_dati_privacy.js ---- */
+/* Informativa privacy di Lloyd Varesino (testo del documento INFO_ASS_Cliente_v5.0) e consensi.
+   Il testo è quello del modulo cartaceo: non modificarlo senza aggiornare la versione. */
+const INFORMATIVA_PRIVACY = {
+ "versione": "INFO_ASS_Cliente_v5.0",
+ "titolare": "LLOYD VARESINO S.R.L., Via Cavour 27, 21100 Varese (VA)",
+ "sezioni": [
+  {
+   "titolo": "INFORMATIVA SUI DATI PERSONALI",
+   "par": [
+    "Ai sensi degli artt. 13 e 14 del GDPR 679/2016 – “Regolamento europeo sulla protezione dei dati personali e in relazione ai dati personali” che La riguardano e che formeranno oggetto del trattamento, La informiamo che:",
+    "Qualora in intestazione siano riportati dati di una persona giuridica, i dati oggetto della presente saranno quelli riferiti alle persone fisiche operanti nella stessa di cui LLOYD VARESINO S.R.L. verrà a conoscenza.",
+    "LLOYD VARESINO S.R.L. in qualità di Titolare del trattamento intende acquisire, anche verbalmente, direttamente o tramite terzi, o già detiene, alcuni Suoi dati, qualificati come personali, il cui trattamento viene effettuato nel rispetto dei diritti e delle libertà fondamentali, nonché della dignità dell’interessato, con particolare riferimento alla riservatezza, all’identità personale, al diritto ed alla protezione dei dati personali.",
+    "Saranno inoltre trattate anche categorie particolari di dati, che devono essere forniti da Lei in qualità di soggetto interessato o da terzi, ad esempio da contraenti di polizze collettive o individuali che La qualificano come assicurato, beneficiario, proprietario dei beni assicurati o danneggiato (come nel caso di polizze di responsabilità civile) oppure da banche dati che vengono consultate in fase pre-assuntiva, assuntiva o liquidativa).",
+    "Ciò premesso, LLOYD VARESINO S.R.L. La informa riguardo le finalità e le modalità del trattamento dei dati personali raccolti e il loro ambito di comunicazione e diffusione, oltre alla natura del loro conferimento, premettendo che i trattamenti avvengono nel contesto delle analisi obbligatorie per legge o regolamento, dell’instaurazione ed esecuzione dei rapporti commerciali in essere o in divenire e dei rapporti consulenziali da Lei richiesti come previsti da leggi o regolamenti di settore."
+   ]
+  },
+  {
+   "titolo": "FINALITA’ DI TRATTAMENTO E BASE GIURIDICA",
+   "par": [
+    "Tutti i dati personali e sensibili da Lei conferiti, o già detenuti da LLOYD VARESINO S.R.L., oppure raccolti presso altri soggetti e presso altre banche dati, la cui consultazione è prevista per legge o per regolamento, costituiscono oggetto di trattamento. LLOYD VARESINO S.R.L. non dispone di mezzi illeciti per ottenere queste informazioni, che saranno utilizzate:",
+    "1. per la gestione delle attività specifiche di LLOYD VARESINO S.R.L., quale intermediario assicurativo, e degli adempimenti obbligatori quali:",
+    "• adempimento degli obblighi previsti da leggi, regolamenti o normative comunitarie, nonché da disposizioni impartite da Autorità a ciò legittimate dalla legge o da organi di vigilanza e di controllo;",
+    "• realizzazione dell’attività di consulenza comprendente l’analisi dei Suoi bisogni e le valutazioni delle Sue esigenze assicurative e previdenziali, secondo quanto stabilito dalla normativa CEE 2002/92, dal Codice delle Assicurazioni (D.lgs. n. 209 del 7/9/2005), nonché dal Regolamento IVASS 40/2018;",
+    "• erogazione di consulenza e supporto finalizzate alla proposta di prodotti e servizi adeguati alle Sue esigenze;",
+    "• gestione, consulenza e supporto in merito alle pratiche di sinistro con le Compagnie di Assicurazioni;",
+    "• gestione, consulenza e supporto in merito alle pratiche di reclamo intentate dagli assicurati.",
+    "2. per attività di marketing, di promozione commerciale propria o di terzi e di analisi (per cui saranno trattati esclusivamente i dati personali comuni, previo rilascio di opportuno consenso) quali:",
+    "• a) informazione e/o promozione commerciale, per illustrare nuove opportunità di Suo possibile interesse, a mezzo posta, telefono o mediante comunicazioni elettroniche come e-mail, fax, messaggi Sms o MMS e altri sistemi automatizzati disponibili allo scopo, volte a far conoscere i nuovi servizi e prodotti assicurativi adeguati al Suo profilo di rischio e a migliorare prodotti e servizi offerti, così come imposto agli intermediari dalle vigenti normative,fermo restando il Suo diritto di opposizione, in tutto o in parte, per le suddette finalità",
+    "• informazione e/o promozione commerciale, per illustrare nuove opportunità di Suo possibile interesse, a mezzo posta,telefono o mediante comunicazioni elettroniche come e-mail, fax, messaggi Sms o MMS e altri sistemi automatizzati disponibili allo scopo, volte a far conoscere i nuovi servizi e prodotti, anche di terzi, di cui LLOYD VARESINO S.R.L. è autorizzato da leggi, normative o appositi mandati e/o contratti, a curare la commercializzazione;",
+    "• ricerche di mercato ed indagini sulla qualità dei servizi e sulla Sua soddisfazione, anche avvalendosi di società specializzate, con l’obiettivo di migliorare l’offerta di prodotti e servizi;",
+    "• comunicazione dei Suoi dati personali verso soggetti terzi, operanti nel settore indicato nella relativa richiesta di consenso, per finalità di informazione e promozione commerciale di prodotti o servizi da parte degli stessi.",
+    "• profilazione volta ad analizzare i Suoi bisogni e le Sue esigenze assicurative per l’individuazione, anche attraverso elaborazioni elettroniche, dei possibili prodotti o servizi in linea con le Sue preferenze e i Suoi interessi. I dati oggetto di profilazione, da cui sono rigorosamente esclusi i dati idonei a rivelare lo stato di salute e la vita sessuale, con riferimento a clienti individuabili, potranno essere conservati per finalità di profilazione per un periodo non superiore a dodici mesi dalla loro registrazione, salva la reale trasformazione in forma anonima che non permetta, anche indirettamente o collegando altre banche dati, di identificare gli interessati: l'attività di profilazione sarà svolta utilizzando dati strettamente necessari al perseguimento delle finalità dichiarate.",
+    "• informazione e/o promozione commerciale, per illustrare nuovi prodotti e/o servizi analoghi a quelli già contrattualizzati (soft spam), a mezzo posta, telefono o mediante comunicazioni elettroniche come e-mail, fax, messaggi Sms o MMS e altri sistemi automatizzati disponibili allo scopo. Per quest’ultima attività la base giuridica è rinvenibile nel legittimo interesse del Titolare, senza che sia necessario il Suo consenso, fermo restando il suo diritto di opposizione, per suddetta finalità.",
+    "3. per attività investigative difensive o per far valere o difendere un diritto in sede giudiziaria. Per questa finalità la base giuridica è rinvenibile nel legittimo interesse del Titolare, senza che sia necessario il Suo consenso, fermo restando il suo diritto di opposizione, per suddetta finalità. Tutti i dati da Lei conferiti sono trattati, quindi, esclusivamente per adempimenti connessi all'attività di LLOYD VARESINO S.R.L., le cui basi giuridiche sono rinvenibili nel consenso (es. per il trattamento delle “categorie particolari di dati personali” o per (marketing/profilazione) e/o nell’esecuzione di un contratto di nostra gestione di cui Lei è parte o nell’esecuzione di misure precontrattuali adottate su Sua richiesta e/o nell’adempiere a obblighi legali ai quali è soggetto lo scrivente Titolare e/o nel legittimo interesse dello stesso."
+   ]
+  },
+  {
+   "titolo": "NATURA OBBLIGATORIA E FACOLTATIVA DEL CONFERIMENTO DEI DATI E CONSEGUENZE DI UN EVENTUALE RIFIUTO",
+   "par": [
+    "Il conferimento dei dati personali ed il conseguente trattamento da parte da LLOYD VARESINO S.R.L. , per le finalità di cui al punto 1, sono necessari per l’instaurazione, per la prosecuzione e per la corretta gestione del rapporto tra Titolare ed Interessato, nonché strettamente necessari alla gestione ed esecuzione dei rapporti in essere o alla gestione dei sinistri: tale conferimento deve pertanto intendersi come obbligatorio in base a legge, regolamento o normativa comunitaria (si cita a titolo esemplificativo e non limitativo, la normativa antiriciclaggio): l’eventuale rifiuto a fornire i dati personali richiesti potrà causare l’impossibilità, in tutto o in parte, di perfezionare e di gestire il rapporto consulenziale in essere o in divenire. Il conferimento dei dati personali ed il conseguente trattamento da parte di LLOYD VARESINO S.R.L. per le finalità di cui al punto 2 è facoltativo ed il mancato conferimento, anche parziale, non pregiudicherà l’esecuzione di polizze assicurative eventualmente stipulate, precludendo il solo espletamento delle attività indicate nel punto citato."
+   ]
+  },
+  {
+   "titolo": "MODALITA’ DI TRATTAMENTO",
+   "par": [
+    "Il trattamento dei dati personali sarà effettuato sia su supporti cartacei, mediante strumenti manuali, sia con l’ausilio di strumenti elettronici mediante idonee procedure informatiche e telematiche, attraverso sistemi e banche dati di proprietà dello scrivente, atti a memorizzare, gestire e trasmettere i dati, con logiche e modalità tali da garantirne la sicurezza e la riservatezza. LLOYD VARESINO S.R.L. garantisce che i dati trattati saranno sempre pertinenti, completi e non eccedenti rispetto alle finalità per le quali sono raccolti, con il Suo impegno di comunicare tempestivamente eventuali correzioni, integrazioni o aggiornamenti; specifiche misure di sicurezza sono osservate per prevenire la perdita dei dati, usi illeciti o non corretti ed accessi non autorizzati."
+   ]
+  },
+  {
+   "titolo": "TEMPI DI CONSERVAZIONE",
+   "par": [
+    "I dati personali saranno trattati per il tempo strettamente necessario a conseguire gli scopi, sopra descritti, per adempiere ad obblighi contrattuali, di legge e di regolamento fatti salvi i termini prescrizionali e di legge, nel rispetto dei diritti e in ottemperanza degli obblighi conseguenti. In particolare, criteri utilizzati per determinare il periodo di conservazione sono stabiliti da specifiche norme di legge (che regolamentano l’attività assicurativa), dal periodo di permanenza quale assicurato presso lo scrivente Titolare (soprattutto in relazione alle “categorie particolari di dati” o di “profilazione”) e dalla normativa fiscale per quanto riguarda il trattamento dei dati amministrativo-contabili. Con riferimento ai dati raccolti per finalità commerciali (di cui al punto 2), i tempi di conservazione sono limitati – per l’attività di profilazione - a 1 anno dalla data di acquisizione e per l’attività di marketing diretto, a due anni dalla raccolta per i prospect o dal termine del rapporto contrattuale per i clienti. I dati personali dell’assicurato, infine, potranno essere conservati anche fino al tempo permesso dalla legge italiana a tutela degli interessi legittimi della società Titolare (art. 2947, co. 1 e 3 c.c.)”."
+   ]
+  },
+  {
+   "titolo": "AMBITO DI CONOSCENZA DEI DATI",
+   "par": [
+    "Il trattamento dei dati personali sarà effettuato, nei limiti delle autorizzazioni di carattere generale rilasciate dal Garante per la protezione dei dati personali, a mezzo di soggetti espressamente e specificamente designati dal Titolare, in qualità di responsabili o incaricati. I dati potranno altresì essere trattati da soggetti terzi (outsourcer), di cui ci si avvale per l’erogazione di servizi connessi alla finalità perseguita, che la nostra organizzazione valuta di volta in volta, per garantire una maggiore tutela, se nominare responsabili dei trattamenti da questi posti in essere. In tutti i casi, tali soggetti tratteranno i dati conformemente alle istruzioni ricevute dal Titolare, secondo profili operativi agli stessi attribuiti in relazione alle funzioni svolte, limitatamente a quanto necessario e strumentale per l’esecuzione di specifiche operazioni nell’ambito dei servizi richiesti ed esclusivamente per il conseguimento delle finalità indicate nella presente informativa. L’elenco dei Responsabili del trattamento, costantemente aggiornato, può essere richiesto inviando una comunicazione con le modalità indicate al successivo punto riguardante i diritti dell’interessato"
+   ]
+  },
+  {
+   "titolo": "COMUNICAZIONE E DIFFUSIONE",
+   "par": [
+    "I dati potranno essere comunicati (intendendo con tale termine il darne conoscenza) ad uno o più soggetti determinati, diversi dal Titolare, dai responsabili, interni ma anche esterni alla struttura aziendale, e dagli incaricati al trattamento individuati e nominati per il perseguimento delle finalità sopra indicate ed in ogni caso nei limiti delle stesse, come segue:",
+    "• a soggetti, pubblici e privati, quali Autonomi Titolari, che possono accedere ai dati in forza di disposizione di legge, di regolamento o di normativa comunitaria, nei limiti previsti da tali norme;",
+    "• a soggetti esterni, anche appartenenti al settore assicurativo e finanziario, che svolgono per conto di LLOYD VARESINO S.R.L. attività ausiliarie correlate ai trattamenti dei dati, che la nostra organizzazione valuta di volta in volta, per garantire una maggiore tutela, se nominare responsabili dei trattamenti da questi posti in essere o a cui richiede di sottoscrivere specifiche clausole che impongano il dovere di riservatezza, sicurezza e la garanzia di rispetto del Codice Privacy e successive integrazioni. Tali soggetti possono:",
+    "• svolgere per nostro conto servizi informatici, telematici, finanziari, amministrativi, di archiviazione, di stampa imbustamento della corrispondenza e di gestione trasporto e smistamento delle comunicazioni alla clientela;",
+    "• operare nella c.d. “catena assicurativa” con specifici compiti di natura tecnica, organizzativa ed operativa ovvero soggetti appartenenti alla c.d. “catena assicurativa” (si citano a titolo esemplificativo e non limitativo, imprese di assicurazione, agenti, subagenti, produttori, centri peritali, broker, promotori finanziari, banche, sim) nonché",
+    "• avere un ruolo attivo in ragione del rapporto assicurativo con Lei intercorrente (contraenti di polizze in cui si risulti assicurati, beneficiari, coobbligati);",
+    "• operare in attività di rilevazione circa la qualità dei servizi forniti, la soddisfazione della clientela, etc.",
+    "• a soggetti esterni consulenti di LLOYD VARESINO S.R.L., nei limiti necessari per svolgere il loro incarico presso la nostra organizzazione, vincolati dalla sottoscrizione di specifiche clausole o accordi che impongano il dovere di riservatezza, sicurezza e la garanzia di rispetto della normativa italiana ed europea in materia di privacy e successive integrazioni;",
+    "• soggetti terzi qualora il trattamento risulti necessario o funzionale agli obblighi di legge e di contratto verso altri soggetti del settore assicurativo con i quali lo scrivente intrattiene o intratterrà rapporti di reciproca collaborazione ai sensi della legge 221/2012;",
+    "Ove tale comunicazione non fosse possibile senza libero ed esplicito consenso da parte dell’interessato, perché prevista in relazione alle normative vigenti e nell’ambito delle finalità dichiarate, l’espressione del consenso risulterà indispensabile per procedere alla comunicazione stessa verso soggetti che svolgono attività ausiliarie rispetto le finalità dichiarate. I dati non verranno diffusi, con tale termine intendendosi il darne conoscenza a soggetti indeterminati in qualunque modo, anche mediante la loro messa a disposizione o consultazione, a meno di specifico consenso, libero ed informato, concesso per ciascun tipo."
+   ]
+  },
+  {
+   "titolo": "DIRITTI DELL’ INTERESSATO",
+   "par": [
+    "Con riferimento agli artt. 15 – diritto di accesso, 16 - diritto di rettifica, 17 – diritto alla cancellazione, 18 – diritto alla limitazione del trattamento, 20 – diritto alla portabilità,21 – diritto di opposizione, 22 diritto di opposizione al processo decisionale automatizzato del GDPR 679/16, il soggetto interessato potrà rivolgere le proprie richieste, così come per conoscere l’elenco aggiornato dei responsabili del trattamento dei dati personali, attraverso specifica comunicazione, a mezzo posta indirizzata alla scrivente Società, o attraverso la casella di posta elettronica: mail@lloydvaresino.it.",
+    "I soggetti interessati, cui si riferiscono i dati personali, hanno facoltà di esercitare in ogni momento i diritti (Diritto di accesso ai dati personali ed altri diritti), in particolare: diritto di ottenere la conferma dell’esistenza o meno dei propri dati personali, di accedervi e di conoscerne il contenuto e l’origine, di verificarne l’esattezza, di chiederne l’integrazione o l'aggiornamento, limitazione del trattamento o portabilità. La rettificazione e il blocco possono essere richiesti se i dati risultano incompleti, erronei o raccolti in violazione della normativa vigente ed in tal senso è anche possibile opporsi al loro trattamento per motivi legittimi o a qualsiasi processo decisionale automatizzato (compreso la profilazione), così come è possibile richiedere, per gli stessi motivi anche la cancellazione purché in conformità alle norme vigenti e qualora non esistano altri obblighi di conservazione e trattamento in capo a LLOYD VARESINO S.R.L.. I soggetti interessati hanno, altresì, il diritto di opposizione al trattamento dei propri dati personali per le finalità di marketing (indicate al punto 2), anche se effettuato con modalità automatizzate di contatto; tale diritto si estende anche a quelle tradizionali e i soggetti interessati potranno esercitare tali diritti in tutto o in parte (es. solo alle comunicazioni tramite sms, e-mail o telefono ovvero opponendosi al solo invio di comunicazioni promozionali effettuato tramite strumenti automatizzati, etc.)."
+   ]
+  },
+  {
+   "titolo": "TITOLARE DEL TRATTAMENTO",
+   "par": [
+    "Il Titolare del trattamento dei dati personali è LLOYD VARESINO S.R.L. con sede in Via Cavour, 27 – 21100 Varese (VA). Il Titolare conserva una lista aggiornata dei responsabili nominati, e ne garantisce la presa visione all’interessato presso la sede sopra indicata."
+   ]
+  }
+ ]
+};
+const CONSENSI_PRIVACY = [
+ {
+  "id": "privFinalita",
+  "testo": "al trattamento dei dati personali comuni e particolari per le finalità indicate al punto 1 dell’informativa consegnatami.",
+  "necessario": true
+ },
+ {
+  "id": "privMarketing",
+  "testo": "al trattamento dei miei dati personali di natura comune per finalità di informazione e promozione commerciale di prodotti e/o servizi, a mezzo posta o telefono e/o mediante comunicazioni elettroniche quali e-mail, fax, messaggi del tipo Sms o MMS ovvero con sistemi automatizzati, come specificato ai punti 2a, 2b e 2c dell’informativa.",
+  "necessario": false
+ },
+ {
+  "id": "privTerzi",
+  "testo": "al trattamento dei miei dati personali di natura comune per finalità di comunicazione dei dati a soggetti terzi, operanti nel settore assicurativo, e nei settori complementari a quello assicurativo, ai fini di informazione e promozione commerciale di prodotti e/o servizi, anche mediante tecniche di comunicazione a distanza, da parte degli stessi come specificato al punto 2d dell’informativa.",
+  "necessario": false
+ },
+ {
+  "id": "privProfilazione",
+  "testo": "al trattamento dei miei dati personali di natura comune per finalità di profilazione volta ad analizzare i bisogni e le esigenze assicurative del cliente per l’individuazione, anche attraverso elaborazioni elettroniche, dei possibili prodotti e/o servizi in linea con le preferenze e gli interessi della clientela come specificato al punto 2e dell’informativa.",
+  "necessario": false
+ }
+];
+
+/* Scelte dei consensi in forma di testo: servono a legare la firma alle scelte fatte */
+const sceltePrivacy = r => CONSENSI_PRIVACY.map(c => c.id + "=" + (r[c.id] || "")).join(";");
+
 /* ---- 20_dati_questionari.js ---- */
 /* =====================================================================
    QUESTIONARI: descritti come dati.
@@ -569,8 +696,17 @@ const PASSO_CHIUSURA = { id: "chiusura", titolo: "Documenti e compliance", sotto
             : { livello: "blu", testo: "Nessun documento allegato. Se ne hai, aggiungili: il backoffice risparmia una richiesta al cliente." } },
         { id: "mup", tipo: "sino", obbl: true, dom: "MUP consegnato al cliente?",
           avvisoNo: { livello: "ambra", testo: "Il MUP va consegnato prima della sottoscrizione. Puoi inviare la richiesta, ma ricordalo." } },
-        { id: "privacy", tipo: "sino", obbl: true, dom: "Informativa privacy firmata?",
-          avvisoNo: { livello: "ambra", testo: "Senza consenso privacy il backoffice non può trattare i dati." } },
+        { id: "privacyModo", tipo: "scelta", obbl: true, dom: "Informativa privacy e consensi", suggerito: () => "app",
+          opzioni: [{ v: "app", t: "Firma qui, sul dispositivo" }, { v: "carta", t: "Modulo cartaceo" }] },
+        { id: "privacy", tipo: "sino", obbl: true, se: r => r.privacyModo === "carta", dom: "Il cliente ha firmato il modulo privacy?",
+          avvisoNo: { livello: "ambra", testo: "Senza consenso privacy il backoffice non può trattare i dati." },
+          figli: { quando: "si", campi: [{ id: "privacyFoto", tipo: "allegato", dom: "Foto del modulo firmato" }] } },
+        { id: "privacyTesto", tipo: "informativa", se: r => r.privacyModo === "app", dom: "Informativa sui dati personali" },
+        ...CONSENSI_PRIVACY.map((c, i) => ({ id: c.id, tipo: "consenso", obbl: true, se: r => r.privacyModo === "app", dom: `Consenso ${i + 1}: ${c.testo}`,
+          avvisoSe: c.necessario ? (v => v === "no" ? { livello: "rosso", testo: "Senza questo consenso l'agenzia non può gestire la pratica." } : null) : undefined })),
+        { id: "firmaPrivacy", tipo: "firma", obbl: true, se: r => r.privacyModo === "app", dom: "Firma del cliente",
+          msgObbl: "Fai firmare il cliente nel riquadro",
+          verifica: (v, r) => v && v.scelte !== sceltePrivacy(r) ? "Le scelte sono cambiate dopo la firma: fai firmare di nuovo" : null },
         { id: "adeguatezza", tipo: "sino", obbl: true, se: r => invioPer(r._prodotto) === "vita" && r._prodotto !== "protection", dom: "Questionario di adeguatezza (IBIP) compilato con il cliente?",
           aiuto: "L'analisi patrimoniale è uno strumento orientativo: non sostituisce la valutazione di adeguatezza prevista per i prodotti d'investimento assicurativi.",
           avvisoNo: { livello: "ambra", testo: "Senza valutazione di adeguatezza il prodotto non può essere proposto: va completata prima della sottoscrizione." } },
@@ -1579,7 +1715,7 @@ QUESTIONARI.protection = {
       { id: "fumatore", tipo: "sino", obbl: true, se: r => prot(r, "tcm") || prot(r, "ci"), dom: "L'assicurato è fumatore?",
         aiuto: "Le compagnie hanno tariffe diverse per fumatori e non fumatori." },
       { id: "durataProt", tipo: "testo", tastiera: "numeric", obbl: true, se: r => prot(r, "tcm") || prot(r, "ci"),
-        dom: r => prot(r, "tcm") && prot(r, "ci") ? "Durata (anni), per caso morte e malattie gravi" : "Durata (anni)",
+        dom: r => (prot(r, "tcm") && prot(r, "ci") ? "Durata caso morte e critical illness" : prot(r, "tcm") ? "Durata caso morte" : "Durata critical illness") + " (anni)",
         verifica: v => Number(v) > 0 && Number(v) <= 40 ? null : "Indica un numero di anni" },
       { id: "capTcm", tipo: "euro", obbl: true, se: r => prot(r, "tcm"), dom: "Caso morte: capitale" },
       { id: "andamentoTcm", tipo: "scelta", obbl: true, se: r => prot(r, "tcm"), dom: "Caso morte: andamento del capitale",
@@ -2030,6 +2166,8 @@ const COORDINATE_AGENZIA = {
   bic: "ICRAITRRB80",
   banca: "Banca di Credito Cooperativo di Busto Garolfo e Buguggiate, filiale di Varese"
 };
+
+const GESTIONALE = { nome: "Omniaweb", nota: "Il gestionale dell'agenzia", link: "https://oweb.siaspa.com/oweb20-mainweb/Home.xhtml?rvn=1" };
 
 const DOC_POG = {
   titolo: "Presa visione della documentazione POG",
@@ -2908,6 +3046,8 @@ function testoRisposta(c, v, r) {
     case "scelta": { const o = (valore(c.opzioni, r) || []).find(x => x.v === v); return o ? o.t : v; }
     case "multipla": { const o = valore(c.opzioni, r) || []; return v.map(x => (o.find(z => z.v === x) || { t: x }).t).join(", "); }
     case "allegato": return v.map(f => f.nome).join(", ");
+    case "consenso": return v === "si" ? "Acconsento" : "Non acconsento";
+    case "firma": return v && v.quando ? "Firmata sul dispositivo il " + new Date(v.quando).toLocaleString("it-IT", { dateStyle: "short", timeStyle: "short" }) : "";
     default: return String(v);
   }
 }
@@ -3129,7 +3269,7 @@ function creaPDF(p, commerciale) {
 }
 
 /* ---- scrittura del file: oggetti, tabella xref, trailer ---- */
-function scriviPDF(pagine, titolo, W, H) {
+function scriviPDF(pagine, titolo, W, H, immagini) {
   const oggetti = [];
   const agg = s => { oggetti.push(s); return oggetti.length; };
   const idCatalogo = agg(null), idPagine = agg(null);
@@ -3140,10 +3280,15 @@ function scriviPDF(pagine, titolo, W, H) {
     const bin = atob(LOGO_JPG.dati);
     idLogo = agg(`<< /Type /XObject /Subtype /Image /Width ${LOGO_JPG.l} /Height ${LOGO_JPG.a} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${bin.length} >>\nstream\n${bin}\nendstream`);
   }
+  const extra = Object.entries(immagini || {}).map(([nome, im]) => {
+    const bin = atob(im.dati);
+    return [nome, agg(`<< /Type /XObject /Subtype /Image /Width ${im.l} /Height ${im.a} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${bin.length} >>\nstream\n${bin}\nendstream`)];
+  });
+  const xobj = (idLogo ? ` /Logo ${idLogo} 0 R` : "") + extra.map(([n, id]) => ` /${n} ${id} 0 R`).join("");
   const idsPagina = pagine.map(o => {
     const flusso = o.join("\n");
     const idC = agg(`<< /Length ${flusso.length} >>\nstream\n${flusso}\nendstream`);
-    return agg(`<< /Type /Page /Parent ${idPagine} 0 R /MediaBox [0 0 ${W} ${H}] /Contents ${idC} 0 R /Resources << /Font << /F1 ${idF1} 0 R /F2 ${idF2} 0 R >>${idLogo ? ` /XObject << /Logo ${idLogo} 0 R >>` : ""} >> >>`);
+    return agg(`<< /Type /Page /Parent ${idPagine} 0 R /MediaBox [0 0 ${W} ${H}] /Contents ${idC} 0 R /Resources << /Font << /F1 ${idF1} 0 R /F2 ${idF2} 0 R >>${xobj ? ` /XObject <<${xobj} >>` : ""} >> >>`);
   });
   oggetti[idCatalogo - 1] = `<< /Type /Catalog /Pages ${idPagine} 0 R >>`;
   oggetti[idPagine - 1] = `<< /Type /Pages /Kids [${idsPagina.map(i => i + " 0 R").join(" ")}] /Count ${idsPagina.length} >>`;
@@ -3184,6 +3329,50 @@ function creaDisdettaPDF(d) {
   testo("Firma", xDest, y, false, 11); y -= 26;
   ops.push(`0.4 0.4 0.4 RG 0.6 w ${xDest} ${y.toFixed(2)} m ${W - M} ${y.toFixed(2)} l S`);
   return scriviPDF([ops], `Disdetta polizza ${d.polizza}`, W, H);
+}
+
+/* ---- informativa privacy con consensi e firma del cliente (firma elettronica semplice) ---- */
+function creaPrivacyPDF(p, commerciale) {
+  const r = p.risposte, F = r.firmaPrivacy, P = INFORMATIVA_PRIVACY;
+  const W = 595.28, H = 841.89, M = 48, LARGH = W - 2 * M, BLU = "0.161 0.302 0.584", GRIGIO = "0.36 0.40 0.45", NERO = "0.12 0.12 0.12";
+  const pagine = []; let ops = [], y = 0;
+  const testo = (t, x, yy, b, corpo, col) => { if (t) ops.push(`BT /${b ? "F2" : "F1"} ${corpo} Tf ${col || NERO} rg ${x.toFixed(2)} ${yy.toFixed(2)} Td (${pdfEsc(t)}) Tj ET`); };
+  const nuova = () => { ops = []; pagine.push(ops); y = H - M; };
+  const spazio = h => { if (y - h < M + 24) nuova(); };
+  const paragrafo = (t, b, corpo, col, rientro) => { for (const riga of pdfACapo(t, LARGH - (rientro || 0), b, corpo)) { spazio(corpo + 4); testo(riga, M + (rientro || 0), y - corpo, b, corpo, col); y -= corpo + 3.2; } y -= 3; };
+  nuova();
+  if (LOGO_JPG) ops.push(`q 80 0 0 50 ${M} ${y - 50} cm /Logo Do Q`);
+  testo("INFORMATIVA E CONSENSI PRIVACY", M + 96, y - 18, true, 13, BLU);
+  testo(P.titolare, M + 96, y - 34, false, 8.5, GRIGIO);
+  testo("Documento " + P.versione, M + 96, y - 46, false, 8.5, GRIGIO);
+  y -= 66;
+  const dati = [["Cognome e nome / ragione sociale", r.nome], ["Codice fiscale / partita IVA", [r.cf, r.piva].filter(Boolean).join(" / ")],
+    ["Indirizzo", [r.indirizzo, r.citta].filter(Boolean).join(", ")], ["Telefono", r.tel], ["Email", r.email],
+    ["Documento d'identità", [({ ci: "Carta d'identità", patente: "Patente", passaporto: "Passaporto" })[r.docTipo] || "", r.docNumero].filter(Boolean).join(" n. ")]];
+  for (const [d, v] of dati) { spazio(14); testo(d, M, y - 10, false, 8.5, GRIGIO); testo(String(v || "-"), M + 170, y - 10, true, 9.5); y -= 14; }
+  y -= 8;
+  for (const sz of P.sezioni) { spazio(40); y -= 4; paragrafo(sz.titolo, true, 9, BLU); for (const par of sz.par) paragrafo(par, false, 8, NERO, par.startsWith("•") ? 8 : 0); }
+  spazio(330); y -= 6; paragrafo("CONSENSO AL TRATTAMENTO DEI DATI PERSONALI", true, 9.5, BLU);   /* consensi e firma sempre sulla stessa pagina */
+  paragrafo("Preso atto dell'Informativa sulla tutela dei dati personali, io sottoscritto/a", false, 8.5);
+  for (const c of CONSENSI_PRIVACY) {
+    const si = r[c.id] === "si";
+    paragrafo(`[${si ? "X" : " "}] acconsento   [${si ? " " : "X"}] non acconsento   ${c.testo}`, false, 8.5, si ? NERO : "0.45 0.1 0.12");
+  }
+  spazio(130); y -= 10;
+  const quando = new Date(F.quando);
+  testo("Data " + quando.toLocaleDateString("it-IT") + " ore " + quando.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" }), M, y - 10, false, 9);
+  testo("Firma del cliente", M + 260, y - 10, false, 9, GRIGIO);
+  const larg = 220, alt = larg * F.a / F.l;
+  ops.push(`q ${larg} 0 0 ${alt.toFixed(2)} ${M + 260} ${(y - 16 - alt).toFixed(2)} cm /Firma Do Q`);
+  y -= alt + 26;
+  paragrafo(`Firma elettronica semplice raccolta con l'app ${AGENZIA.app} sul dispositivo del commerciale ${commerciale && commerciale.nome ? commerciale.nome : ""} (${AGENZIA.nome}).` +
+    (F.impronta ? ` Impronta di controllo (SHA-256): ${F.impronta}` : ""), false, 7.5, GRIGIO);
+  pagine.forEach((o, i) => {
+    o.push(`BT /F1 7.5 Tf ${GRIGIO} rg ${M} ${M - 16} Td (${pdfEsc(AGENZIA.nome + " · " + P.versione + " · " + (r.nome || ""))}) Tj ET`);
+    const n = `Pagina ${i + 1} di ${pagine.length}`;
+    o.push(`BT /F1 7.5 Tf ${GRIGIO} rg ${(W - M - pdfLarghezza(n, false, 7.5)).toFixed(2)} ${M - 16} Td (${n}) Tj ET`);
+  });
+  return scriviPDF(pagine, `Privacy - ${r.nome || ""}`, W, H, { Firma: F });
 }
 
 /* ---- 40_interfaccia.js ---- */
@@ -3272,6 +3461,8 @@ function vistaHome() {
       </button>
       <button class="tessera" data-az="sinistro"><span class="ico rosso">${ICONE.sinistro}</span><span><b>Sinistro</b><small>Dati per aprire la pratica</small></span></button>
       <button class="tessera" data-az="compliance"><span class="ico verde">${ICONE.compliance}</span><span><b>Compliance</b><small>MUP, privacy, adeguatezza</small></span></button>
+      <a class="tessera" href="${esc(GESTIONALE.link)}" target="_blank" rel="noopener" style="grid-column:1 / -1;min-height:0;flex-direction:row;align-items:center;text-decoration:none;color:inherit">
+        <span class="ico blu">${ICONE.preventivo}</span><span style="flex:1"><b>${esc(GESTIONALE.nome)}</b><small>Apri il gestionale</small></span>${ICONE.freccia}</a>
       <button class="tessera" data-az="guida" style="grid-column:1 / -1;min-height:0;flex-direction:row;align-items:center">
         <span class="ico ambra">${ICONE.guida}</span><span style="flex:1"><b>Guida dell'agenzia</b><small>Procedure e schede per ramo</small></span>${ICONE.freccia}</button>
     </div>
@@ -3383,6 +3574,38 @@ function vistaQuestionario() {
     <button class="elimina-pratica" data-elimina="${p.id}" data-dentro="1">Elimina questa pratica</button></div></div>`;
   caricaAnteprime();
   avviaMFO();
+  attivaFirme();
+}
+
+/* ---------- firma su schermo: tratto con dito, penna o mouse; salvata come JPEG ---------- */
+function attivaFirme() {
+  document.querySelectorAll("canvas[data-firma]").forEach(cv => {
+    const dpr = window.devicePixelRatio || 1, w = cv.clientWidth, h = cv.clientHeight;
+    cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
+    const ctx = cv.getContext("2d");
+    ctx.scale(dpr, dpr); ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, w, h);
+    ctx.lineWidth = 2.4; ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.strokeStyle = "#14213d";
+    let attivo = false, ultimo = null;
+    const punto = e => { const b = cv.getBoundingClientRect(); return [e.clientX - b.left, e.clientY - b.top]; };
+    cv.addEventListener("pointerdown", e => { attivo = true; ultimo = punto(e); cv.setPointerCapture(e.pointerId); cv.dataset.tracciata = "1"; cv.parentNode.classList.add("in-corso");
+      delete Stato.errori[cv.dataset.firma]; const err = cv.closest(".campo").querySelector(":scope > .errore"); if (err) err.remove(); e.preventDefault(); });
+    cv.addEventListener("pointermove", e => { if (!attivo) return; const p = punto(e); ctx.beginPath(); ctx.moveTo(ultimo[0], ultimo[1]); ctx.lineTo(p[0], p[1]); ctx.stroke(); ultimo = p; e.preventDefault(); });
+    const fine = () => { attivo = false; };
+    cv.addEventListener("pointerup", fine); cv.addEventListener("pointercancel", fine);
+  });
+}
+async function salvaFirma(id) {
+  const cv = document.querySelector(`canvas[data-firma="${id}"]`), r = Stato.pratica.risposte;
+  if (!cv || cv.dataset.tracciata !== "1") { Stato.errori[id] = "Il riquadro è vuoto: fai firmare il cliente"; return vistaQuestionario(); }
+  const dati = cv.toDataURL("image/jpeg", 0.85).split(",")[1];
+  const scelte = sceltePrivacy(r), quando = new Date().toISOString();
+  let impronta = "";
+  try {
+    const testo = JSON.stringify({ versione: INFORMATIVA_PRIVACY.versione, cliente: r.nome, cf: r.cf || r.piva, scelte, quando });
+    const h = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(testo));
+    impronta = Array.from(new Uint8Array(h)).map(b => b.toString(16).padStart(2, "0")).join("");
+  } catch (e) {}
+  rispondi(id, { dati, l: cv.width, a: cv.height, quando, scelte, impronta }, true);
 }
 
 function disegnaCampi(lista, r) { return lista.filter(c => campoVisibile(c, r)).map(c => disegnaCampo(c, r)).join(""); }
@@ -3428,6 +3651,26 @@ function disegnaCampo(c, r) {
       return `<div class="campo" data-box="${c.id}"><button class="spunta impegno" data-flag="${c.id}" aria-pressed="${v === true}">
           <span class="casella">${v === true ? "✓" : ""}</span><span class="testo-spunta"><b>${esc(dom)}</b></span></button>
         <div data-avviso="${c.id}">${htmlAvviso(c, r)}</div>${err ? `<div class="errore">${esc(err)}</div>` : ""}</div>`;
+    case "consenso":
+      corpo = `<div class="scelte due">${pill(c.id, "si", "Acconsento", v, "si")}${pill(c.id, "no", "Non acconsento", v, "no")}</div>`; break;
+    case "informativa": {
+      const P = INFORMATIVA_PRIVACY;
+      corpo = `<details class="informativa"><summary>Leggi l'informativa completa (${esc(P.versione)})</summary>
+        ${P.sezioni.map(sz => `<h4>${esc(sz.titolo)}</h4>${sz.par.map(x => `<p>${esc(x)}</p>`).join("")}`).join("")}</details>
+        <div class="aiuto" style="margin-top:8px">Fai leggere l'informativa al cliente, poi le sue scelte qui sotto. I consensi non sono mai preselezionati.</div>`; break;
+    }
+    case "firma": {
+      if (v && v.dati) {
+        corpo = `<img class="firma-img" alt="Firma del cliente" src="data:image/jpeg;base64,${v.dati}">
+          <div class="aiuto" style="margin:6px 0 0">Firmata il ${esc(new Date(v.quando).toLocaleString("it-IT", { dateStyle: "short", timeStyle: "short" }))}</div>
+          <div class="bottoni-msg"><button class="btn piccolo" data-rifai-firma="${c.id}">Rifai la firma</button></div>`;
+      } else {
+        corpo = `<div class="riquadro-firma"><canvas data-firma="${c.id}"></canvas><span class="segno-firma">Firma qui con il dito o con il mouse</span></div>
+          <div class="bottoni-msg"><button class="btn piccolo" data-pulisci-firma="${c.id}">Cancella</button>
+          <button class="btn piccolo primario" data-salva-firma="${c.id}">Conferma la firma</button></div>`;
+      }
+      break;
+    }
     case "messaggio": {
       const testo = valore(c.testo, r) || "";
       const mail = r.email ? `mailto:${encodeURIComponent(r.email)}?subject=${encodeURIComponent("Documenti per il preventivo – " + AGENZIA.nome)}&body=${encodeURIComponent(testo)}` : "";
@@ -3590,6 +3833,11 @@ function vistaRiepilogo() {
       </div>
       <div class="errore" id="erroreProfilo"></div>
     </div>
+    ${p.risposte.privacyModo === "app" && p.risposte.firmaPrivacy ? `<div class="campo">
+      <div class="dom">Privacy firmata</div>
+      <div class="aiuto">Il PDF con l'informativa, i consensi e la firma va al backoffice insieme alla pratica. Puoi mandarne una copia anche al cliente.</div>
+      <div class="bottoni-msg"><button class="btn" data-az="privacyCliente">Copia al cliente</button></div>
+      <div class="stato-file" id="statoPrivacy"></div></div>` : ""}
     <div class="campo">
       <div class="dom">Come inviare</div>
       ${condivisione
@@ -3646,6 +3894,7 @@ async function azioneInvio(tipo) {
   }
   const pdf = new File([creaPDF(p, pr)], nomeFile(p, "pdf"), { type: "application/pdf" });
   const allegati = await fileAllegati(p);
+  const pPriv = filePrivacy(p, pr); if (pPriv) allegati.unshift(pPriv);
   if (tipo === "scarica") {
     scaricaBlob(pdf, pdf.name);
     allegati.forEach((f, i) => setTimeout(() => scaricaBlob(f, f.name), 400 * (i + 1)));
@@ -3658,6 +3907,20 @@ async function azioneInvio(tipo) {
       segnaInviato(`Condiviso. Indirizzo copiato: ${to}`);
     } catch (e) { if (e && e.name !== "AbortError") { const st = $("#statoInvio"); if (st) st.textContent = "Condivisione non riuscita: usa «Solo email» e allega il PDF a mano."; } }
   }
+}
+function filePrivacy(p, pr) {
+  const r = p.risposte;
+  if (r.privacyModo !== "app" || !r.firmaPrivacy || !r.firmaPrivacy.dati) return null;
+  return new File([creaPrivacyPDF(p, pr)], nomeFile(p, "pdf").replace(/^[^_]+_/, "Privacy_"), { type: "application/pdf" });
+}
+/* Copia dell'informativa firmata per il cliente: condivisione (telefono, Mac) o download + email già compilata */
+async function copiaPrivacyCliente() {
+  const p = Stato.pratica, pr = Memoria.leggi("bussola.profilo", {}), f = filePrivacy(p, pr), out = $("#statoPrivacy");
+  if (!f) return;
+  if (navigator.canShare && navigator.canShare({ files: [f] })) { try { await navigator.share({ files: [f], title: "Informativa privacy firmata" }); return; } catch (e) { if (e.name === "AbortError") return; } }
+  scaricaBlob(f, f.name);
+  if (p.risposte.email) location.href = `mailto:${encodeURIComponent(p.risposte.email)}?subject=${encodeURIComponent("Informativa privacy firmata – " + AGENZIA.nome)}&body=${encodeURIComponent("Buongiorno,\nin allegato la copia dell'informativa privacy firmata e dei consensi espressi.\n\nCordiali saluti\n" + [pr.nome, AGENZIA.nome].filter(Boolean).join("\n"))}`;
+  if (out) out.textContent = `Scaricato ${f.name}: allegalo all'email per il cliente.`;
 }
 function chiudiPratica() {
   const p = Stato.pratica, gruppo = p.tipo === "sinistro" ? "sinistri" : invioPer(p.prodotto);
@@ -3729,6 +3992,10 @@ function htmlAgenzia() {
       ${riga("Banca", C.banca)}${riga("Sede", C.indirizzo)}
       <button class="btn piccolo" style="margin-top:8px" data-copia="${esc([C.intestatario, "IBAN: " + C.iban, "BIC: " + C.bic, C.banca, C.indirizzo].join("\n"))}" data-copia-nome="Coordinate complete">Copia tutto</button>
       <div data-esito-copia class="aiuto" style="min-height:1.2em;margin:6px 0 0"></div></div>
+    <div class="campo"><div class="dom">Collegamenti</div>
+      <p class="aiuto">Si aprono in una nuova scheda con le tue credenziali.</p>
+      <div class="bottoni-msg"><a class="btn link" href="${esc(GESTIONALE.link)}" target="_blank" rel="noopener">${esc(GESTIONALE.nome)}, gestionale</a>
+        <a class="btn link" href="${esc(DOC_POG.link)}" target="_blank" rel="noopener">Cloud dell'agenzia</a></div></div>
     <div class="campo"><div class="dom">Documenti utili</div>
       <details class="doc-utile"><summary>Lettera di disdetta del cliente</summary>
         <p class="aiuto">Compila e scarica il PDF: il cliente lo firma e lo invia alla compagnia con raccomandata A/R o PEC, rispettando il preavviso scritto nelle condizioni di polizza. I dati non vengono salvati.</p>
@@ -3814,6 +4081,9 @@ function collegaEventi() {
     if (b.id === "btnHome") return vaiHome();
     if (b.dataset.elimina) return chiediElimina(b);
     if (b.dataset.az === "disdettaPDF") return creaDisdetta();
+    if (b.dataset.salvaFirma) return salvaFirma(b.dataset.salvaFirma);
+    if (b.dataset.pulisciFirma || b.dataset.rifaiFirma) { const id = b.dataset.pulisciFirma || b.dataset.rifaiFirma; return rispondi(id, null, true); }
+    if (b.dataset.az === "privacyCliente") return copiaPrivacyCliente();
     if (b.dataset.az === "esperto") { Memoria.scrivi("bussola.esperto", !(Memoria.leggi("bussola.esperto", false) === true)); return disegna(); }
     if (b.dataset.az === "nuovaEsigenza") { const seg = Stato.clienteRiuso && Stato.clienteRiuso._segmento; return vai("albero", seg ? { nodo: seg } : {}); }
     if (b.dataset.condividiTesto !== undefined) {
