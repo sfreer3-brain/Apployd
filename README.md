@@ -1,6 +1,6 @@
 # Bussola · Lloyd Varesino
 
-**Versione 0.9** · strumento interno della rete commerciale
+**Versione 0.11** · strumento interno della rete commerciale
 
 Bussola guida il commerciale nella raccolta dei dati per i preventivi, nella denuncia dei sinistri e negli adempimenti di compliance. Alla fine prepara un riepilogo in PDF da inviare al backoffice giusto.
 
@@ -15,8 +15,10 @@ La navigazione segue l'albero dei prodotti dell'agenzia: **Persona fisica / Azie
 
 | Area | Prodotto | Note |
 |---|---|---|
+| Persona fisica e Azienda | **Auto** | Anagrafica, tipo di contratto (decreto Bersani con targa del veicolo da cui prendere la classe e altre targhe del nucleo familiare, continuità assicurativa, nuovo in 14ª classe), foto di libretto e contratto di acquisto |
 | Persona fisica · Rami elementari | **Casa** | Questionario interno, neutro rispetto alle compagnie: ogni garanzia ha la spiegazione da dare al cliente ed è consigliata in base alle caratteristiche della casa |
 | Persona fisica · Rami elementari | **Infortuni** | Infortuni e, a scelta, malattia: garanzie neutre (dai DIP AXA, Unipol, Helvetia) consigliate in base a lavoro e sport, somme assicurate, domande sanitarie quando servono |
+| Persona fisica · Rami elementari | **Protection** | Caso morte (TCM), non autosufficienza (LTC), malattie gravi (critical illness) in un'unica scheda: anagrafica una volta, domande comuni una volta. Va al backoffice vita |
 | Persona fisica · Vita investimento | **Piano di accumulo**, **Fondo pensione** | Con l'analisi patrimoniale (Mini Family Office) integrata |
 | Azienda · Rami elementari | **Commercio**, **Azienda**, **Industria** | Sezioni A–G (incendio, danni indiretti, furto, guasti macchine, assistenza informatica, RC, tutela legale), con garanzie aggiuntive consigliate |
 | Azienda · Rami elementari | **Impresa edile: RC, CAR, Postuma** | Fedeli ai questionari delle compagnie (CAR e decennale postuma per ristrutturazioni; RCT/RCO impresa con malattie professionali; RC del committente). Elenco dei documenti richiesti e messaggio pronto per chiedere al cliente quelli mancanti |
@@ -124,6 +126,14 @@ Le prove nel browser richiedono Playwright e un server locale avviato dentro `di
 ---
 
 ## Versioni
+
+### 0.11 — 02/10/2026
+- **Protection** (persona fisica, backoffice vita): caso morte, non autosufficienza e malattie gravi in un'unica scheda. Si scelgono una o più coperture; fumatore e durata si chiedono una volta sola per caso morte e malattie gravi; capitale costante o decrescente per il caso morte; rendita e durata del pagamento dei premi (5, 10, 15, 20 anni o vita intera) per la non autosufficienza. Niente questionario di adeguatezza IBIP (non è un prodotto d'investimento).
+- Al posto delle voci separate Caso morte, LTC e Critical illness.
+
+### 0.10 — 02/10/2026
+- **Auto** (persona fisica e azienda): solo anagrafica e documenti (libretto, documento d'identità, contratto di acquisto) e il tipo di contratto. Con il decreto Bersani la targa del veicolo da cui prendere la classe è obbligatoria; si possono aggiungere altre targhe del nucleo familiare.
+- Casa: nuove garanzie consigliate decise in agenzia (danni, furto, RC, assistenza, persona; animali e pannelli solo se presenti; eventi atmosferici anche negli appartamenti; lavori in casa sempre; niente «guasti causati dai ladri»).
 
 ### 0.9 — 01/10/2026
 - **Impresa edile**: CAR e decennale postuma (ristrutturazioni integrali, ampliamenti e sopraelevazioni) e RC edile (impresa RCT/RCO con malattie professionali, oppure RC del committente), con domande fedeli ai questionari delle compagnie.

@@ -285,8 +285,8 @@ body.esperto .campo > .aiuto, body.esperto .perche, body.esperto .testo-spunta s
 const AGENZIA = {
   nome: "Lloyd Varesino",
   app: "Bussola",
-  versione: "0.9",       // scritta da ricomponi.py (file VERSIONE)
-  dataBuild: "01/10/2026",
+  versione: "0.11",       // scritta da ricomponi.py (file VERSIONE)
+  dataBuild: "02/10/2026",
   giorniConservazioneBozze: 7   // le bozze non inviate si cancellano da sole dopo N giorni
 };
 
@@ -308,21 +308,19 @@ const DESTINATARI = {
    questionario: null = prodotto non ancora disponibile.                                */
 const ALBERO = [
   { id: "pf", nome: "Persona fisica", nota: "Privati e famiglie", figli: [
-    { id: "pf-auto", nome: "Auto", invio: "auto", questionario: null },
+    { id: "pf-auto", nome: "Auto", nota: "Bersani, continuità, 14ª classe", invio: "auto", questionario: "auto" },
     { id: "pf-re", nome: "Rami elementari", nota: "Casa, persona, animali, viaggi", invio: "danni", figli: [
       { id: "casa",      nome: "Casa", questionario: "casa" },
       { id: "pf-inf",    nome: "Infortuni", nota: "Anche malattia", questionario: "infortuni" },
       { id: "salute",    nome: "Salute", questionario: null },
-      { id: "tcm",       nome: "Caso morte (TCM)", invio: "vita", questionario: null },
-      { id: "ltc",       nome: "Non autosufficienza (LTC)", invio: "vita", questionario: null },
-      { id: "ci",        nome: "Malattie gravi (critical illness)", invio: "vita", questionario: null },
+      { id: "protection", nome: "Protection", nota: "Caso morte, non autosufficienza, malattie gravi", invio: "vita", questionario: "protection" },
       { id: "pet",       nome: "Pet", nota: "Cani e gatti", questionario: null },
       { id: "viaggio",   nome: "Viaggio", questionario: null } ] },
     { id: "pf-vita", nome: "Vita investimento", invio: "vita", figli: [
       { id: "pac",       nome: "Piano di accumulo", nota: "Con analisi patrimoniale", questionario: "vita" },
       { id: "fpens",     nome: "Fondo pensione", nota: "Con analisi patrimoniale", questionario: "vita" } ] } ] },
   { id: "az", nome: "Azienda", nota: "Imprese, professionisti, enti", figli: [
-    { id: "az-auto", nome: "Auto", nota: "Veicoli aziendali e flotte", invio: "auto", questionario: null },
+    { id: "az-auto", nome: "Auto", nota: "Veicoli aziendali", invio: "auto", questionario: "auto" },
     { id: "az-re", nome: "Rami elementari", nota: "Patrimonio, cantieri, persone, cyber", invio: "danni", figli: [
       { id: "commercio", nome: "Commercio", nota: "Incendio, furto, catastrofali", questionario: "property" },
       { id: "azienda",   nome: "Azienda", nota: "Incendio, furto, catastrofali", questionario: "property" },
@@ -557,6 +555,8 @@ const DOC_UTILI = {
   car: "Contratto di appalto, relazione geotecnica e geologica, computo metrico, planimetria del cantiere, titolo edilizio, cronoprogramma",
   "edile-rc": "Visura camerale, polizza RC in corso, statistica sinistri, attestazione SOA",
   postuma: "Contratto di appalto, relazione geotecnica, computo metrico, planimetria del cantiere, titolo edilizio",
+  auto: "Attestato di rischio o polizza in corso, libretto dell'altro veicolo in caso di Bersani",
+  protection: "Eventuale polizza in corso; per un capitale decrescente, piano di ammortamento del mutuo",
   casa: "Polizza in corso, planimetria o visura catastale, foto dell'immobile",
   ufficio: "Polizza in corso, visura camerale, planimetria, contratto d'affitto"
 };
@@ -571,7 +571,7 @@ const PASSO_CHIUSURA = { id: "chiusura", titolo: "Documenti e compliance", sotto
           avvisoNo: { livello: "ambra", testo: "Il MUP va consegnato prima della sottoscrizione. Puoi inviare la richiesta, ma ricordalo." } },
         { id: "privacy", tipo: "sino", obbl: true, dom: "Informativa privacy firmata?",
           avvisoNo: { livello: "ambra", testo: "Senza consenso privacy il backoffice non può trattare i dati." } },
-        { id: "adeguatezza", tipo: "sino", obbl: true, se: r => invioPer(r._prodotto) === "vita", dom: "Questionario di adeguatezza (IBIP) compilato con il cliente?",
+        { id: "adeguatezza", tipo: "sino", obbl: true, se: r => invioPer(r._prodotto) === "vita" && r._prodotto !== "protection", dom: "Questionario di adeguatezza (IBIP) compilato con il cliente?",
           aiuto: "L'analisi patrimoniale è uno strumento orientativo: non sostituisce la valutazione di adeguatezza prevista per i prodotti d'investimento assicurativi.",
           avvisoNo: { livello: "ambra", testo: "Senza valutazione di adeguatezza il prodotto non può essere proposto: va completata prima della sottoscrizione." } },
         { id: "antiriciclaggio", tipo: "sino", obbl: true, se: r => invioPer(r._prodotto) === "vita", dom: "Adeguata verifica antiriciclaggio fatta?",
@@ -636,12 +636,9 @@ const SEZIONI_CASA = [
   { v: "green", t: "Pannelli solari e colonnina di ricarica", n: "Danni e furto dell'impianto fotovoltaico e della colonnina", comp: ["AXA", "UNI"] },
   { v: "persona", t: "Protezione della persona e della famiglia", n: "Aiuti economici in caso di infortunio, perdita del lavoro, imprevisti", comp: ["UNI"] }
 ];
-const SUGGERISCI_SEZIONI_CASA = r => ["incendio", "rc",
+const SUGGERISCI_SEZIONI_CASA = r => ["incendio", "furto", "rc", "assistenza", "persona",
   ha(r, "cane") || ha(r, "gatto") ? "animali" : null,
-  ha(r, "pannelli") || ha(r, "colonnina") ? "green" : null,
-  ha(r, "arte") ? "arte" : null,
-  ha(r, "cassaforte") || ha(r, "allarme") ? "furto" : null,
-  ha(r, "figli") ? "persona" : null
+  ha(r, "pannelli") || ha(r, "colonnina") ? "green" : null
 ].filter(Boolean);
 
 const G = (v, t, n, g, sez, comp, se) => ({ v, t, n, g, sez: r => sezC(r, sez), comp, se });
@@ -649,24 +646,24 @@ const nonAppartamento = r => r.immTipo !== "appartamento";
 const GC = { inc: "Danni alla casa", fur: "Furto", rc: "Responsabilità civile", tut: "Tutela legale", ass: "Assistenza", ani: "Animali", per: "Persona e famiglia" };
 const GARANZIE_CASA = [
   G("elettrico", "Fenomeno elettrico", "Elettrodomestici e impianti bruciati da sbalzi di corrente o fulmini", GC.inc, "incendio", ["AXA", "UNI"], r => true),
-  G("elettricoCons", "Danni conseguenti al fenomeno elettrico", "Es. il cibo perso se si guasta il frigorifero", GC.inc, "incendio", ["AXA"], r => false),
+  G("elettricoCons", "Danni conseguenti al fenomeno elettrico", "Es. il cibo perso se si guasta il frigorifero", GC.inc, "incendio", ["AXA"], r => true),
   G("acqua", "Acqua condotta", "Danni da un tubo rotto, a casa sua o dei vicini", GC.inc, "incendio", ["AXA", "UNI"], r => true),
   G("ricercaGuasto", "Ricerca del guasto", "Le spese per rompere e rifare muri e pavimenti per trovare la perdita", GC.inc, "incendio", ["UNI"], r => true),
-  G("perditeOcculte", "Perdite occulte d'acqua", "La bolletta dell'acqua in più per una perdita nascosta", GC.inc, "incendio", ["UNI"], r => false),
-  G("atmosferici", "Eventi atmosferici", "Vento, grandine, tempeste su tetto, finestre, persiane", GC.inc, "incendio", ["AXA", "UNI"], nonAppartamento),
-  G("piovana", "Acqua piovana", "Infiltrazioni di pioggia dal tetto o dalle pareti", GC.inc, "incendio", ["AXA"], nonAppartamento),
-  G("vetri", "Vetri e cristalli", "Rottura di vetrate, specchi, piani in cristallo", GC.inc, "incendio", ["UNI"], r => false),
+  G("perditeOcculte", "Perdite occulte d'acqua", "La bolletta dell'acqua in più per una perdita nascosta", GC.inc, "incendio", ["UNI"], r => true),
+  G("atmosferici", "Eventi atmosferici", "Vento, grandine, tempeste su tetto, finestre, persiane", GC.inc, "incendio", ["AXA", "UNI"], r => true),
+  G("piovana", "Acqua piovana", "Infiltrazioni di pioggia dal tetto o dalle pareti", GC.inc, "incendio", ["AXA"], r => true),
+  G("vetri", "Vetri e cristalli", "Rottura di vetrate, specchi, piani in cristallo", GC.inc, "incendio", ["UNI"], r => true),
   G("alberi", "Caduta di alberi", "Un albero che cade sulla casa o sulla recinzione", GC.inc, "incendio", ["UNI"], r => ha(r, "giardino")),
   G("canoni", "Perdita dei canoni di affitto", "Gli affitti persi se la casa data in locazione diventa inagibile", GC.inc, "incendio", ["AXA"], r => r.uso === "affitto"),
   G("terremoto", "Terremoto", "", GC.inc, "incendio", ["AXA", "UNI"], r => false),
   G("alluvione", "Alluvione e allagamento", "", GC.inc, "incendio", ["AXA", "UNI"], r => false),
-  G("guastiLadri", "Guasti causati dai ladri", "Porte, finestre e serrature da riparare dopo un furto", GC.fur, "furto", ["AXA"], r => true),
+  G("guastiLadri", "Guasti causati dai ladri", "Porte, finestre e serrature da riparare dopo un furto", GC.fur, "furto", ["AXA"], r => false),
   G("gioielli", "Gioielli e valori", "Gioielli e denaro, in cassaforte o in casa", GC.fur, "furto", ["AXA", "UNI"], r => ha(r, "cassaforte")),
   G("scippo", "Scippo e rapina fuori casa", "Borsa o portafoglio rubati per strada", GC.fur, "furto", ["UNI", "HEL"], r => false),
   G("furtoSociopol", "Furto durante disordini", "Saccheggi durante scioperi o tumulti", GC.fur, "furto", ["UNI"], r => false),
   G("rcFabb", "RC della proprietà della casa", "Danni ad altri causati dalla casa: una tegola che cade, un'infiltrazione al vicino", GC.rc, "rc", ["AXA", "UNI", "HEL"], r => r.titoloCasa !== "inquilino"),
   G("domestici", "Collaboratori domestici", "Infortuni e danni che riguardano colf e badanti", GC.rc, "rc", ["UNI"], r => ha(r, "colf")),
-  G("lavori", "Lavori in casa", "Danni ad altri durante lavori di manutenzione commissionati dal cliente", GC.rc, "rc", ["AXA"], r => ha(r, "lavori")),
+  G("lavori", "Lavori in casa", "Danni ad altri durante lavori di manutenzione commissionati dal cliente", GC.rc, "rc", ["AXA"], r => true),
   G("bici", "Bicicletta", "Danni causati ad altri andando in bici", GC.rc, "rc", ["AXA"], r => ha(r, "bici")),
   G("locata", "Casa data in affitto", "La responsabilità del proprietario verso l'inquilino e i terzi", GC.rc, "rc", ["UNI"], r => r.uso === "affitto"),
   G("bb", "B&B e affittacamere", "La responsabilità verso gli ospiti", GC.rc, "rc", ["UNI"], r => r.uso === "bb"),
@@ -1560,6 +1557,43 @@ QUESTIONARI.vita = {
 };
 DOC_UTILI.pac = DOC_UTILI.fpens = "Estratti conto o polizze vita in essere, ultima dichiarazione dei redditi, eventuale posizione di previdenza complementare";
 
+/* ---- 23b_dati_protection.js ---- */
+/* =====================================================================
+   PROTECTION (persona fisica, ramo vita): caso morte (TCM), non
+   autosufficienza (LTC), malattie gravi (critical illness).
+   Una sola scheda e una sola anagrafica; le domande comuni si fanno una volta.
+   ===================================================================== */
+const prot = (r, x) => (r.protezioni || []).includes(x);
+
+QUESTIONARI.protection = {
+  titolo: "Protection",
+  passi: [
+    PASSO_CLIENTE,
+    { id: "protezioniScelta", titolo: "Coperture", sotto: "Si possono scegliere anche tutte e tre.", campi: [
+      { id: "protezioni", tipo: "multipla", verticale: true, obbl: true, dom: "Cosa vuole proteggere il cliente?",
+        opzioni: [{ v: "tcm", t: "Caso morte (TCM)", n: "un capitale ai beneficiari se l'assicurato muore durante il contratto" },
+                  { v: "ltc", t: "Non autosufficienza (LTC)", n: "una rendita se l'assicurato non è più autosufficiente" },
+                  { v: "ci", t: "Malattie gravi (critical illness)", n: "un capitale alla diagnosi di una malattia grave" }] }
+    ]},
+    { id: "protezioniDati", titolo: "Dati delle coperture", sotto: "Le domande comuni compaiono una volta sola.", campi: [
+      { id: "fumatore", tipo: "sino", obbl: true, se: r => prot(r, "tcm") || prot(r, "ci"), dom: "L'assicurato è fumatore?",
+        aiuto: "Le compagnie hanno tariffe diverse per fumatori e non fumatori." },
+      { id: "durataProt", tipo: "testo", tastiera: "numeric", obbl: true, se: r => prot(r, "tcm") || prot(r, "ci"),
+        dom: r => prot(r, "tcm") && prot(r, "ci") ? "Durata (anni), per caso morte e malattie gravi" : "Durata (anni)",
+        verifica: v => Number(v) > 0 && Number(v) <= 40 ? null : "Indica un numero di anni" },
+      { id: "capTcm", tipo: "euro", obbl: true, se: r => prot(r, "tcm"), dom: "Caso morte: capitale" },
+      { id: "andamentoTcm", tipo: "scelta", obbl: true, se: r => prot(r, "tcm"), dom: "Caso morte: andamento del capitale",
+        opzioni: [{ v: "costante", t: "Costante" }, { v: "decrescente", t: "Decrescente" }],
+        aiuto: "Decrescente: scende nel tempo, per esempio insieme al debito residuo di un mutuo." },
+      { id: "capCi", tipo: "euro", obbl: true, se: r => prot(r, "ci"), dom: "Malattie gravi: capitale" },
+      { id: "renditaLtc", tipo: "euro", obbl: true, se: r => prot(r, "ltc"), dom: "Non autosufficienza: rendita mensile" },
+      { id: "premiLtc", tipo: "scelta", obbl: true, se: r => prot(r, "ltc"), dom: "Non autosufficienza: durata del pagamento dei premi",
+        opzioni: [{ v: "5", t: "5 anni" }, { v: "10", t: "10 anni" }, { v: "15", t: "15 anni" }, { v: "20", t: "20 anni" }, { v: "vita", t: "Vita intera" }] }
+    ]},
+    PASSO_CHIUSURA
+  ]
+};
+
 /* ---- 24_dati_sinistri.js ---- */
 /* =====================================================================
    SINISTRI: un unico percorso per tutti i rami.
@@ -2031,7 +2065,7 @@ const sportRischio = r => (r.sport || []).some(x => SPORT_RISCHIO.includes(x)) |
 const GI = { inf: "Infortuni", mal: "Malattia", srv: "Servizi" };
 const I = (v, t, n, g, comp, se) => ({ v, t, n, g, comp, se });
 const GARANZIE_INF = [
-  I("morte", "Morte da infortunio", "Un capitale ai beneficiari se l'infortunio è mortale. Per il caso morte proponi la TCM.", GI.inf, ["AXA", "UNI", "HEL"]),
+  I("morte", "Morte da infortunio", "Un capitale ai beneficiari se l'infortunio è mortale. Per il caso morte proponi la Protection (TCM).", GI.inf, ["AXA", "UNI", "HEL"]),
   I("ip", "Invalidità permanente da infortunio", "Un capitale in proporzione all'invalidità che resta dopo l'infortunio", GI.inf, ["AXA", "UNI", "HEL"]),
   I("ipGrave", "Capitale in più per invalidità grave", "Un ulteriore capitale se l'invalidità è pari o superiore al 60%", GI.inf, ["AXA", "HEL"]),
   I("rendita", "Rendita vitalizia per invalidità grave", "Un assegno mensile per tutta la vita se l'invalidità è pari o superiore al 60%", GI.inf, ["AXA"]),
@@ -2537,6 +2571,38 @@ QUESTIONARI.edileRc = {
       { id: "altriElementi", tipo: "nota", dom: "Altri elementi utili per valutare il rischio" }
     ]},
     PASSO_DOC_EDILE,
+    PASSO_CHIUSURA
+  ]
+};
+
+/* ---- 29_dati_auto.js ---- */
+/* =====================================================================
+   AUTO (persona fisica e azienda): solo anagrafica, documenti e il tipo
+   di contratto per la classe di merito. Il preventivo lo fa il backoffice.
+   ===================================================================== */
+const TARGA_IT = /^[A-Z]{2}\s?\d{3}\s?[A-Z]{2}$/i;
+const avvisoTarga = v => TARGA_IT.test(String(v).trim()) ? null : { livello: "blu", testo: "Non è una targa italiana del tipo AB123CD: va bene se è di una moto o di un veicolo particolare, altrimenti ricontrolla." };
+
+QUESTIONARI.auto = {
+  titolo: "Auto",
+  passi: [
+    PASSO_CLIENTE,
+    { id: "classe", titolo: "Contratto e classe", sotto: "Da dove viene la classe di merito.", campi: [
+      { id: "tipoContratto", tipo: "scelta", verticale: true, obbl: true, dom: "Tipo di contratto",
+        opzioni: [{ v: "bersani", t: "Decreto Bersani", n: "la classe di un altro veicolo del cliente o di un familiare convivente" },
+                  { v: "continuita", t: "Continuità assicurativa", n: "stesso veicolo, già assicurato" },
+                  { v: "nuovo", t: "Contratto nuovo in 14ª classe" }] },
+      { id: "targaBersani", tipo: "testo", obbl: true, maiuscolo: true, se: r => r.tipoContratto === "bersani", dom: "Targa del veicolo da cui prendere la classe", avviso: avvisoTarga },
+      { id: "altreTargheSi", tipo: "sino", se: r => r.tipoContratto === "bersani", dom: "Nel nucleo familiare ci sono altri veicoli da cui si può prendere la classe?",
+        figli: { quando: "si", campi: [{ id: "altreTarghe", tipo: "nota", obbl: true, dom: "Altre targhe, una per riga, con il nome dell'intestatario",
+          aiuto: "Il backoffice sceglie la classe migliore." }] } }
+    ]},
+    { id: "documentiAuto", titolo: "Documenti", sotto: "Foto o PDF leggibili.", campi: [
+      { id: "libretto", tipo: "allegato", dom: "Libretto di circolazione, fronte e retro",
+        avvisoVuoto: () => ({ livello: "ambra", testo: "Senza libretto il backoffice non può fare il preventivo: fotografalo adesso se puoi." }) },
+      { id: "contrattoAcquisto", tipo: "allegato", dom: "Contratto di acquisto",
+        aiuto: "Solo per un veicolo appena comprato, se il libretto non è ancora intestato al cliente." }
+    ]},
     PASSO_CHIUSURA
   ]
 };
