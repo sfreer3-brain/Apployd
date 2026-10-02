@@ -1,6 +1,6 @@
 # Bussola · Lloyd Varesino
 
-**Versione 0.18** · strumento interno della rete commerciale
+**Versione 0.19** · strumento interno della rete commerciale
 
 Bussola guida il commerciale nella raccolta dei dati per i preventivi, nella denuncia dei sinistri e negli adempimenti di compliance. Alla fine prepara un riepilogo in PDF da inviare al backoffice giusto.
 
@@ -49,6 +49,14 @@ Il percorso è unico per tutti i rami. Per ogni tipo di evento l'app indica i do
 La **Compliance** riporta le regole del fascicolo compliance addetto dell'agenzia (prima della vendita, identificazione e firma OTP, antiriciclaggio, incasso premi e conto separato, privacy, sicurezza informatica, consulenze, siti e social, collaboratori, normativa, segnalazione di violazioni), il numero RUI con il collegamento alla verifica sul registro ufficiale IVASS, i moduli (dichiarazione proposta personalizzata, informativa privacy) e le segnalazioni di ritorno POG all'agenzia. La **Guida** contiene i collegamenti a Omniaweb e al cloud e regole operative per ramo, in bozza da validare.
 
 La Guida contiene anche le coordinate bancarie dell'agenzia (con i tasti per copiare IBAN, BIC o tutte le coordinate) e i **documenti utili**: il modulo privacy in bianco da stampare, la lettera di disdetta del cliente, che si compila e diventa un PDF da firmare (i dati non vengono salvati), e la procedura per la presa visione della documentazione POG con il collegamento al cloud dell'agenzia. Le credenziali di accesso al cloud non sono nell'app, perché il sito è pubblico.
+
+### Foglio cassa (comunicazione d'incasso)
+Dalla home, **Foglio cassa**: il commerciale aggiunge gli incassi della giornata (contraente, ramo, polizza, compagnia, titolo, data effetto, data incasso, pagamento, premio lordo, note e contabile facoltativa). L'app controlla le regole della procedura del 26/10/2023 e del fascicolo compliance:
+- vita: solo assegno bancario, circolare o bonifico; sopra 5.000 € dati dell'assegno o IBAN del conto che fa il bonifico;
+- contanti: rami danni fino a 750 € (escluse RC auto e garanzie dello stesso veicolo), mai da 5.000 € in su;
+- POS e carte si incassano in agenzia.
+
+All'invio compila il **foglio cassa Excel dell'agenzia** (stesse colonne, sigle, convalide e totali, con Sub e Codice) e prepara l'email per spassoni@lloydvaresino.it con l'elenco degli incassi nel testo e le contabili allegate. Fuori orario (lunedì-giovedì 8:45-13 e 14:45-18, venerdì 8:45-13) l'email va alla PEC postmaster@pec.lvsrl.eu con spassoni e sbreglia in copia, da spedire dalla casella PEC. Dopo l'invio, «Ho inviato» svuota il foglio; un foglio non inviato si cancella dopo 7 giorni. Il modello Excel si rigenera con `strumenti/prepara_cassa.py`.
 
 ### Invio al backoffice
 1. Il commerciale controlla il riepilogo e sceglie il destinatario. L'app propone i destinatari a turno per distribuire il lavoro.
@@ -130,6 +138,9 @@ Le prove nel browser richiedono Playwright e un server locale avviato dentro `di
 ---
 
 ## Versioni
+
+### 0.19 — 02/10/2026
+- **Foglio cassa** in home: comunicazione d'incasso con il file Excel dell'agenzia compilato, controlli antiriciclaggio e contanti, totali, email pronta a spassoni o alla PEC fuori orario, contabili allegate. Procedura riassunta nella scheda e richiamata nella Compliance.
 
 ### 0.18 — 02/10/2026
 - Foto allegate unite al PDF del riepilogo, una pagina ciascuna, ridotte e compresse. I PDF allegati restano separati.

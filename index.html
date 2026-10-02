@@ -181,6 +181,14 @@ dd.grave{color:var(--rosso);font-weight:700}
 .mfo-campo{grid-column:1 / -1}
 .mfo-campo iframe{display:block;width:100%;border:0;background:var(--fondo);margin-top:12px}
 .mfo-campo #mfoEsito .avviso{margin-top:0}
+.riga-cassa{display:grid;grid-template-columns:1fr auto;gap:4px 12px;padding:10px 0;border-top:1px solid var(--bordo)}
+.riga-cassa:first-of-type{border-top:0}
+.riga-cassa small{display:block;color:var(--testo-2);font-size:13px;margin-top:2px}
+.riga-cassa .importo{white-space:nowrap;align-self:start}
+.riga-cassa .bottoni-msg{grid-column:1 / -1;margin-top:2px}
+.totali-cassa .riga-dato span{flex:1}
+.totali-cassa .riga-dato b{flex:0 0 auto;text-align:right}
+.btn.pericolo{border-color:#a3262b;color:#a3262b;background:#fdecec}
 .riga-dato{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--bordo);font-size:15px}
 .riga-dato:first-of-type{border-top:0}
 .riga-dato span{color:var(--testo-2);flex:0 0 96px}
@@ -295,7 +303,7 @@ body.esperto .campo > .aiuto, body.esperto .perche, body.esperto .testo-spunta s
 const AGENZIA = {
   nome: "Lloyd Varesino",
   app: "Bussola",
-  versione: "0.18",       // scritta da ricomponi.py (file VERSIONE)
+  versione: "0.19",       // scritta da ricomponi.py (file VERSIONE)
   dataBuild: "02/10/2026",
   giorniConservazioneBozze: 7   // le bozze non inviate si cancellano da sole dopo N giorni
 };
@@ -2187,7 +2195,8 @@ const COMPLIANCE = [
     "Mezzi ammessi: assegni non trasferibili intestati alla compagnia o all'intermediario in quanto tale; bonifici e pagamenti elettronici a favore degli stessi.",
     "Contanti: solo per RC auto e garanzie accessorie dello stesso veicolo, e per gli altri rami danni fino a 750 € all'anno per contratto. Limite generale per il contante: 4.999,99 € per operazione.",
     "Puoi incassare su un tuo conto solo se è un conto separato (art. 117 D.Lgs. 209/2005), autorizzato dall'agenzia e intestato con la dicitura «intermediario assicurativo».",
-    "Versa subito sul conto separato i premi ricevuti. Senza conto separato non puoi incassare sul tuo conto e poi fare il bonifico all'agenzia."
+    "Versa subito sul conto separato i premi ricevuti. Senza conto separato non puoi incassare sul tuo conto e poi fare il bonifico all'agenzia.",
+    "Ogni incasso va comunicato a cassa (procedura del 26/10/2023): usa il Foglio cassa dell'app, che compila il file Excel per spassoni@lloydvaresino.it o, fuori orario, l'email per la PEC."
   ]},
   { titolo: "Privacy e riservatezza", voci: [
     "Tratta solo i dati che servono e non comunicarli a nessuno senza autorizzazione.",
@@ -2977,9 +2986,10 @@ const Allegati = (() => {
     },
     async leggi(id) { if (ram.has(id)) return ram.get(id).blob; const r = await op("readonly", st => st.get(id)); return r ? r.blob : null; },
     async elimina(id) { ram.delete(id); await op("readwrite", st => st.delete(id)); },
-    async eliminaPratica(pratica) { return this.tieniSolo(Pratiche.tutte().map(x => x.id).filter(x => x !== pratica)); },
-    async tieniSolo(praticheValide) {
-      const ok = new Set(praticheValide);
+    async eliminaPratica(pratica) { return this.tieniSolo(Pratiche.tutte().map(x => x.id).filter(x => x !== pratica), pratica === "cassa"); },
+    /* i file del foglio cassa (contabili) restano finché non si svuota il foglio */
+    async tieniSolo(praticheValide, togliCassa) {
+      const ok = new Set(praticheValide); if (!togliCassa) ok.add("cassa");
       for (const [k, v] of ram) if (!ok.has(v.pratica)) ram.delete(k);
       const tutti = (await op("readonly", st => st.getAll())) || [];
       for (const f of tutti) if (!ok.has(f.pratica)) await op("readwrite", st => st.delete(f.id));
@@ -3179,6 +3189,183 @@ const PERCHE = {
   fattUltimo: "Il premio della RC verso terzi dell'impresa si calcola sul fatturato.",
   p1Opere: "È il valore delle opere da assicurare: se è più basso del vero, in caso di danno la compagnia paga in proporzione."
 };
+
+/* ---- 31_modello_cassa.js ---- */
+/* Modello del foglio cassa dell'agenzia (generato da strumenti/prepara_cassa.py: non modificare a mano) */
+const CASSA_MODELLO = {"[Content_Types].xml": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\r\n<Types xmlns=\"http://schemas.openxmlformats.org/package/2006/content-types\"><Default Extension=\"rels\" ContentType=\"application/vnd.openxmlformats-package.relationships+xml\"/><Default Extension=\"xml\" ContentType=\"application/xml\"/><Override PartName=\"/xl/workbook.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml\"/><Override PartName=\"/xl/worksheets/sheet1.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml\"/><Override PartName=\"/xl/theme/theme1.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.theme+xml\"/><Override PartName=\"/xl/styles.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml\"/><Override PartName=\"/xl/sharedStrings.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.spreadsheetml.sharedStrings+xml\"/><Override PartName=\"/docProps/app.xml\" ContentType=\"application/vnd.openxmlformats-officedocument.extended-properties+xml\"/></Types>", "_rels/.rels": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\r\n<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\"><Relationship Id=\"rId3\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties\" Target=\"docProps/app.xml\"/><Relationship Id=\"rId1\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument\" Target=\"xl/workbook.xml\"/></Relationships>", "docProps/app.xml": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\r\n<Properties xmlns=\"http://schemas.openxmlformats.org/officeDocument/2006/extended-properties\" xmlns:vt=\"http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes\"><Application>Microsoft Excel</Application><DocSecurity>0</DocSecurity><ScaleCrop>false</ScaleCrop><HeadingPairs><vt:vector size=\"4\" baseType=\"variant\"><vt:variant><vt:lpstr>Fogli di lavoro</vt:lpstr></vt:variant><vt:variant><vt:i4>1</vt:i4></vt:variant><vt:variant><vt:lpstr>Intervalli denominati</vt:lpstr></vt:variant><vt:variant><vt:i4>1</vt:i4></vt:variant></vt:vector></HeadingPairs><TitlesOfParts><vt:vector size=\"2\" baseType=\"lpstr\"><vt:lpstr>Foglio1</vt:lpstr><vt:lpstr>Foglio1!Area_stampa</vt:lpstr></vt:vector></TitlesOfParts><LinksUpToDate>false</LinksUpToDate><SharedDoc>false</SharedDoc><HyperlinksChanged>false</HyperlinksChanged><AppVersion>16.0300</AppVersion></Properties>", "xl/workbook.xml": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\r\n<workbook xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\" xmlns:mc=\"http://schemas.openxmlformats.org/markup-compatibility/2006\" mc:Ignorable=\"x15 xr xr6 xr10 xr2\" xmlns:x15=\"http://schemas.microsoft.com/office/spreadsheetml/2010/11/main\" xmlns:xr=\"http://schemas.microsoft.com/office/spreadsheetml/2014/revision\" xmlns:xr6=\"http://schemas.microsoft.com/office/spreadsheetml/2016/revision6\" xmlns:xr10=\"http://schemas.microsoft.com/office/spreadsheetml/2016/revision10\" xmlns:xr2=\"http://schemas.microsoft.com/office/spreadsheetml/2015/revision2\"><fileVersion appName=\"xl\" lastEdited=\"7\" lowestEdited=\"7\" rupBuild=\"26827\"/><workbookPr/><bookViews><workbookView xWindow=\"-108\" yWindow=\"-108\" windowWidth=\"23256\" windowHeight=\"12456\" xr2:uid=\"{00000000-000D-0000-FFFF-FFFF00000000}\"/></bookViews><sheets><sheet name=\"Foglio1\" sheetId=\"1\" r:id=\"rId1\"/></sheets><definedNames><definedName name=\"_xlnm.Print_Area\" localSheetId=\"0\">Foglio1!$B$1:$L$27</definedName></definedNames><calcPr calcId=\"191029\" fullCalcOnLoad=\"1\"/><extLst><ext uri=\"{B58B0392-4F1F-4190-BB64-5DF3571DCE5F}\" xmlns:xcalcf=\"http://schemas.microsoft.com/office/spreadsheetml/2018/calcfeatures\"><xcalcf:calcFeatures><xcalcf:feature name=\"microsoft.com:RD\"/><xcalcf:feature name=\"microsoft.com:Single\"/><xcalcf:feature name=\"microsoft.com:FV\"/><xcalcf:feature name=\"microsoft.com:CNMTM\"/><xcalcf:feature name=\"microsoft.com:LET_WF\"/><xcalcf:feature name=\"microsoft.com:LAMBDA_WF\"/><xcalcf:feature name=\"microsoft.com:ARRAYTEXT_WF\"/></xcalcf:calcFeatures></ext></extLst></workbook>", "xl/_rels/workbook.xml.rels": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\r\n<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\"><Relationship Id=\"rId3\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles\" Target=\"styles.xml\"/><Relationship Id=\"rId2\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme\" Target=\"theme/theme1.xml\"/><Relationship Id=\"rId1\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet\" Target=\"worksheets/sheet1.xml\"/><Relationship Id=\"rId4\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings\" Target=\"sharedStrings.xml\"/></Relationships>", "xl/styles.xml": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\r\n<styleSheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\" xmlns:mc=\"http://schemas.openxmlformats.org/markup-compatibility/2006\" mc:Ignorable=\"x14ac x16r2 xr\" xmlns:x14ac=\"http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac\" xmlns:x16r2=\"http://schemas.microsoft.com/office/spreadsheetml/2015/02/main\" xmlns:xr=\"http://schemas.microsoft.com/office/spreadsheetml/2014/revision\"><numFmts count=\"2\"><numFmt numFmtId=\"164\" formatCode=\"[$€-2]\\ #,##0.00\"/><numFmt numFmtId=\"165\" formatCode=\"h\\.mm\"/></numFmts><fonts count=\"16\"><font><sz val=\"10\"/><color rgb=\"FF000000\"/><name val=\"Arial\"/><scheme val=\"minor\"/></font><font><b/><sz val=\"20\"/><color theme=\"1\"/><name val=\"Arial\"/><family val=\"2\"/></font><font><b/><sz val=\"12\"/><color theme=\"1\"/><name val=\"Arial\"/><family val=\"2\"/></font><font><b/><sz val=\"10\"/><color theme=\"1\"/><name val=\"Arial\"/><family val=\"2\"/><scheme val=\"minor\"/></font><font><sz val=\"10\"/><color theme=\"1\"/><name val=\"Arial\"/><family val=\"2\"/></font><font><sz val=\"10\"/><name val=\"Arial\"/><family val=\"2\"/></font><font><b/><sz val=\"10\"/><color theme=\"1\"/><name val=\"Arial\"/><family val=\"2\"/></font><font><b/><sz val=\"10\"/><color theme=\"1\"/><name val=\"Arial\"/><family val=\"2\"/><scheme val=\"minor\"/></font><font><sz val=\"10\"/><color theme=\"1\"/><name val=\"Arial\"/><family val=\"2\"/><scheme val=\"minor\"/></font><font><sz val=\"15\"/><color theme=\"1\"/><name val=\"Arial\"/><family val=\"2\"/><scheme val=\"minor\"/></font><font><b/><sz val=\"10\"/><color theme=\"1\"/><name val=\"Arial\"/><family val=\"2\"/><scheme val=\"minor\"/></font><font><sz val=\"14\"/><color theme=\"1\"/><name val=\"Arial\"/><family val=\"2\"/><scheme val=\"minor\"/></font><font><sz val=\"14\"/><color rgb=\"FF000000\"/><name val=\"Arial\"/><family val=\"2\"/></font><font><sz val=\"14\"/><color rgb=\"FF000000\"/><name val=\"&quot;Segoe UI&quot;\"/></font><font><sz val=\"14\"/><color rgb=\"FF000000\"/><name val=\"Arial\"/><family val=\"2\"/><scheme val=\"minor\"/></font><font><u/><sz val=\"14\"/><color rgb=\"FF000000\"/><name val=\"Arial\"/><family val=\"2\"/></font></fonts><fills count=\"12\"><fill><patternFill patternType=\"none\"/></fill><fill><patternFill patternType=\"gray125\"/></fill><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFF3F3F3\"/><bgColor rgb=\"FFF3F3F3\"/></patternFill></fill><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFFFFFFF\"/><bgColor rgb=\"FFFFFFFF\"/></patternFill></fill><fill><patternFill patternType=\"solid\"><fgColor theme=\"0\"/><bgColor theme=\"0\"/></patternFill></fill><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFF7F7F7\"/><bgColor rgb=\"FFF7F7F7\"/></patternFill></fill><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFE9F3E5\"/><bgColor rgb=\"FFD9EAD3\"/></patternFill></fill><fill><patternFill patternType=\"solid\"><fgColor theme=\"2\" tint=\"-0.14999847407452621\"/><bgColor rgb=\"FFF7F7F7\"/></patternFill></fill><fill><patternFill patternType=\"solid\"><fgColor theme=\"2\" tint=\"-0.14999847407452621\"/><bgColor rgb=\"FFF3F3F3\"/></patternFill></fill><fill><patternFill patternType=\"solid\"><fgColor theme=\"2\" tint=\"-0.14999847407452621\"/><bgColor indexed=\"64\"/></patternFill></fill><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFADD3B4\"/><bgColor rgb=\"FFD9EAD3\"/></patternFill></fill><fill><patternFill patternType=\"solid\"><fgColor rgb=\"FFADD3B4\"/><bgColor indexed=\"64\"/></patternFill></fill></fills><borders count=\"17\"><border><left/><right/><top/><bottom/><diagonal/></border><border><left style=\"thin\"><color rgb=\"FF000000\"/></left><right style=\"thin\"><color rgb=\"FF000000\"/></right><top style=\"thin\"><color rgb=\"FF000000\"/></top><bottom/><diagonal/></border><border><left style=\"thin\"><color rgb=\"FF000000\"/></left><right/><top style=\"thin\"><color rgb=\"FF000000\"/></top><bottom style=\"thin\"><color rgb=\"FF000000\"/></bottom><diagonal/></border><border><left/><right style=\"thin\"><color rgb=\"FF000000\"/></right><top style=\"thin\"><color rgb=\"FF000000\"/></top><bottom style=\"thin\"><color rgb=\"FF000000\"/></bottom><diagonal/></border><border><left style=\"thin\"><color rgb=\"FF000000\"/></left><right style=\"thin\"><color rgb=\"FF000000\"/></right><top/><bottom style=\"thin\"><color rgb=\"FF000000\"/></bottom><diagonal/></border><border><left style=\"thin\"><color rgb=\"FF000000\"/></left><right style=\"thin\"><color rgb=\"FF000000\"/></right><top style=\"thin\"><color rgb=\"FF000000\"/></top><bottom style=\"thin\"><color rgb=\"FF000000\"/></bottom><diagonal/></border><border><left style=\"thin\"><color rgb=\"FF000000\"/></left><right style=\"thin\"><color rgb=\"FF000000\"/></right><top/><bottom/><diagonal/></border><border><left style=\"thin\"><color rgb=\"FF000000\"/></left><right/><top style=\"thin\"><color rgb=\"FF000000\"/></top><bottom/><diagonal/></border><border><left/><right style=\"thin\"><color rgb=\"FF000000\"/></right><top style=\"thin\"><color rgb=\"FF000000\"/></top><bottom/><diagonal/></border><border><left style=\"thin\"><color rgb=\"FF000000\"/></left><right/><top/><bottom/><diagonal/></border><border><left/><right style=\"thin\"><color rgb=\"FF000000\"/></right><top/><bottom/><diagonal/></border><border><left style=\"thin\"><color rgb=\"FF000000\"/></left><right/><top/><bottom style=\"thin\"><color rgb=\"FF000000\"/></bottom><diagonal/></border><border><left/><right/><top style=\"thin\"><color rgb=\"FF000000\"/></top><bottom/><diagonal/></border><border><left/><right/><top style=\"thin\"><color rgb=\"FF000000\"/></top><bottom style=\"thin\"><color rgb=\"FF000000\"/></bottom><diagonal/></border><border><left/><right style=\"thin\"><color rgb=\"FF000000\"/></right><top/><bottom style=\"thin\"><color rgb=\"FF000000\"/></bottom><diagonal/></border><border><left style=\"thin\"><color rgb=\"FF000000\"/></left><right style=\"thin\"><color indexed=\"64\"/></right><top style=\"thin\"><color rgb=\"FF000000\"/></top><bottom/><diagonal/></border><border><left/><right/><top/><bottom style=\"thin\"><color rgb=\"FF000000\"/></bottom><diagonal/></border></borders><cellStyleXfs count=\"1\"><xf numFmtId=\"0\" fontId=\"0\" fillId=\"0\" borderId=\"0\"/></cellStyleXfs><cellXfs count=\"92\"><xf numFmtId=\"0\" fontId=\"0\" fillId=\"0\" borderId=\"0\" xfId=\"0\"/><xf numFmtId=\"0\" fontId=\"3\" fillId=\"2\" borderId=\"2\" xfId=\"0\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"right\"/></xf><xf numFmtId=\"0\" fontId=\"4\" fillId=\"2\" borderId=\"3\" xfId=\"0\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"center\" vertical=\"center\"/></xf><xf numFmtId=\"0\" fontId=\"6\" fillId=\"3\" borderId=\"2\" xfId=\"0\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"right\" vertical=\"center\"/></xf><xf numFmtId=\"0\" fontId=\"4\" fillId=\"3\" borderId=\"3\" xfId=\"0\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"center\" vertical=\"center\"/></xf><xf numFmtId=\"0\" fontId=\"8\" fillId=\"0\" borderId=\"0\" xfId=\"0\" applyFont=\"1\" applyAlignment=\"1\"><alignment horizontal=\"center\" vertical=\"center\"/></xf><xf numFmtId=\"0\" fontId=\"8\" fillId=\"0\" borderId=\"0\" xfId=\"0\" applyFont=\"1\" applyAlignment=\"1\"><alignment horizontal=\"left\"/></xf><xf numFmtId=\"0\" fontId=\"8\" fillId=\"0\" borderId=\"0\" xfId=\"0\" applyFont=\"1\"/><xf numFmtId=\"0\" fontId=\"8\" fillId=\"0\" borderId=\"12\" xfId=\"0\" applyFont=\"1\" applyBorder=\"1\"/><xf numFmtId=\"0\" fontId=\"8\" fillId=\"0\" borderId=\"8\" xfId=\"0\" applyFont=\"1\" applyBorder=\"1\"/><xf numFmtId=\"0\" fontId=\"8\" fillId=\"0\" borderId=\"10\" xfId=\"0\" applyFont=\"1\" applyBorder=\"1\"/><xf numFmtId=\"0\" fontId=\"8\" fillId=\"0\" borderId=\"0\" xfId=\"0\" applyFont=\"1\" applyAlignment=\"1\"><alignment horizontal=\"center\"/></xf><xf numFmtId=\"0\" fontId=\"8\" fillId=\"0\" borderId=\"0\" xfId=\"0\" applyFont=\"1\" applyAlignment=\"1\"><alignment horizontal=\"right\"/></xf><xf numFmtId=\"165\" fontId=\"8\" fillId=\"0\" borderId=\"0\" xfId=\"0\" applyNumberFormat=\"1\" applyFont=\"1\" applyAlignment=\"1\"><alignment horizontal=\"center\"/></xf><xf numFmtId=\"0\" fontId=\"7\" fillId=\"10\" borderId=\"5\" xfId=\"0\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"center\" vertical=\"center\"/></xf><xf numFmtId=\"0\" fontId=\"7\" fillId=\"10\" borderId=\"4\" xfId=\"0\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"center\" vertical=\"center\"/></xf><xf numFmtId=\"0\" fontId=\"7\" fillId=\"10\" borderId=\"1\" xfId=\"0\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"center\" vertical=\"center\"/></xf><xf numFmtId=\"0\" fontId=\"7\" fillId=\"10\" borderId=\"5\" xfId=\"0\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"center\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"10\" fillId=\"10\" borderId=\"5\" xfId=\"0\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"center\" vertical=\"center\" wrapText=\"1\"/></xf><xf numFmtId=\"0\" fontId=\"11\" fillId=\"8\" borderId=\"6\" xfId=\"0\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"left\"/></xf><xf numFmtId=\"0\" fontId=\"11\" fillId=\"8\" borderId=\"1\" xfId=\"0\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"left\"/></xf><xf numFmtId=\"0\" fontId=\"12\" fillId=\"8\" borderId=\"1\" xfId=\"0\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"left\"/></xf><xf numFmtId=\"0\" fontId=\"11\" fillId=\"8\" borderId=\"8\" xfId=\"0\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"center\"/></xf><xf numFmtId=\"14\" fontId=\"11\" fillId=\"10\" borderId=\"7\" xfId=\"0\" applyNumberFormat=\"1\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"left\"/></xf><xf numFmtId=\"14\" fontId=\"11\" fillId=\"10\" borderId=\"1\" xfId=\"0\" applyNumberFormat=\"1\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"left\"/></xf><xf numFmtId=\"164\" fontId=\"11\" fillId=\"8\" borderId=\"15\" xfId=\"0\" applyNumberFormat=\"1\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\"/><xf numFmtId=\"164\" fontId=\"11\" fillId=\"8\" borderId=\"0\" xfId=\"0\" applyNumberFormat=\"1\" applyFont=\"1\" applyFill=\"1\"/><xf numFmtId=\"0\" fontId=\"11\" fillId=\"8\" borderId=\"1\" xfId=\"0\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"center\"/></xf><xf numFmtId=\"0\" fontId=\"11\" fillId=\"4\" borderId=\"6\" xfId=\"0\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"left\"/></xf><xf numFmtId=\"0\" fontId=\"11\" fillId=\"0\" borderId=\"6\" xfId=\"0\" applyFont=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"left\"/></xf><xf numFmtId=\"49\" fontId=\"13\" fillId=\"4\" borderId=\"6\" xfId=\"0\" applyNumberFormat=\"1\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"right\"/></xf><xf numFmtId=\"0\" fontId=\"12\" fillId=\"0\" borderId=\"6\" xfId=\"0\" applyFont=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"left\"/></xf><xf numFmtId=\"0\" fontId=\"11\" fillId=\"0\" borderId=\"10\" xfId=\"0\" applyFont=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"center\"/></xf><xf numFmtId=\"14\" fontId=\"11\" fillId=\"6\" borderId=\"9\" xfId=\"0\" applyNumberFormat=\"1\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"left\"/></xf><xf numFmtId=\"14\" fontId=\"11\" fillId=\"6\" borderId=\"6\" xfId=\"0\" applyNumberFormat=\"1\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"left\"/></xf><xf numFmtId=\"164\" fontId=\"11\" fillId=\"0\" borderId=\"6\" xfId=\"0\" applyNumberFormat=\"1\" applyFont=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"right\"/></xf><xf numFmtId=\"0\" fontId=\"11\" fillId=\"0\" borderId=\"6\" xfId=\"0\" applyFont=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"center\"/></xf><xf numFmtId=\"0\" fontId=\"12\" fillId=\"9\" borderId=\"6\" xfId=\"0\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"left\"/></xf><xf numFmtId=\"0\" fontId=\"11\" fillId=\"8\" borderId=\"10\" xfId=\"0\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"center\"/></xf><xf numFmtId=\"14\" fontId=\"11\" fillId=\"10\" borderId=\"9\" xfId=\"0\" applyNumberFormat=\"1\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"left\"/></xf><xf numFmtId=\"14\" fontId=\"11\" fillId=\"10\" borderId=\"6\" xfId=\"0\" applyNumberFormat=\"1\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"left\"/></xf><xf numFmtId=\"0\" fontId=\"11\" fillId=\"7\" borderId=\"6\" xfId=\"0\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"left\"/></xf><xf numFmtId=\"164\" fontId=\"12\" fillId=\"7\" borderId=\"6\" xfId=\"0\" applyNumberFormat=\"1\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\"/><xf numFmtId=\"0\" fontId=\"11\" fillId=\"8\" borderId=\"6\" xfId=\"0\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"center\"/></xf><xf numFmtId=\"0\" fontId=\"12\" fillId=\"7\" borderId=\"6\" xfId=\"0\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"left\"/></xf><xf numFmtId=\"49\" fontId=\"13\" fillId=\"8\" borderId=\"6\" xfId=\"0\" applyNumberFormat=\"1\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"right\"/></xf><xf numFmtId=\"0\" fontId=\"12\" fillId=\"8\" borderId=\"6\" xfId=\"0\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"left\"/></xf><xf numFmtId=\"164\" fontId=\"11\" fillId=\"7\" borderId=\"6\" xfId=\"0\" applyNumberFormat=\"1\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"right\"/></xf><xf numFmtId=\"0\" fontId=\"12\" fillId=\"3\" borderId=\"6\" xfId=\"0\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"left\"/></xf><xf numFmtId=\"49\" fontId=\"13\" fillId=\"0\" borderId=\"6\" xfId=\"0\" applyNumberFormat=\"1\" applyFont=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"right\"/></xf><xf numFmtId=\"49\" fontId=\"15\" fillId=\"8\" borderId=\"6\" xfId=\"0\" applyNumberFormat=\"1\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"right\"/></xf><xf numFmtId=\"49\" fontId=\"11\" fillId=\"0\" borderId=\"6\" xfId=\"0\" applyNumberFormat=\"1\" applyFont=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"center\"/></xf><xf numFmtId=\"0\" fontId=\"11\" fillId=\"9\" borderId=\"6\" xfId=\"0\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"left\"/></xf><xf numFmtId=\"0\" fontId=\"11\" fillId=\"9\" borderId=\"9\" xfId=\"0\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"left\"/></xf><xf numFmtId=\"49\" fontId=\"11\" fillId=\"9\" borderId=\"6\" xfId=\"0\" applyNumberFormat=\"1\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"center\"/></xf><xf numFmtId=\"0\" fontId=\"11\" fillId=\"9\" borderId=\"10\" xfId=\"0\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"center\"/></xf><xf numFmtId=\"164\" fontId=\"11\" fillId=\"9\" borderId=\"6\" xfId=\"0\" applyNumberFormat=\"1\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"right\"/></xf><xf numFmtId=\"0\" fontId=\"11\" fillId=\"9\" borderId=\"6\" xfId=\"0\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"center\"/></xf><xf numFmtId=\"0\" fontId=\"11\" fillId=\"0\" borderId=\"9\" xfId=\"0\" applyFont=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"left\"/></xf><xf numFmtId=\"0\" fontId=\"11\" fillId=\"7\" borderId=\"9\" xfId=\"0\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"left\"/></xf><xf numFmtId=\"49\" fontId=\"13\" fillId=\"7\" borderId=\"6\" xfId=\"0\" applyNumberFormat=\"1\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"center\"/></xf><xf numFmtId=\"49\" fontId=\"13\" fillId=\"0\" borderId=\"6\" xfId=\"0\" applyNumberFormat=\"1\" applyFont=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"center\"/></xf><xf numFmtId=\"49\" fontId=\"11\" fillId=\"7\" borderId=\"6\" xfId=\"0\" applyNumberFormat=\"1\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"center\"/></xf><xf numFmtId=\"49\" fontId=\"11\" fillId=\"4\" borderId=\"6\" xfId=\"0\" applyNumberFormat=\"1\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"center\"/></xf><xf numFmtId=\"0\" fontId=\"11\" fillId=\"7\" borderId=\"4\" xfId=\"0\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"left\"/></xf><xf numFmtId=\"0\" fontId=\"11\" fillId=\"7\" borderId=\"11\" xfId=\"0\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"left\"/></xf><xf numFmtId=\"49\" fontId=\"11\" fillId=\"7\" borderId=\"4\" xfId=\"0\" applyNumberFormat=\"1\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"center\"/></xf><xf numFmtId=\"0\" fontId=\"12\" fillId=\"8\" borderId=\"4\" xfId=\"0\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"left\"/></xf><xf numFmtId=\"0\" fontId=\"11\" fillId=\"8\" borderId=\"14\" xfId=\"0\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"center\"/></xf><xf numFmtId=\"14\" fontId=\"11\" fillId=\"10\" borderId=\"11\" xfId=\"0\" applyNumberFormat=\"1\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"left\"/></xf><xf numFmtId=\"14\" fontId=\"11\" fillId=\"10\" borderId=\"4\" xfId=\"0\" applyNumberFormat=\"1\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"left\"/></xf><xf numFmtId=\"164\" fontId=\"11\" fillId=\"7\" borderId=\"4\" xfId=\"0\" applyNumberFormat=\"1\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\"/><xf numFmtId=\"0\" fontId=\"11\" fillId=\"8\" borderId=\"4\" xfId=\"0\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"center\"/></xf><xf numFmtId=\"49\" fontId=\"11\" fillId=\"0\" borderId=\"6\" xfId=\"0\" applyNumberFormat=\"1\" applyFont=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"right\"/></xf><xf numFmtId=\"49\" fontId=\"13\" fillId=\"3\" borderId=\"6\" xfId=\"0\" applyNumberFormat=\"1\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"right\"/></xf><xf numFmtId=\"49\" fontId=\"13\" fillId=\"7\" borderId=\"6\" xfId=\"0\" applyNumberFormat=\"1\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"right\"/></xf><xf numFmtId=\"49\" fontId=\"11\" fillId=\"9\" borderId=\"6\" xfId=\"0\" applyNumberFormat=\"1\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"right\"/></xf><xf numFmtId=\"1\" fontId=\"14\" fillId=\"9\" borderId=\"0\" xfId=\"0\" applyNumberFormat=\"1\" applyFont=\"1\" applyFill=\"1\"/><xf numFmtId=\"0\" fontId=\"1\" fillId=\"0\" borderId=\"10\" xfId=\"0\" applyFont=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"center\" vertical=\"center\"/></xf><xf numFmtId=\"0\" fontId=\"3\" fillId=\"5\" borderId=\"13\" xfId=\"0\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"left\" vertical=\"center\"/></xf><xf numFmtId=\"0\" fontId=\"5\" fillId=\"0\" borderId=\"13\" xfId=\"0\" applyFont=\"1\" applyBorder=\"1\"/><xf numFmtId=\"0\" fontId=\"5\" fillId=\"0\" borderId=\"3\" xfId=\"0\" applyFont=\"1\" applyBorder=\"1\"/><xf numFmtId=\"0\" fontId=\"3\" fillId=\"0\" borderId=\"13\" xfId=\"0\" applyFont=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"left\" vertical=\"center\"/></xf><xf numFmtId=\"164\" fontId=\"9\" fillId=\"10\" borderId=\"2\" xfId=\"0\" applyNumberFormat=\"1\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"right\" vertical=\"center\"/></xf><xf numFmtId=\"164\" fontId=\"9\" fillId=\"10\" borderId=\"13\" xfId=\"0\" applyNumberFormat=\"1\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"right\" vertical=\"center\"/></xf><xf numFmtId=\"0\" fontId=\"5\" fillId=\"11\" borderId=\"3\" xfId=\"0\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\"/><xf numFmtId=\"14\" fontId=\"2\" fillId=\"10\" borderId=\"1\" xfId=\"0\" applyNumberFormat=\"1\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"center\" vertical=\"center\"/></xf><xf numFmtId=\"0\" fontId=\"5\" fillId=\"11\" borderId=\"4\" xfId=\"0\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\"/><xf numFmtId=\"0\" fontId=\"4\" fillId=\"2\" borderId=\"9\" xfId=\"0\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"center\" vertical=\"center\"/></xf><xf numFmtId=\"0\" fontId=\"4\" fillId=\"2\" borderId=\"0\" xfId=\"0\" applyFont=\"1\" applyFill=\"1\" applyAlignment=\"1\"><alignment horizontal=\"center\" vertical=\"center\"/></xf><xf numFmtId=\"0\" fontId=\"4\" fillId=\"2\" borderId=\"11\" xfId=\"0\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"center\" vertical=\"center\"/></xf><xf numFmtId=\"0\" fontId=\"4\" fillId=\"2\" borderId=\"16\" xfId=\"0\" applyFont=\"1\" applyFill=\"1\" applyBorder=\"1\" applyAlignment=\"1\"><alignment horizontal=\"center\" vertical=\"center\"/></xf></cellXfs><cellStyles count=\"1\"><cellStyle name=\"Normale\" xfId=\"0\" builtinId=\"0\"/></cellStyles><dxfs count=\"6\"><dxf><fill><patternFill><bgColor rgb=\"FFFF0000\"/></patternFill></fill></dxf><dxf><fill><patternFill><bgColor rgb=\"FFFF0000\"/></patternFill></fill></dxf><dxf><fill><patternFill><bgColor rgb=\"FFFF0000\"/></patternFill></fill></dxf><dxf><fill><patternFill><bgColor rgb=\"FFFF0000\"/></patternFill></fill></dxf><dxf><fill><patternFill><bgColor rgb=\"FFFF0000\"/></patternFill></fill></dxf><dxf><fill><patternFill><bgColor rgb=\"FFFF0000\"/></patternFill></fill></dxf></dxfs><tableStyles count=\"0\" defaultTableStyle=\"TableStyleMedium2\" defaultPivotStyle=\"PivotStyleLight16\"/><colors><mruColors><color rgb=\"FFADD3B4\"/><color rgb=\"FFE9F3E5\"/></mruColors></colors><extLst><ext uri=\"{EB79DEF2-80B8-43e5-95BD-54CBDDF9020C}\" xmlns:x14=\"http://schemas.microsoft.com/office/spreadsheetml/2009/9/main\"><x14:slicerStyles defaultSlicerStyle=\"SlicerStyleLight1\"/></ext><ext uri=\"{9260A510-F301-46a8-8635-F512D64BE5F5}\" xmlns:x15=\"http://schemas.microsoft.com/office/spreadsheetml/2010/11/main\"><x15:timelineStyles defaultTimelineStyle=\"TimeSlicerStyleLight1\"/></ext></extLst></styleSheet>", "xl/theme/theme1.xml": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\r\n<a:theme xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\" name=\"Sheets\"><a:themeElements><a:clrScheme name=\"Sheets\"><a:dk1><a:srgbClr val=\"000000\"/></a:dk1><a:lt1><a:srgbClr val=\"FFFFFF\"/></a:lt1><a:dk2><a:srgbClr val=\"000000\"/></a:dk2><a:lt2><a:srgbClr val=\"FFFFFF\"/></a:lt2><a:accent1><a:srgbClr val=\"4285F4\"/></a:accent1><a:accent2><a:srgbClr val=\"EA4335\"/></a:accent2><a:accent3><a:srgbClr val=\"FBBC04\"/></a:accent3><a:accent4><a:srgbClr val=\"34A853\"/></a:accent4><a:accent5><a:srgbClr val=\"FF6D01\"/></a:accent5><a:accent6><a:srgbClr val=\"46BDC6\"/></a:accent6><a:hlink><a:srgbClr val=\"1155CC\"/></a:hlink><a:folHlink><a:srgbClr val=\"1155CC\"/></a:folHlink></a:clrScheme><a:fontScheme name=\"Sheets\"><a:majorFont><a:latin typeface=\"Arial\"/><a:ea typeface=\"Arial\"/><a:cs typeface=\"Arial\"/></a:majorFont><a:minorFont><a:latin typeface=\"Arial\"/><a:ea typeface=\"Arial\"/><a:cs typeface=\"Arial\"/></a:minorFont></a:fontScheme><a:fmtScheme name=\"Office\"><a:fillStyleLst><a:solidFill><a:schemeClr val=\"phClr\"/></a:solidFill><a:gradFill rotWithShape=\"1\"><a:gsLst><a:gs pos=\"0\"><a:schemeClr val=\"phClr\"><a:lumMod val=\"110000\"/><a:satMod val=\"105000\"/><a:tint val=\"67000\"/></a:schemeClr></a:gs><a:gs pos=\"50000\"><a:schemeClr val=\"phClr\"><a:lumMod val=\"105000\"/><a:satMod val=\"103000\"/><a:tint val=\"73000\"/></a:schemeClr></a:gs><a:gs pos=\"100000\"><a:schemeClr val=\"phClr\"><a:lumMod val=\"105000\"/><a:satMod val=\"109000\"/><a:tint val=\"81000\"/></a:schemeClr></a:gs></a:gsLst><a:lin ang=\"5400000\" scaled=\"0\"/></a:gradFill><a:gradFill rotWithShape=\"1\"><a:gsLst><a:gs pos=\"0\"><a:schemeClr val=\"phClr\"><a:satMod val=\"103000\"/><a:lumMod val=\"102000\"/><a:tint val=\"94000\"/></a:schemeClr></a:gs><a:gs pos=\"50000\"><a:schemeClr val=\"phClr\"><a:satMod val=\"110000\"/><a:lumMod val=\"100000\"/><a:shade val=\"100000\"/></a:schemeClr></a:gs><a:gs pos=\"100000\"><a:schemeClr val=\"phClr\"><a:lumMod val=\"99000\"/><a:satMod val=\"120000\"/><a:shade val=\"78000\"/></a:schemeClr></a:gs></a:gsLst><a:lin ang=\"5400000\" scaled=\"0\"/></a:gradFill></a:fillStyleLst><a:lnStyleLst><a:ln w=\"6350\" cap=\"flat\" cmpd=\"sng\" algn=\"ctr\"><a:solidFill><a:schemeClr val=\"phClr\"/></a:solidFill><a:prstDash val=\"solid\"/><a:miter lim=\"800000\"/></a:ln><a:ln w=\"12700\" cap=\"flat\" cmpd=\"sng\" algn=\"ctr\"><a:solidFill><a:schemeClr val=\"phClr\"/></a:solidFill><a:prstDash val=\"solid\"/><a:miter lim=\"800000\"/></a:ln><a:ln w=\"19050\" cap=\"flat\" cmpd=\"sng\" algn=\"ctr\"><a:solidFill><a:schemeClr val=\"phClr\"/></a:solidFill><a:prstDash val=\"solid\"/><a:miter lim=\"800000\"/></a:ln></a:lnStyleLst><a:effectStyleLst><a:effectStyle><a:effectLst/></a:effectStyle><a:effectStyle><a:effectLst/></a:effectStyle><a:effectStyle><a:effectLst><a:outerShdw blurRad=\"57150\" dist=\"19050\" dir=\"5400000\" algn=\"ctr\" rotWithShape=\"0\"><a:srgbClr val=\"000000\"><a:alpha val=\"63000\"/></a:srgbClr></a:outerShdw></a:effectLst></a:effectStyle></a:effectStyleLst><a:bgFillStyleLst><a:solidFill><a:schemeClr val=\"phClr\"/></a:solidFill><a:solidFill><a:schemeClr val=\"phClr\"><a:tint val=\"95000\"/><a:satMod val=\"170000\"/></a:schemeClr></a:solidFill><a:gradFill rotWithShape=\"1\"><a:gsLst><a:gs pos=\"0\"><a:schemeClr val=\"phClr\"><a:tint val=\"93000\"/><a:satMod val=\"150000\"/><a:shade val=\"98000\"/><a:lumMod val=\"102000\"/></a:schemeClr></a:gs><a:gs pos=\"50000\"><a:schemeClr val=\"phClr\"><a:tint val=\"98000\"/><a:satMod val=\"130000\"/><a:shade val=\"90000\"/><a:lumMod val=\"103000\"/></a:schemeClr></a:gs><a:gs pos=\"100000\"><a:schemeClr val=\"phClr\"><a:shade val=\"63000\"/><a:satMod val=\"120000\"/></a:schemeClr></a:gs></a:gsLst><a:lin ang=\"5400000\" scaled=\"0\"/></a:gradFill></a:bgFillStyleLst></a:fmtScheme></a:themeElements><a:objectDefaults/><a:extraClrSchemeLst/></a:theme>", "xl/sharedStrings.xml": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\r\n<sst xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\" count=\"17\" uniqueCount=\"17\"><si><t>Sub:</t></si><si><t>Codice:</t></si><si><t>CONTRAENTE</t></si><si><t>RAMO</t></si><si><t>N° POLIZZA</t></si><si><t>COMPAGNIA</t></si><si><t>TITOLO</t></si><si><t>DATA EFFETTO</t></si><si><t>DATA INCASSO</t></si><si><t>PAGAMENTO</t></si><si><t>PREMIO LORDO</t></si><si><t>NOTE</t></si><si><t xml:space=\"preserve\">TOTALE </t></si><si><t>TOTALE - BONIFICI</t></si><si><t>SPUNTA</t></si><si><t>ANTICIPI + BONIFICI</t></si><si><t></t></si></sst>", "xl/worksheets/sheet1.xml": "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\r\n<worksheet xmlns=\"http://schemas.openxmlformats.org/spreadsheetml/2006/main\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\" xmlns:mc=\"http://schemas.openxmlformats.org/markup-compatibility/2006\" mc:Ignorable=\"x14ac xr xr2 xr3\" xmlns:x14ac=\"http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac\" xmlns:xr=\"http://schemas.microsoft.com/office/spreadsheetml/2014/revision\" xmlns:xr2=\"http://schemas.microsoft.com/office/spreadsheetml/2015/revision2\" xmlns:xr3=\"http://schemas.microsoft.com/office/spreadsheetml/2016/revision3\" xr:uid=\"{00000000-0001-0000-0000-000000000000}\"><sheetPr><outlinePr summaryBelow=\"0\" summaryRight=\"0\"/><pageSetUpPr fitToPage=\"1\"/></sheetPr><dimension ref=\"A1:N28\"/><sheetViews><sheetView tabSelected=\"1\" zoomScale=\"74\" zoomScaleNormal=\"80\" workbookViewId=\"0\"><pane ySplit=\"3\" topLeftCell=\"A4\" activePane=\"bottomLeft\" state=\"frozen\"/><selection pane=\"bottomLeft\" activeCell=\"J5\" sqref=\"J5\"/></sheetView></sheetViews><sheetFormatPr defaultColWidth=\"12.6640625\" defaultRowHeight=\"15.75\" customHeight=\"1\"/><cols><col min=\"1\" max=\"1\" width=\"2.44140625\" customWidth=\"1\"/><col min=\"2\" max=\"2\" width=\"38\" customWidth=\"1\"/><col min=\"3\" max=\"3\" width=\"11.33203125\" customWidth=\"1\"/><col min=\"4\" max=\"4\" width=\"23.88671875\" bestFit=\"1\" customWidth=\"1\"/><col min=\"5\" max=\"5\" width=\"14.88671875\" bestFit=\"1\" customWidth=\"1\"/><col min=\"6\" max=\"6\" width=\"7.88671875\" customWidth=\"1\"/><col min=\"7\" max=\"7\" width=\"15.44140625\" bestFit=\"1\" customWidth=\"1\"/><col min=\"8\" max=\"8\" width=\"14.33203125\" bestFit=\"1\" customWidth=\"1\"/><col min=\"9\" max=\"9\" width=\"7.33203125\" customWidth=\"1\"/><col min=\"10\" max=\"10\" width=\"14.88671875\" bestFit=\"1\" customWidth=\"1\"/><col min=\"11\" max=\"11\" width=\"6.109375\" customWidth=\"1\"/><col min=\"12\" max=\"12\" width=\"40.5546875\" customWidth=\"1\"/></cols><sheetData><row r=\"1\" spans=\"1:20\" ht=\"18\" customHeight=\"1\"><c r=\"A1\" s=\"78\"/><c r=\"B1\" s=\"86\"><f ca=\"1\">TODAY()</f><v>45225</v></c><c r=\"C1\" s=\"1\" t=\"s\"><v>0</v></c><c r=\"D1\" s=\"2\"><v>218</v></c><c r=\"E1\" s=\"88\"/><c r=\"F1\" s=\"89\"/><c r=\"G1\" s=\"89\"/><c r=\"H1\" s=\"89\"/><c r=\"I1\" s=\"89\"/><c r=\"J1\" s=\"89\"/><c r=\"K1\" s=\"89\"/><c r=\"L1\" s=\"89\"/></row><row r=\"2\" spans=\"1:20\" ht=\"21\" customHeight=\"1\"><c r=\"A2\" s=\"78\"/><c r=\"B2\" s=\"87\"/><c r=\"C2\" s=\"3\" t=\"s\"><v>1</v></c><c r=\"D2\" s=\"4\" t=\"s\"><v>16</v></c><c r=\"E2\" s=\"90\"/><c r=\"F2\" s=\"91\"/><c r=\"G2\" s=\"91\"/><c r=\"H2\" s=\"91\"/><c r=\"I2\" s=\"91\"/><c r=\"J2\" s=\"91\"/><c r=\"K2\" s=\"91\"/><c r=\"L2\" s=\"91\"/></row><row r=\"3\" spans=\"1:20\" ht=\"39.6\"><c r=\"A3\" s=\"78\"/><c r=\"B3\" s=\"14\" t=\"s\"><v>2</v></c><c r=\"C3\" s=\"15\" t=\"s\"><v>3</v></c><c r=\"D3\" s=\"14\" t=\"s\"><v>4</v></c><c r=\"E3\" s=\"16\" t=\"s\"><v>5</v></c><c r=\"F3\" s=\"17\" t=\"s\"><v>6</v></c><c r=\"G3\" s=\"17\" t=\"s\"><v>7</v></c><c r=\"H3\" s=\"17\" t=\"s\"><v>8</v></c><c r=\"I3\" s=\"17\" t=\"s\"><v>9</v></c><c r=\"J3\" s=\"17\" t=\"s\"><v>10</v></c><c r=\"K3\" s=\"18\" t=\"s\"><v>14</v></c><c r=\"L3\" s=\"14\" t=\"s\"><v>11</v></c><c r=\"M3\" s=\"5\"/><c r=\"N3\" s=\"5\"/><c r=\"O3\" s=\"5\"/><c r=\"P3\" s=\"5\"/><c r=\"Q3\" s=\"5\"/><c r=\"R3\" s=\"5\"/><c r=\"S3\" s=\"5\"/><c r=\"T3\" s=\"5\"/></row><row r=\"4\" spans=\"1:20\" ht=\"25.95\" customHeight=\"1\"><c r=\"A4\" s=\"6\"/><c r=\"B4\" s=\"19\"/><c r=\"C4\" s=\"20\"/><c r=\"D4\" s=\"75\"/><c r=\"E4\" s=\"21\"/><c r=\"F4\" s=\"22\"/><c r=\"G4\" s=\"23\"/><c r=\"H4\" s=\"24\"/><c r=\"I4\" s=\"20\"/><c r=\"J4\" s=\"25\"/><c r=\"K4\" s=\"26\"/><c r=\"L4\" s=\"27\"/><c r=\"N4\" s=\"7\"/></row><row r=\"5\" spans=\"1:20\" ht=\"25.95\" customHeight=\"1\"><c r=\"A5\" s=\"6\"/><c r=\"B5\" s=\"28\"/><c r=\"C5\" s=\"29\"/><c r=\"D5\" s=\"30\"/><c r=\"E5\" s=\"31\"/><c r=\"F5\" s=\"32\"/><c r=\"G5\" s=\"33\"/><c r=\"H5\" s=\"34\"/><c r=\"I5\" s=\"29\"/><c r=\"J5\" s=\"35\"/><c r=\"K5\" s=\"35\"/><c r=\"L5\" s=\"36\"/></row><row r=\"6\" spans=\"1:20\" ht=\"25.95\" customHeight=\"1\"><c r=\"A6\" s=\"6\"/><c r=\"B6\" s=\"19\"/><c r=\"C6\" s=\"19\"/><c r=\"D6\" s=\"77\"/><c r=\"E6\" s=\"37\"/><c r=\"F6\" s=\"38\"/><c r=\"G6\" s=\"39\"/><c r=\"H6\" s=\"40\"/><c r=\"I6\" s=\"41\"/><c r=\"J6\" s=\"42\"/><c r=\"K6\" s=\"42\"/><c r=\"L6\" s=\"43\"/></row><row r=\"7\" spans=\"1:20\" ht=\"25.95\" customHeight=\"1\"><c r=\"A7\" s=\"6\"/><c r=\"B7\" s=\"29\"/><c r=\"C7\" s=\"29\"/><c r=\"D7\" s=\"74\"/><c r=\"E7\" s=\"31\"/><c r=\"F7\" s=\"32\"/><c r=\"G7\" s=\"33\"/><c r=\"H7\" s=\"34\"/><c r=\"I7\" s=\"29\"/><c r=\"J7\" s=\"35\"/><c r=\"K7\" s=\"35\"/><c r=\"L7\" s=\"36\"/></row><row r=\"8\" spans=\"1:20\" ht=\"25.95\" customHeight=\"1\"><c r=\"A8\" s=\"6\"/><c r=\"B8\" s=\"44\"/><c r=\"C8\" s=\"19\"/><c r=\"D8\" s=\"45\"/><c r=\"E8\" s=\"46\"/><c r=\"F8\" s=\"38\"/><c r=\"G8\" s=\"39\"/><c r=\"H8\" s=\"40\"/><c r=\"I8\" s=\"41\"/><c r=\"J8\" s=\"47\"/><c r=\"K8\" s=\"47\"/><c r=\"L8\" s=\"43\"/></row><row r=\"9\" spans=\"1:20\" ht=\"25.95\" customHeight=\"1\"><c r=\"A9\" s=\"6\"/><c r=\"B9\" s=\"48\"/><c r=\"C9\" s=\"29\"/><c r=\"D9\" s=\"49\"/><c r=\"E9\" s=\"31\"/><c r=\"F9\" s=\"32\"/><c r=\"G9\" s=\"33\"/><c r=\"H9\" s=\"34\"/><c r=\"I9\" s=\"29\"/><c r=\"J9\" s=\"35\"/><c r=\"K9\" s=\"35\"/><c r=\"L9\" s=\"36\"/></row><row r=\"10\" spans=\"1:20\" ht=\"25.95\" customHeight=\"1\"><c r=\"A10\" s=\"6\"/><c r=\"B10\" s=\"44\"/><c r=\"C10\" s=\"19\"/><c r=\"D10\" s=\"50\"/><c r=\"E10\" s=\"46\"/><c r=\"F10\" s=\"38\"/><c r=\"G10\" s=\"39\"/><c r=\"H10\" s=\"40\"/><c r=\"I10\" s=\"41\"/><c r=\"J10\" s=\"47\"/><c r=\"K10\" s=\"47\"/><c r=\"L10\" s=\"43\"/></row><row r=\"11\" spans=\"1:20\" ht=\"25.95\" customHeight=\"1\"><c r=\"A11\" s=\"6\"/><c r=\"B11\" s=\"29\"/><c r=\"C11\" s=\"29\"/><c r=\"D11\" s=\"73\"/><c r=\"E11\" s=\"31\"/><c r=\"F11\" s=\"32\"/><c r=\"G11\" s=\"33\"/><c r=\"H11\" s=\"34\"/><c r=\"I11\" s=\"29\"/><c r=\"J11\" s=\"35\"/><c r=\"K11\" s=\"35\"/><c r=\"L11\" s=\"36\"/></row><row r=\"12\" spans=\"1:20\" ht=\"25.95\" customHeight=\"1\"><c r=\"A12\" s=\"6\"/><c r=\"B12\" s=\"52\"/><c r=\"C12\" s=\"53\"/><c r=\"D12\" s=\"76\"/><c r=\"E12\" s=\"37\"/><c r=\"F12\" s=\"55\"/><c r=\"G12\" s=\"39\"/><c r=\"H12\" s=\"40\"/><c r=\"I12\" s=\"52\"/><c r=\"J12\" s=\"56\"/><c r=\"K12\" s=\"56\"/><c r=\"L12\" s=\"57\"/></row><row r=\"13\" spans=\"1:20\" ht=\"25.95\" customHeight=\"1\"><c r=\"A13\" s=\"6\"/><c r=\"B13\" s=\"29\"/><c r=\"C13\" s=\"58\"/><c r=\"D13\" s=\"51\"/><c r=\"E13\" s=\"31\"/><c r=\"F13\" s=\"32\"/><c r=\"G13\" s=\"33\"/><c r=\"H13\" s=\"34\"/><c r=\"I13\" s=\"29\"/><c r=\"J13\" s=\"35\"/><c r=\"K13\" s=\"35\"/><c r=\"L13\" s=\"36\"/></row><row r=\"14\" spans=\"1:20\" ht=\"25.95\" customHeight=\"1\"><c r=\"A14\" s=\"6\"/><c r=\"B14\" s=\"52\"/><c r=\"C14\" s=\"53\"/><c r=\"D14\" s=\"54\"/><c r=\"E14\" s=\"37\"/><c r=\"F14\" s=\"55\"/><c r=\"G14\" s=\"39\"/><c r=\"H14\" s=\"40\"/><c r=\"I14\" s=\"52\"/><c r=\"J14\" s=\"56\"/><c r=\"K14\" s=\"56\"/><c r=\"L14\" s=\"57\"/></row><row r=\"15\" spans=\"1:20\" ht=\"25.95\" customHeight=\"1\"><c r=\"A15\" s=\"6\"/><c r=\"B15\" s=\"29\"/><c r=\"C15\" s=\"58\"/><c r=\"D15\" s=\"51\"/><c r=\"E15\" s=\"31\"/><c r=\"F15\" s=\"32\"/><c r=\"G15\" s=\"33\"/><c r=\"H15\" s=\"34\"/><c r=\"I15\" s=\"29\"/><c r=\"J15\" s=\"35\"/><c r=\"K15\" s=\"35\"/><c r=\"L15\" s=\"36\"/></row><row r=\"16\" spans=\"1:20\" ht=\"25.95\" customHeight=\"1\"><c r=\"A16\" s=\"6\"/><c r=\"B16\" s=\"41\"/><c r=\"C16\" s=\"59\"/><c r=\"D16\" s=\"60\"/><c r=\"E16\" s=\"46\"/><c r=\"F16\" s=\"38\"/><c r=\"G16\" s=\"39\"/><c r=\"H16\" s=\"40\"/><c r=\"I16\" s=\"41\"/><c r=\"J16\" s=\"47\"/><c r=\"K16\" s=\"47\"/><c r=\"L16\" s=\"43\"/></row><row r=\"17\" spans=\"1:12\" ht=\"25.95\" customHeight=\"1\"><c r=\"A17\" s=\"6\"/><c r=\"B17\" s=\"29\"/><c r=\"C17\" s=\"58\"/><c r=\"D17\" s=\"61\"/><c r=\"E17\" s=\"31\"/><c r=\"F17\" s=\"32\"/><c r=\"G17\" s=\"33\"/><c r=\"H17\" s=\"34\"/><c r=\"I17\" s=\"29\"/><c r=\"J17\" s=\"35\"/><c r=\"K17\" s=\"35\"/><c r=\"L17\" s=\"36\"/></row><row r=\"18\" spans=\"1:12\" ht=\"25.95\" customHeight=\"1\"><c r=\"A18\" s=\"6\"/><c r=\"B18\" s=\"41\"/><c r=\"C18\" s=\"59\"/><c r=\"D18\" s=\"60\"/><c r=\"E18\" s=\"46\"/><c r=\"F18\" s=\"38\"/><c r=\"G18\" s=\"39\"/><c r=\"H18\" s=\"40\"/><c r=\"I18\" s=\"41\"/><c r=\"J18\" s=\"47\"/><c r=\"K18\" s=\"47\"/><c r=\"L18\" s=\"43\"/></row><row r=\"19\" spans=\"1:12\" ht=\"25.95\" customHeight=\"1\"><c r=\"A19\" s=\"6\"/><c r=\"B19\" s=\"29\"/><c r=\"C19\" s=\"58\"/><c r=\"D19\" s=\"61\"/><c r=\"E19\" s=\"31\"/><c r=\"F19\" s=\"32\"/><c r=\"G19\" s=\"33\"/><c r=\"H19\" s=\"34\"/><c r=\"I19\" s=\"29\"/><c r=\"J19\" s=\"35\"/><c r=\"K19\" s=\"35\"/><c r=\"L19\" s=\"36\"/></row><row r=\"20\" spans=\"1:12\" ht=\"25.95\" customHeight=\"1\"><c r=\"B20\" s=\"41\"/><c r=\"C20\" s=\"59\"/><c r=\"D20\" s=\"60\"/><c r=\"E20\" s=\"46\"/><c r=\"F20\" s=\"38\"/><c r=\"G20\" s=\"39\"/><c r=\"H20\" s=\"40\"/><c r=\"I20\" s=\"41\"/><c r=\"J20\" s=\"47\"/><c r=\"K20\" s=\"47\"/><c r=\"L20\" s=\"43\"/></row><row r=\"21\" spans=\"1:12\" ht=\"25.95\" customHeight=\"1\"><c r=\"B21\" s=\"29\"/><c r=\"C21\" s=\"58\"/><c r=\"D21\" s=\"51\"/><c r=\"E21\" s=\"31\"/><c r=\"F21\" s=\"32\"/><c r=\"G21\" s=\"33\"/><c r=\"H21\" s=\"34\"/><c r=\"I21\" s=\"29\"/><c r=\"J21\" s=\"35\"/><c r=\"K21\" s=\"35\"/><c r=\"L21\" s=\"36\"/></row><row r=\"22\" spans=\"1:12\" ht=\"25.95\" customHeight=\"1\"><c r=\"B22\" s=\"41\"/><c r=\"C22\" s=\"59\"/><c r=\"D22\" s=\"62\"/><c r=\"E22\" s=\"46\"/><c r=\"F22\" s=\"38\"/><c r=\"G22\" s=\"39\"/><c r=\"H22\" s=\"40\"/><c r=\"I22\" s=\"41\"/><c r=\"J22\" s=\"47\"/><c r=\"K22\" s=\"47\"/><c r=\"L22\" s=\"43\"/></row><row r=\"23\" spans=\"1:12\" ht=\"25.95\" customHeight=\"1\"><c r=\"B23\" s=\"29\"/><c r=\"C23\" s=\"58\"/><c r=\"D23\" s=\"63\"/><c r=\"E23\" s=\"31\"/><c r=\"F23\" s=\"32\"/><c r=\"G23\" s=\"33\"/><c r=\"H23\" s=\"34\"/><c r=\"I23\" s=\"29\"/><c r=\"J23\" s=\"35\"/><c r=\"K23\" s=\"35\"/><c r=\"L23\" s=\"36\"/></row><row r=\"24\" spans=\"1:12\" ht=\"25.95\" customHeight=\"1\"><c r=\"B24\" s=\"64\"/><c r=\"C24\" s=\"65\"/><c r=\"D24\" s=\"66\"/><c r=\"E24\" s=\"67\"/><c r=\"F24\" s=\"68\"/><c r=\"G24\" s=\"69\"/><c r=\"H24\" s=\"70\"/><c r=\"I24\" s=\"64\"/><c r=\"J24\" s=\"71\"/><c r=\"K24\" s=\"71\"/><c r=\"L24\" s=\"72\"/></row><row r=\"25\" spans=\"1:12\" ht=\"25.95\" customHeight=\"1\"><c r=\"B25\" s=\"8\"/><c r=\"C25\" s=\"8\"/><c r=\"D25\" s=\"8\"/><c r=\"E25\" s=\"8\"/><c r=\"F25\" s=\"9\"/><c r=\"G25\" s=\"82\" t=\"s\"><v>12</v></c><c r=\"H25\" s=\"80\"/><c r=\"I25\" s=\"81\"/><c r=\"J25\" s=\"83\"><f>SUM(J4:J24)</f><v>0</v></c><c r=\"K25\" s=\"84\"/><c r=\"L25\" s=\"85\"/></row><row r=\"26\" spans=\"1:12\" ht=\"25.95\" customHeight=\"1\"><c r=\"F26\" s=\"10\"/><c r=\"G26\" s=\"79\" t=\"s\"><v>15</v></c><c r=\"H26\" s=\"80\"/><c r=\"I26\" s=\"81\"/><c r=\"J26\" s=\"83\"><f>SUMIF(I4:I24,\"AA\",J4:J24)+SUMIF(I4:I24,\"bo\",J4:J24)</f><v>0</v></c><c r=\"K26\" s=\"84\"/><c r=\"L26\" s=\"85\"/></row><row r=\"27\" spans=\"1:12\" ht=\"25.95\" customHeight=\"1\"><c r=\"F27\" s=\"10\"/><c r=\"G27\" s=\"82\" t=\"s\"><v>13</v></c><c r=\"H27\" s=\"80\"/><c r=\"I27\" s=\"81\"/><c r=\"J27\" s=\"83\"><f>J25-J26</f><v>0</v></c><c r=\"K27\" s=\"84\"/><c r=\"L27\" s=\"85\"/></row><row r=\"28\" spans=\"1:12\" ht=\"13.2\"><c r=\"D28\" s=\"11\"/><c r=\"E28\" s=\"11\"/><c r=\"I28\" s=\"11\"/><c r=\"J28\" s=\"12\"/><c r=\"K28\" s=\"12\"/></row></sheetData><mergeCells count=\"9\"><mergeCell ref=\"A1:A3\"/><mergeCell ref=\"G26:I26\"/><mergeCell ref=\"G27:I27\"/><mergeCell ref=\"J27:L27\"/><mergeCell ref=\"B1:B2\"/><mergeCell ref=\"G25:I25\"/><mergeCell ref=\"J25:L25\"/><mergeCell ref=\"J26:L26\"/><mergeCell ref=\"E1:L2\"/></mergeCells><conditionalFormatting sqref=\"B16:L24\"><cfRule type=\"expression\" dxfId=\"5\" priority=\"3\"><formula>AND(#REF!=\"RAA\",#REF!=\"BO\")</formula></cfRule></conditionalFormatting><conditionalFormatting sqref=\"B12:L15 B11 D11:L11\"><cfRule type=\"expression\" dxfId=\"4\" priority=\"5\"><formula>AND(#REF!=\"RAA\",#REF!=\"BO\")</formula></cfRule></conditionalFormatting><conditionalFormatting sqref=\"D5:F5 D7:F10 E6:F6 E4:F4\"><cfRule type=\"expression\" dxfId=\"3\" priority=\"7\"><formula>AND(XFA4=\"RAA\",A4=\"BO\")</formula></cfRule></conditionalFormatting><conditionalFormatting sqref=\"B4:C4 B5:B10 C5:C11\"><cfRule type=\"expression\" dxfId=\"2\" priority=\"8\"><formula>AND(XEY4=\"RAA\",XFB4=\"BO\")</formula></cfRule></conditionalFormatting><conditionalFormatting sqref=\"G4:L10\"><cfRule type=\"expression\" dxfId=\"1\" priority=\"9\"><formula>AND(A4=\"RAA\",#REF!=\"BO\")</formula></cfRule></conditionalFormatting><conditionalFormatting sqref=\"D4\"><cfRule type=\"expression\" dxfId=\"0\" priority=\"11\"><formula>AND(XFA6=\"RAA\",A6=\"BO\")</formula></cfRule></conditionalFormatting><dataValidations count=\"6\"><dataValidation type=\"custom\" allowBlank=\"1\" showDropDown=\"1\" sqref=\"B1 N4 G4:H24\" xr:uid=\"{00000000-0002-0000-0000-000004000000}\"><formula1>OR(NOT(ISERROR(DATEVALUE(B1))), AND(ISNUMBER(B1), LEFT(CELL(\"format\", B1))=\"D\"))</formula1></dataValidation><dataValidation type=\"list\" allowBlank=\"1\" sqref=\"I4\" xr:uid=\"{90C037DB-1047-46C4-9381-6092F4D595CB}\"><formula1>\"AB,AC,BO,CO,AA,\"</formula1></dataValidation><dataValidation type=\"list\" allowBlank=\"1\" sqref=\"C4:C24\" xr:uid=\"{00000000-0002-0000-0000-000000000000}\"><formula1>\"R.E,AUTO,VITA\"</formula1></dataValidation><dataValidation type=\"list\" allowBlank=\"1\" sqref=\"I5:I24\" xr:uid=\"{00000000-0002-0000-0000-000002000000}\"><formula1>\"AB,AC,BO,CO,AA\"</formula1></dataValidation><dataValidation type=\"list\" allowBlank=\"1\" sqref=\"E4:E24\" xr:uid=\"{745EB616-0459-465A-A479-76D1D2215018}\"><formula1>\"AXA,HELVETIA,UNIPOL,ARAG,DUAL,ACCORDO A CON A\"</formula1></dataValidation><dataValidation type=\"list\" allowBlank=\"1\" sqref=\"F4:F24\" xr:uid=\"{81B1207D-D550-4704-B128-348B6EB6AE6D}\"><formula1>\"Q,S,NP,A,RAA\"</formula1></dataValidation></dataValidations><printOptions horizontalCentered=\"1\"/><pageMargins left=\"0.25\" right=\"0.25\" top=\"0.75\" bottom=\"0.75\" header=\"0.3\" footer=\"0.3\"/><pageSetup paperSize=\"9\" scale=\"74\" pageOrder=\"overThenDown\" orientation=\"landscape\" cellComments=\"atEnd\"/></worksheet>"};
+
+/* ---- 32_logica_cassa.js ---- */
+/* =====================================================================
+   FOGLIO CASSA: comunicazione degli incassi (procedura del 26/10/2023)
+   Dati, controlli, testo dell'email e file Excel nel formato dell'agenzia.
+   ===================================================================== */
+const CASSA = {
+  destinatario: "spassoni@lloydvaresino.it",
+  pec: "postmaster@pec.lvsrl.eu",
+  copiaFuoriOrario: ["spassoni@lloydvaresino.it", "sbreglia@lloydvaresino.it"],
+  /* orari dell'agenzia: lun-gio 8:45-13 e 14:45-18, ven 8:45-13 (minuti dalla mezzanotte) */
+  orari: { 1: [[525, 780], [885, 1080]], 2: [[525, 780], [885, 1080]], 3: [[525, 780], [885, 1080]], 4: [[525, 780], [885, 1080]], 5: [[525, 780]] },
+  orariTesto: "lunedì-giovedì 8:45-13 e 14:45-18, venerdì 8:45-13",
+  maxRighe: 21,
+  rami: [{ v: "R.E", t: "Rami elementari" }, { v: "AUTO", t: "Auto" }, { v: "VITA", t: "Vita" }],
+  compagnie: ["AXA", "HELVETIA", "UNIPOL", "ARAG", "DUAL", "ACCORDO A CON A"],
+  titoli: [{ v: "Q", t: "Quietanza" }, { v: "NP", t: "Nuova polizza" }, { v: "S", t: "Sostituzione" }, { v: "A", t: "Appendice" }, { v: "RAA", t: "Riscosso anticipo agenzia" }],
+  pagamenti: [{ v: "BO", t: "Bonifico" }, { v: "AB", t: "Assegno bancario" }, { v: "AC", t: "Assegno circolare" }, { v: "CO", t: "Contanti" }, { v: "AA", t: "Anticipo agenzia" }],
+  sogliaVita: 5000, sogliaContantiDanni: 750, limiteContanti: 5000
+};
+const etichettaCassa = (lista, v) => (lista.find(x => x.v === v) || { t: v }).t;
+
+/* fuori dall'orario d'ufficio la comunicazione va alla PEC (procedura 5) */
+function cassaFuoriOrario(d) {
+  const fasce = CASSA.orari[d.getDay()] || [], m = d.getHours() * 60 + d.getMinutes();
+  return !fasce.some(([a, b]) => m >= a && m < b);
+}
+function cassaIndirizzi(d) {
+  return cassaFuoriOrario(d) ? { a: [CASSA.pec], cc: CASSA.copiaFuoriOrario, pec: true } : { a: [CASSA.destinatario], cc: [], pec: false };
+}
+
+/* IBAN: struttura e cifra di controllo (mod 97) */
+function ibanValido(s) {
+  const x = String(s || "").replace(/\s+/g, "").toUpperCase();
+  if (!/^[A-Z]{2}\d{2}[A-Z0-9]{11,30}$/.test(x) || (x.startsWith("IT") && x.length !== 27)) return false;
+  const n = (x.slice(4) + x.slice(0, 4)).replace(/[A-Z]/g, c => String(c.charCodeAt(0) - 55));
+  let r = 0; for (const c of n) r = (r * 10 + Number(c)) % 97;
+  return r === 1;
+}
+/* importi con i centesimi: «1.234,56», «1234.5», «80» */
+function leggiImporto(s) {
+  let t = String(s == null ? "" : s).replace(/[€\s]/g, "");
+  if (!t) return NaN;
+  if (/,/.test(t)) t = t.replace(/\./g, "").replace(",", ".");
+  else if (/^\d{1,3}(\.\d{3})+$/.test(t)) t = t.replace(/\./g, "");
+  return /^\d+(\.\d{1,2})?$/.test(t) ? Number(t) : NaN;
+}
+/* € 1.234,56 (sempre con il punto delle migliaia, anche a 4 cifre) */
+const euroCassa = n => { const [i, d] = Math.abs(Number(n || 0)).toFixed(2).split("."); return (Number(n) < 0 ? "-€ " : "€ ") + i.replace(/\B(?=(\d{3})+(?!\d))/g, ".") + "," + d; };
+const dataCassa = v => { const [a, m, g] = String(v || "").split("-"); return g ? `${g}/${m}/${a}` : ""; };
+const assegno = p => p === "AB" || p === "AC";
+
+/* controlli di una riga: errori bloccanti e avvisi */
+function controllaRigaCassa(r, oggi) {
+  const e = {}, avvisi = [], premio = Number(r.premio);
+  if (!String(r.contraente || "").trim()) e.contraente = "Scrivi il contraente.";
+  if (!r.ramo) e.ramo = "Scegli il ramo.";
+  if (!String(r.polizza || "").trim()) e.polizza = "Scrivi il numero di polizza.";
+  if (!r.compagnia) e.compagnia = "Scegli la compagnia.";
+  if (!r.titolo) e.titolo = "Scegli il titolo.";
+  if (!r.effetto) e.effetto = "Indica la data di effetto (scadenza o decorrenza).";
+  if (!r.incasso) e.incasso = "Indica la data di incasso.";
+  else if (oggi && r.incasso > oggi) e.incasso = "La data di incasso non può essere futura.";
+  if (!r.pagamento) e.pagamento = "Scegli il mezzo di pagamento.";
+  if (!(premio > 0)) e.premio = "Scrivi il premio lordo (es. 1.234,56).";
+  if (r.ramo === "VITA" && r.pagamento && !(assegno(r.pagamento) || r.pagamento === "BO"))
+    e.pagamento = "Vita: per l'antiriciclaggio il pagamento può essere solo assegno bancario, assegno circolare o bonifico.";
+  if (r.ramo === "VITA" && premio > CASSA.sogliaVita) {
+    if (assegno(r.pagamento)) {
+      if (!String(r.banca || "").trim()) e.banca = "Sopra 5.000 € serve la banca dell'assegno.";
+      if (!String(r.numAssegno || "").trim()) e.numAssegno = "Sopra 5.000 € serve il numero dell'assegno.";
+    }
+    if (r.pagamento === "BO" && !ibanValido(r.ibanOrdinante)) e.ibanOrdinante = r.ibanOrdinante ? "IBAN non valido: ricontrollalo." : "Sopra 5.000 € serve l'IBAN del conto da cui parte il bonifico.";
+  }
+  if (r.pagamento === "CO" && premio > 0) {
+    if (premio >= CASSA.limiteContanti) e.premio = "In contanti si incassa al massimo 4.999,99 € per operazione.";
+    else if (r.ramo === "R.E" && premio > CASSA.sogliaContantiDanni) e.premio = "Rami danni: in contanti al massimo 750 € l'anno per contratto (non vale per RC auto e garanzie dello stesso veicolo).";
+  }
+  if (assegno(r.pagamento)) avvisi.push({ livello: "blu", testo: "L'assegno dev'essere non trasferibile e intestato alla compagnia o all'agenzia. Consegnalo in agenzia." });
+  if (r.pagamento === "CO") avvisi.push({ livello: "ambra", testo: "I contanti vanno versati subito: consegnali in agenzia." });
+  if (r.pagamento === "BO") avvisi.push({ livello: "blu", testo: "Se hai la contabile, allegala. La copertura parte dai dati scritti nella comunicazione, non dalla sola contabile." });
+  return { errori: e, avvisi };
+}
+
+function cassaTotali(righe) {
+  const tot = righe.reduce((s, r) => s + Number(r.premio || 0), 0);
+  const ab = righe.filter(r => r.pagamento === "AA" || r.pagamento === "BO").reduce((s, r) => s + Number(r.premio || 0), 0);
+  const c = n => Math.round(n * 100) / 100;
+  return { totale: c(tot), anticipiBonifici: c(ab), resto: c(tot - ab) };
+}
+function dettaglioPagamento(r) {
+  const x = [];
+  if (assegno(r.pagamento) && (r.banca || r.numAssegno)) x.push(`assegno ${r.banca || ""} n. ${r.numAssegno || ""}`.replace(/\s+/g, " ").trim());
+  if (r.pagamento === "BO" && r.ibanOrdinante) x.push("IBAN ordinante " + String(r.ibanOrdinante).replace(/\s+/g, "").toUpperCase());
+  return x.join(" · ");
+}
+
+function cassaOggetto(pr, quando) {
+  return `[Foglio cassa] ${pr.nome || "Commerciale"}${pr.sub ? " (Sub " + pr.sub + ")" : ""} - ${quando.toLocaleDateString("it-IT")}`;
+}
+function cassaTestoEmail(righe, pr, quando, contabili) {
+  const T = cassaTotali(righe), fuori = cassaFuoriOrario(quando);
+  const out = ["Buongiorno,", `comunico gli incassi da registrare a cassa (foglio cassa Excel in allegato).`, "",
+    `Sub: ${pr.sub || "-"} · Codice: ${(pr.nome || "").toUpperCase()}`, ""];
+  righe.forEach((r, i) => {
+    out.push(`${i + 1}) ${r.contraente} - ${r.ramo} - Pol. ${r.polizza} - ${r.compagnia} - ${r.titolo} (${etichettaCassa(CASSA.titoli, r.titolo)})`);
+    out.push(`   effetto ${dataCassa(r.effetto)} - incasso ${dataCassa(r.incasso)} - ${r.pagamento} (${etichettaCassa(CASSA.pagamenti, r.pagamento)}) - ${euroCassa(r.premio)}`);
+    const d = [dettaglioPagamento(r), r.note].filter(Boolean).join(" · ");
+    if (d) out.push("   " + d);
+  });
+  out.push("", `Totale: ${euroCassa(T.totale)}`, `Anticipi + bonifici: ${euroCassa(T.anticipiBonifici)}`, `Totale - bonifici: ${euroCassa(T.resto)}`);
+  if (contabili) out.push("", `Contabili allegate: ${contabili}`);
+  if (fuori) out.push("", "Comunicazione inviata fuori dall'orario d'ufficio.");
+  out.push("", "Grazie", [pr.nome, pr.tel].filter(Boolean).join(" · "), AGENZIA.nome);
+  return out.join("\n");
+}
+
+/* ---- file Excel: il modello dell'agenzia con le righe compilate ---- */
+function xmlEsc(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+function serialeExcel(v) { const [a, m, g] = String(v).split("-").map(Number); return Math.round((Date.UTC(a, m - 1, g) - Date.UTC(1899, 11, 30)) / 864e5); }
+function cassaXlsxFile(righe, pr, quando) {
+  let sh = CASSA_MODELLO["xl/worksheets/sheet1.xml"];
+  const metti = (ref, val, testo) => {
+    const re = new RegExp(`<c r="${ref}" s="(\\d+)"(?: t="s")?\\s*(?:/>|>(?:<v>[^<]*</v>)?</c>)`);
+    sh = sh.replace(re, (m, s) => val === "" || val == null ? `<c r="${ref}" s="${s}"/>`
+      : testo ? `<c r="${ref}" s="${s}" t="inlineStr"><is><t xml:space="preserve">${xmlEsc(val)}</t></is></c>` : `<c r="${ref}" s="${s}"><v>${val}</v></c>`);
+  };
+  const oggi = `${quando.getFullYear()}-${String(quando.getMonth() + 1).padStart(2, "0")}-${String(quando.getDate()).padStart(2, "0")}`;
+  sh = sh.replace(/(<c r="B1" s="\d+"><f ca="1">TODAY\(\)<\/f><v>)\d+(<\/v>)/, `$1${serialeExcel(oggi)}$2`);
+  if (/^\d+$/.test(String(pr.sub || ""))) metti("D1", Number(pr.sub)); else metti("D1", pr.sub || "", true);
+  metti("D2", (pr.nome || "").toUpperCase(), true);
+  righe.slice(0, CASSA.maxRighe).forEach((r, i) => {
+    const n = 4 + i;
+    metti("B" + n, r.contraente, true); metti("C" + n, r.ramo, true); metti("D" + n, r.polizza, true);
+    metti("E" + n, r.compagnia, true); metti("F" + n, r.titolo, true);
+    metti("G" + n, serialeExcel(r.effetto)); metti("H" + n, serialeExcel(r.incasso));
+    metti("I" + n, r.pagamento, true); metti("J" + n, Number(r.premio));
+    metti("L" + n, [dettaglioPagamento(r), r.note].filter(Boolean).join(" · "), true);
+  });
+  const T = cassaTotali(righe);
+  sh = sh.replace(/(<f>SUM\(J4:J24\)<\/f><v>)[^<]*/, `$1${T.totale}`)
+    .replace(/(<f>SUMIF\(I4:I24,"AA",J4:J24\)\+SUMIF\(I4:I24,"bo",J4:J24\)<\/f><v>)[^<]*/, `$1${T.anticipiBonifici}`)
+    .replace(/(<f>J25-J26<\/f><v>)[^<]*/, `$1${T.resto}`);
+  const file = Object.assign({}, CASSA_MODELLO, { "xl/worksheets/sheet1.xml": sh });
+  const ordine = ["[Content_Types].xml", "_rels/.rels", "docProps/app.xml", "xl/workbook.xml", "xl/_rels/workbook.xml.rels", "xl/styles.xml", "xl/theme/theme1.xml", "xl/sharedStrings.xml", "xl/worksheets/sheet1.xml"];
+  return zipSemplice(ordine.map(n => [n, new TextEncoder().encode(file[n])]));
+}
+
+/* ZIP senza compressione (metodo «store»): basta per un file Excel di poche decine di KB */
+const CRC_TAB = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+function crc32(u) { let c = 0xFFFFFFFF; for (let i = 0; i < u.length; i++) c = CRC_TAB[(c ^ u[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+function zipSemplice(voci) {
+  const parti = [], centrale = []; let pos = 0;
+  const u16 = n => [n & 255, (n >>> 8) & 255], u32 = n => [n & 255, (n >>> 8) & 255, (n >>> 16) & 255, (n >>> 24) & 255];
+  for (const [nome, dati] of voci) {
+    const n = new TextEncoder().encode(nome), crc = crc32(dati);
+    const loc = [...u32(0x04034b50), ...u16(20), ...u16(0x0800), ...u16(0), ...u16(0), ...u16(0x21), ...u32(crc), ...u32(dati.length), ...u32(dati.length), ...u16(n.length), ...u16(0)];
+    centrale.push([...u32(0x02014b50), ...u16(20), ...u16(20), ...u16(0x0800), ...u16(0), ...u16(0), ...u16(0x21), ...u32(crc), ...u32(dati.length), ...u32(dati.length), ...u16(n.length), ...u16(0), ...u16(0), ...u16(0), ...u16(0), ...u32(0), ...u32(pos)], n);
+    parti.push(Uint8Array.from(loc), n, dati);
+    pos += loc.length + n.length + dati.length;
+  }
+  const dir = centrale.map(x => x instanceof Uint8Array ? x : Uint8Array.from(x));
+  const lungDir = dir.reduce((s, x) => s + x.length, 0);
+  const fine = Uint8Array.from([...u32(0x06054b50), ...u16(0), ...u16(0), ...u16(voci.length), ...u16(voci.length), ...u32(lungDir), ...u32(pos), ...u16(0)]);
+  const tutti = parti.concat(dir, [fine]), out = new Uint8Array(tutti.reduce((s, x) => s + x.length, 0));
+  let o = 0; for (const x of tutti) { out.set(x, o); o += x.length; }
+  return out;
+}
+function nomeFoglioCassa(pr, quando) {
+  const pul = s => String(s || "").normalize("NFD").replace(/[^\w\s-]/g, "").trim().replace(/\s+/g, "-");
+  const d = quando.toLocaleDateString("it-IT").replace(/\//g, "-");
+  return `Foglio-cassa_${pul(pr.nome) || "commerciale"}_${d}.xlsx`;
+}
 
 /* ---- 35_riepilogo_pdf.js ---- */
 /* =====================================================================
@@ -3480,14 +3667,14 @@ function testoEmailBreve(p, commerciale) {
 }
 
 /* Email pronta (.eml) con allegati: Outlook classico, eM Client e altri la aprono come messaggio da inviare */
-async function creaEml(a, oggetto, testo, files) {
+async function creaEml(a, oggetto, testo, files, cc) {
   const b64 = s => { const u = new TextEncoder().encode(s); let x = ""; for (let i = 0; i < u.length; i += 0x8000) x += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000)); return btoa(x); };
   const intest = s => /^[\x20-\x7e]*$/.test(s) ? s : `=?UTF-8?B?${b64(s)}?=`;
   const righe76 = s => s.replace(/.{1,76}/g, "$&\r\n");
   const conf = "----=_Bussola_" + Math.random().toString(36).slice(2);
-  let out = [`To: ${a}`, `Subject: ${intest(oggetto)}`, "X-Unsent: 1", "MIME-Version: 1.0", `Date: ${new Date().toUTCString().replace("GMT", "+0000")}`,
+  let out = [`To: ${a}`].concat(cc && cc.length ? [`Cc: ${cc.join(", ")}`] : []).concat([`Subject: ${intest(oggetto)}`, "X-Unsent: 1", "MIME-Version: 1.0", `Date: ${new Date().toUTCString().replace("GMT", "+0000")}`,
     `Content-Type: multipart/mixed; boundary="${conf}"`, "", "This is a multi-part message in MIME format.", "",
-    `--${conf}`, "Content-Type: text/plain; charset=UTF-8", "Content-Transfer-Encoding: base64", "", righe76(b64(testo.replace(/\n/g, "\r\n")))].join("\r\n");
+    `--${conf}`, "Content-Type: text/plain; charset=UTF-8", "Content-Transfer-Encoding: base64", "", righe76(b64(testo.replace(/\n/g, "\r\n")))]).join("\r\n");
   for (const f of files) {
     const u = new Uint8Array(await f.arrayBuffer()); let x = "";
     for (let i = 0; i < u.length; i += 0x8000) x += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000));
@@ -3748,7 +3935,7 @@ function impostaAzioni(html) {
 function disegna() {
   const s = Stato.schermo();
   document.body.classList.toggle("esperto", Memoria.leggi("bussola.esperto", false) === true);
-  ({ home: vistaHome, albero: vistaAlbero, questionario: vistaQuestionario, riepilogo: vistaRiepilogo, schede: vistaSchede })[s]();
+  ({ home: vistaHome, albero: vistaAlbero, questionario: vistaQuestionario, riepilogo: vistaRiepilogo, schede: vistaSchede, cassa: vistaCassa })[s]();
   misura();
 }
 
@@ -3772,6 +3959,7 @@ function vistaHome() {
       </button>
       <button class="tessera" data-az="sinistro"><span class="ico rosso">${ICONE.sinistro}</span><span><b>Sinistro</b><small>Dati per aprire la pratica</small></span></button>
       <button class="tessera" data-az="compliance"><span class="ico verde">${ICONE.compliance}</span><span><b>Compliance</b><small>Regole, moduli, POG</small></span></button>
+      ${htmlTesseraCassa()}
       <a class="tessera" href="${esc(GESTIONALE.link)}" target="_blank" rel="noopener" style="grid-column:1 / -1;min-height:0;flex-direction:row;align-items:center;text-decoration:none;color:inherit">
         <span class="ico blu">${ICONE.preventivo}</span><span style="flex:1"><b>${esc(GESTIONALE.nome)}</b><small>Apri il gestionale</small></span>${ICONE.freccia}</a>
       <button class="tessera" data-az="guida" style="grid-column:1 / -1;min-height:0;flex-direction:row;align-items:center">
@@ -4576,11 +4764,278 @@ function collegaEventi() {
   if (window.ResizeObserver) { const ro = new ResizeObserver(misura); ro.observe($("#barra")); ro.observe($("#azioni")); }
 }
 
+/* ---- 45_cassa.js ---- */
+/* ================= FOGLIO CASSA (interfaccia) =================
+   Il commerciale aggiunge gli incassi durante la giornata; l'app compila il foglio cassa Excel
+   dell'agenzia e prepara l'email per spassoni (o la PEC fuori orario). */
+const Cassa = {
+  leggi() { const f = Memoria.leggi("bussola.cassa", null); return f && Array.isArray(f.righe) ? f : { righe: [] }; },
+  salva(f) { f.aggiornato = Date.now(); Memoria.scrivi("bussola.cassa", f); },
+  svuota() { Memoria.scrivi("bussola.cassa", { righe: [] }); Allegati.eliminaPratica("cassa"); },
+  /* come le pratiche: dopo 7 giorni senza modifiche il foglio non inviato si cancella */
+  pulisci() { const f = this.leggi(); if (f.righe.length && (f.aggiornato || 0) < Date.now() - AGENZIA.giorniConservazioneBozze * 864e5) this.svuota(); }
+};
+const oggiISO = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
+
+function htmlTesseraCassa() {
+  const n = Cassa.leggi().righe.length;
+  return `<button class="tessera" data-cassa="apri" style="grid-column:1 / -1;min-height:0;flex-direction:row;align-items:center">
+      <span class="ico verde"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M7 12h.01M17 12h.01"/></svg></span>
+      <span style="flex:1"><b>Foglio cassa</b><small>${n ? `${n} incass${n === 1 ? "o" : "i"} da comunicare` : "Comunica gli incassi da registrare a cassa"}</small></span>${ICONE.freccia}</button>`;
+}
+
+function vistaCassa() {
+  const d = Stato.pila[Stato.pila.length - 1].dati || {};
+  if (d.riga !== undefined) return vistaRigaCassa(d.riga);
+  const F = Cassa.leggi(), righe = F.righe, T = cassaTotali(righe), pr = Memoria.leggi("bussola.profilo", {});
+  const ora = new Date(), ind = cassaIndirizzi(ora);
+  impostaBarra("Foglio cassa", ora.toLocaleDateString("it-IT"), true, null);
+  impostaAzioni(righe.length ? `<button class="btn primario" data-cassa="inviato" ${Stato.cassaTentato ? "" : "disabled"}>Ho inviato: svuota il foglio</button>` : null);
+  const xlsxProva = new File(["x"], "f.xlsx", { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+  const condividi = puoCondividereFile(xlsxProva);
+  const conf = Stato.cassaConferma;
+  $("#vista").innerHTML = `
+    <div class="passo-titolo">Comunicazione d'incasso</div>
+    <p class="passo-sotto">Aggiungi gli incassi della giornata: l'app compila il foglio cassa dell'agenzia e prepara l'email per la registrazione a cassa.</p>
+    <div class="campo"><div class="dom">I tuoi dati sul foglio</div>
+      <div class="griglia-2">
+        <input type="text" data-profilo="sub" inputmode="numeric" placeholder="Codice Sub (es. 218)" aria-label="Codice Sub" value="${esc(pr.sub || "")}">
+        <input type="text" data-profilo="nome" placeholder="Nome e cognome (Codice)" value="${esc(pr.nome || "")}">
+        <input type="tel" data-profilo="tel" placeholder="Telefono" value="${esc(pr.tel || "")}">
+      </div><div class="errore" id="erroreCassa"></div></div>
+    <div class="campo"><div class="dom">Incassi (${righe.length} di ${CASSA.maxRighe})</div>
+      ${righe.length ? righe.map((r, i) => `<div class="riga-cassa">
+          <div><b>${i + 1}. ${esc(r.contraente)}</b>
+            <small>${esc(r.compagnia)} · Pol. ${esc(r.polizza)} · ${esc(r.ramo)} · ${esc(r.titolo)} · ${esc(etichettaCassa(CASSA.pagamenti, r.pagamento))}${(r.allegati || []).length ? " · contabile" : ""}</small></div>
+          <b class="importo">${esc(euroCassa(r.premio))}</b>
+          <div class="bottoni-msg"><button class="btn piccolo" data-cassa-modifica="${i}">Modifica</button>
+            <button class="btn piccolo ${conf === i ? "pericolo" : ""}" data-cassa-elimina="${i}">${conf === i ? "Tocca di nuovo per eliminare" : "Elimina"}</button></div></div>`).join("")
+        : `<div class="vuoto">Nessun incasso. Aggiungi il primo.</div>`}
+      <button class="btn ${righe.length ? "" : "primario"}" style="margin-top:10px" data-cassa="nuova" ${righe.length >= CASSA.maxRighe ? "disabled" : ""}>+ Aggiungi incasso</button>
+      ${righe.length >= CASSA.maxRighe ? `<div class="aiuto">Il foglio ha ${CASSA.maxRighe} righe: invia questo e poi comincia un foglio nuovo.</div>` : ""}</div>
+    ${righe.length ? `<div class="campo totali-cassa"><div class="dom">Totali</div>
+      <div class="riga-dato"><span>Totale</span><b>${esc(euroCassa(T.totale))}</b></div>
+      <div class="riga-dato"><span>Anticipi + bonifici</span><b>${esc(euroCassa(T.anticipiBonifici))}</b></div>
+      <div class="riga-dato"><span>Totale − bonifici (contanti e assegni)</span><b>${esc(euroCassa(T.resto))}</b></div></div>
+    <div class="campo"><div class="dom">Invio</div>
+      ${ind.pec ? `<div class="avviso ambra">${ICONE.attenzione}<span>L'agenzia ora è chiusa (${esc(CASSA.orariTesto)}). Fuori orario la comunicazione va inviata <b>dalla tua casella PEC</b> a ${esc(CASSA.pec)}, con ${esc(CASSA.copiaFuoriOrario.join(" e "))} in copia. L'email è già indirizzata così.</span></div>`
+        : `<p class="aiuto">Destinatario: <b>${esc(CASSA.destinatario)}</b>. Fuori orario (${esc(CASSA.orariTesto)}) l'app indirizza alla PEC.</p>`}
+      ${condividi
+        ? `<ol class="passi-invio"><li><b>Condividi</b> il foglio cassa${righe.some(r => (r.allegati || []).length) ? " e le contabili" : ""} con la tua app di posta: gli indirizzi vengono copiati, incollali nel destinatario.</li><li>Torna qui e tocca <b>Ho inviato</b>.</li></ol>
+           <div class="bottoni-invio"><button class="btn primario" data-cassa-invio="condividi">Condividi foglio cassa</button></div>`
+        : suTelefono()
+        ? `<ol class="passi-invio"><li><b>Scarica</b> il foglio cassa (va nei Download).</li><li><b>Apri l'email</b> già compilata e allega il file dai Download.</li><li>Torna qui e tocca <b>Ho inviato</b>.</li></ol>
+           <div class="bottoni-invio"><button class="btn primario" data-cassa-invio="scarica">Scarica foglio cassa</button><button class="btn" data-cassa-invio="email">Apri email già compilata</button></div>`
+        : `<ol class="passi-invio"><li><b>Scarica l'email pronta</b>: destinatario, oggetto, elenco degli incassi e foglio cassa Excel già allegato.</li><li><b>Aprila</b> dal riquadro dei download: si apre il messaggio in Outlook o eM Client. Controlla e invia.</li><li>Torna qui e tocca <b>Ho inviato</b>.</li></ol>
+           <div class="bottoni-invio"><button class="btn primario" data-cassa-invio="eml">Scarica email pronta</button></div>
+           <details class="doc-utile" style="margin-top:10px"><summary>L'email pronta non si apre come messaggio da inviare?</summary>
+             <div class="bottoni-msg"><button class="btn piccolo" data-cassa-invio="scarica">Scarica foglio cassa</button><button class="btn piccolo" data-cassa-invio="email">Apri email (senza allegati)</button></div>
+             <div class="bottoni-msg"><button class="btn piccolo" data-copia="${esc(ind.a.concat(ind.cc).join(", "))}" data-copia-nome="indirizzi">Copia indirizzi</button>
+               <button class="btn piccolo" data-cassa-invio="copia">Copia testo</button></div>
+             <div data-esito-copia class="aiuto" style="min-height:1.2em;margin:6px 0 0"></div></details>`}
+      <div class="stato-file" id="statoCassa"></div></div>` : ""}
+    <details class="doc-utile"><summary>Procedura di comunicazione d'incasso</summary>${htmlProceduraCassa()}</details>`;
+}
+
+function htmlProceduraCassa() {
+  return `<ul class="lista-schede">${PROCEDURA_CASSA.map(x => `<li>${esc(x)}</li>`).join("")}</ul>`;
+}
+const PROCEDURA_CASSA = [
+  "Ogni incasso va comunicato con: contraente, numero di polizza, compagnia, data di incasso, data di scadenza o decorrenza, mezzo di pagamento.",
+  "Via email: foglio cassa Excel a spassoni@lloydvaresino.it (l'app lo compila e lo allega).",
+  "A mano: libro giornale compilato, consegnando insieme contanti o assegni.",
+  "Fuori orario: solo PEC a postmaster@pec.lvsrl.eu, in copia spassoni e sbreglia, con i dati nel testo.",
+  "Per telefono solo in casi eccezionali, quando serve una copertura immediata, e solo con Sara o Simonetta: numero di polizza, compagnia, mezzo di pagamento.",
+  "Polizze firmate con OTP/FEA: la comunicazione a cassa la fa chi segue la firma, subito, perché la polizza parte al cliente via email.",
+  "Vita (antiriciclaggio): mezzo di pagamento obbligatorio e conforme all'incasso (assegno bancario, circolare o bonifico). Sopra 5.000 €: dati dell'assegno o IBAN del conto che fa il bonifico.",
+  "Le email con la sola contabile del cliente non danno copertura se i dati non sono scritti nel testo.",
+  "Prima di consegnare documenti al cliente verifica la messa in copertura su Omniaweb o sul portale della compagnia.",
+  "POS e carte si incassano in agenzia. Altre forme di comunicazione non sono valide: il titolo non viene registrato a cassa."
+];
+
+/* ---- scheda di un incasso ---- */
+function vistaRigaCassa(indice) {
+  const nuova = indice === "nuova", F = Cassa.leggi();
+  if (!Stato.bozzaCassa || Stato.bozzaCassa._indice !== indice)
+    Stato.bozzaCassa = nuova ? { _indice: indice, incasso: oggiISO(), allegati: [] } : Object.assign({ _indice: indice, allegati: [] }, JSON.parse(JSON.stringify(F.righe[indice] || {})));
+  const r = Stato.bozzaCassa, E = Stato.erroriCassa || {}, premio = Number(r.premio);
+  impostaBarra(nuova ? "Nuovo incasso" : "Modifica incasso", "Foglio cassa", true, null);
+  impostaAzioni(`<button class="btn secondario-largo" data-cassa="annulla">Annulla</button><button class="btn primario" data-cassa="salva">Salva incasso</button>`);
+  const err = id => E[id] ? `<div class="errore">${esc(E[id])}</div>` : "";
+  const box = (id, dom, corpo, aiuto) => `<div class="campo" data-box="cc-${id}"><div class="dom">${esc(dom)}</div>${aiuto ? `<div class="aiuto">${esc(aiuto)}</div>` : ""}${corpo}${err(id)}</div>`;
+  const testo = (id, extra) => `<input type="text" id="cc_${id}" data-cc="${id}" value="${esc(r[id] || "")}" autocomplete="off" ${extra || ""}>`;
+  const chip = (id, opz, sigla) => `<div class="scelte">${opz.map(o => { const v = o.v || o, t = o.t ? (sigla ? `${o.t} (${v})` : o.t) : o;
+    return `<button class="pill" data-cc="${id}" data-v="${esc(v)}" aria-pressed="${r[id] === v}">${esc(t)}</button>`; }).join("")}</div>`;
+  const pagamenti = r.ramo === "VITA" ? CASSA.pagamenti.filter(p => ["AB", "AC", "BO"].includes(p.v)) : CASSA.pagamenti;
+  const vitaAlta = r.ramo === "VITA" && premio > CASSA.sogliaVita;
+  const { avvisi } = controllaRigaCassa(r);
+  $("#vista").innerHTML = `
+    ${box("contraente", "Contraente", testo("contraente"))}
+    ${box("ramo", "Ramo", chip("ramo", CASSA.rami))}
+    ${box("polizza", "Numero di polizza", testo("polizza", 'style="text-transform:uppercase"'))}
+    ${box("compagnia", "Compagnia", chip("compagnia", CASSA.compagnie))}
+    ${box("titolo", "Titolo", chip("titolo", CASSA.titoli, true))}
+    ${box("effetto", "Data effetto", `<input type="date" id="cc_effetto" data-cc="effetto" value="${esc(r.effetto || "")}">`, "Scadenza della rata o decorrenza della polizza.")}
+    ${box("incasso", "Data incasso", `<input type="date" id="cc_incasso" data-cc="incasso" value="${esc(r.incasso || "")}" max="${oggiISO()}">`)}
+    ${box("pagamento", "Mezzo di pagamento", chip("pagamento", pagamenti, true) + avvisi.map(a => `<div class="avviso ${a.livello}" style="margin-top:8px">${ICONE.attenzione}<span>${esc(a.testo)}</span></div>`).join(""),
+      r.ramo === "VITA" ? "Vita: solo assegno o bonifico, conforme all'incasso effettivo (antiriciclaggio). POS e carte si incassano in agenzia." : "POS e carte si incassano in agenzia.")}
+    ${box("premio", "Premio lordo", `<div class="euro"><input type="text" inputmode="decimal" id="cc_premio" data-cc="premio" data-importo="1" value="${r.premio ? esc(Number(r.premio).toLocaleString("it-IT", { minimumFractionDigits: 2 })) : ""}" placeholder="0,00"></div>`)}
+    ${vitaAlta && assegno(r.pagamento) ? box("banca", "Banca dell'assegno", testo("banca"), "Vita sopra 5.000 €: i dati dell'assegno sono obbligatori.") + box("numAssegno", "Numero dell'assegno", testo("numAssegno", 'inputmode="numeric"')) : ""}
+    ${vitaAlta && r.pagamento === "BO" ? box("ibanOrdinante", "IBAN del conto da cui parte il bonifico", testo("ibanOrdinante", 'style="text-transform:uppercase"'), "Vita sopra 5.000 €: obbligatorio per l'antiriciclaggio.") : ""}
+    ${r.pagamento && r.pagamento !== "CO" && r.pagamento !== "AA" ? box("allegati", r.pagamento === "BO" ? "Contabile del bonifico" : "Foto dell'assegno", `<div class="allegati">${(r.allegati || []).map(f => `<div class="allegato">
+          <span class="anteprima" data-anteprima="${esc(f.id)}" data-tipo="${esc(f.tipo)}">${f.tipo === "application/pdf" ? "PDF" : ""}</span>
+          <div><b>${esc(f.nome)}</b></div><button class="btn piccolo" data-cassa-togli="${esc(f.id)}">Rimuovi</button></div>`).join("")}
+        <div class="stato-file" id="statoFileCassa"></div>
+        <label class="btn aggiungi"><input type="file" accept="image/*,application/pdf" data-cassa-file="1">Scatta una foto o scegli un file</label></div>`, "Facoltativa: va in allegato all'email insieme al foglio cassa.") : ""}
+    ${box("note", "Note", `<textarea id="cc_note" data-cc="note">${esc(r.note || "")}</textarea>`, "Facoltative, finiscono nella colonna NOTE.")}`;
+  caricaAnteprime();
+}
+
+function salvaRigaCassa() {
+  const r = Stato.bozzaCassa; if (!r) return;
+  const { errori } = controllaRigaCassa(r, oggiISO());
+  Stato.erroriCassa = errori;
+  if (Object.keys(errori).length) {
+    vistaRigaCassa(r._indice);
+    const primo = document.querySelector(`[data-box="cc-${Object.keys(errori)[0]}"]`); if (primo) primo.scrollIntoView({ block: "center" });
+    return;
+  }
+  const F = Cassa.leggi(), riga = Object.assign({}, r);
+  delete riga._indice;
+  riga.polizza = String(riga.polizza).trim().toUpperCase(); riga.contraente = String(riga.contraente).trim();
+  if (riga.ibanOrdinante) riga.ibanOrdinante = riga.ibanOrdinante.replace(/\s+/g, "").toUpperCase();
+  if (!(riga.ramo === "VITA" && Number(riga.premio) > CASSA.sogliaVita)) { delete riga.banca; delete riga.numAssegno; delete riga.ibanOrdinante; }
+  if (r._indice === "nuova") F.righe.push(riga); else F.righe[r._indice] = riga;
+  Cassa.salva(F);
+  Stato.bozzaCassa = null; Stato.erroriCassa = {}; Stato.cassaTentato = false;
+  indietro(); window.scrollTo(0, 0);
+}
+
+async function fileCassa(pr, quando) {
+  const righe = Cassa.leggi().righe;
+  const xlsx = new File([cassaXlsxFile(righe, pr, quando)], nomeFoglioCassa(pr, quando), { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+  const contabili = [];
+  for (const [i, r] of righe.entries()) for (const a of r.allegati || []) {
+    const b = await Allegati.leggi(a.id);
+    if (b) contabili.push(new File([b], `Riga${i + 1}_${r.polizza}_${a.nome}`.replace(/[\\/:*?"<>|]/g, ""), { type: b.type || a.tipo }));
+  }
+  return { righe, xlsx, contabili };
+}
+async function inviaCassa(tipo) {
+  const pr = Memoria.leggi("bussola.profilo", {}), box = $("#erroreCassa");
+  const manca = !pr.sub ? "sub" : !pr.nome ? "nome" : "";
+  if (manca) {
+    if (box) box.textContent = manca === "sub" ? "Inserisci il tuo codice Sub: va sul foglio cassa." : "Inserisci nome e cognome: è il Codice sul foglio cassa.";
+    const el = document.querySelector(`[data-profilo="${manca}"]`); if (el) { el.focus(); el.scrollIntoView({ block: "center" }); }
+    return;
+  }
+  if (box) box.textContent = "";
+  const quando = new Date(), ind = cassaIndirizzi(quando);
+  const { righe, xlsx, contabili } = await fileCassa(pr, quando);
+  const oggetto = cassaOggetto(pr, quando), testo = cassaTestoEmail(righe, pr, quando, contabili.map(f => f.name).join(", "));
+  const st = $("#statoCassa"), fatto = msg => { Stato.cassaTentato = true; const b = document.querySelector('[data-cassa="inviato"]'); if (b) b.disabled = false; if (st && msg) st.innerHTML = msg; };
+  const tutti = [xlsx].concat(contabili);
+  if (tipo === "eml") {
+    const nome = xlsx.name.replace(/\.xlsx$/, ".eml");
+    const eml = await creaEml(ind.a.join(", "), oggetto, testo, tutti, ind.cc);
+    Stato.scaricati = [new File([eml], nome, { type: "message/rfc822" })];
+    scaricaBlob(eml, nome);
+    return fatto(`<p>Scaricata <b>${esc(nome)}</b>. Aprila dal riquadro dei download: si apre il messaggio con il foglio cassa allegato${ind.pec ? ", indirizzato alla PEC: invialo dalla tua casella PEC" : ""}. Controlla e invia.</p><p><button class="btn piccolo" data-riscarica="0">Scarica di nuovo</button></p>`);
+  }
+  if (tipo === "scarica") {
+    scaricaBlob(xlsx, xlsx.name);
+    contabili.forEach((f, i) => setTimeout(() => scaricaBlob(f, f.name), 400 * (i + 1)));
+    return fatto(elencoScaricati(tutti) + "<p>Ora apri l'email già compilata e allega i file.</p>");
+  }
+  if (tipo === "email") {
+    location.href = `mailto:${ind.a.join(",")}?${ind.cc.length ? "cc=" + encodeURIComponent(ind.cc.join(",")) + "&" : ""}subject=${encodeURIComponent(oggetto)}&body=${encodeURIComponent(testo)}`;
+    return fatto("<p>Ricorda di allegare il foglio cassa scaricato.</p>");
+  }
+  if (tipo === "copia") {
+    const out = document.querySelector("[data-esito-copia]");
+    try { await navigator.clipboard.writeText(testo); if (out) out.textContent = "Testo copiato."; fatto(""); } catch (e) { if (out) out.textContent = "Copia non riuscita."; }
+    return;
+  }
+  if (tipo === "condividi") {
+    try { await navigator.clipboard.writeText(ind.a.concat(ind.cc).join(", ")); } catch (e) {}
+    try {
+      await navigator.share({ files: tutti, title: oggetto, text: testo });
+      fatto(`<p>Condiviso. Indirizzi copiati: ${esc(ind.a.concat(ind.cc).join(", "))}${ind.pec ? " (invia dalla casella PEC)" : ""}.</p>`);
+    } catch (e) {
+      if (e && e.name === "AbortError") return;
+      if (st) st.textContent = e && e.name === "NotAllowedError" ? "File pronti: tocca di nuovo «Condividi foglio cassa»." : "Condivisione non riuscita: scarica il foglio e allegalo a mano.";
+    }
+  }
+}
+
+async function aggiungiFileCassa(files) {
+  const r = Stato.bozzaCassa, st = $("#statoFileCassa"); if (!r) return;
+  for (const f of files) {
+    if (st) st.textContent = `Preparo ${f.name}…`;
+    try { const { blob, nome } = await preparaFile(f); r.allegati.push(await Allegati.salva("cassa", blob, nome)); }
+    catch (e) { if (st) st.textContent = `${f.name}: ${e.message}`; return; }
+  }
+  vistaRigaCassa(r._indice);
+}
+
+/* ---- eventi ---- */
+document.addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  if (b.dataset.cassa === "apri") { Stato.cassaConferma = null; return vai("cassa"); }
+  if (b.dataset.cassa === "nuova") { Stato.bozzaCassa = null; Stato.erroriCassa = {}; return vai("cassa", { riga: "nuova" }); }
+  if (b.dataset.cassaModifica !== undefined) { Stato.bozzaCassa = null; Stato.erroriCassa = {}; return vai("cassa", { riga: Number(b.dataset.cassaModifica) }); }
+  if (b.dataset.cassa === "annulla") { Stato.bozzaCassa = null; Stato.erroriCassa = {}; return indietro(); }
+  if (b.dataset.cassa === "salva") return salvaRigaCassa();
+  if (b.dataset.cassaElimina !== undefined) {
+    const i = Number(b.dataset.cassaElimina);
+    if (Stato.cassaConferma !== i) { Stato.cassaConferma = i; clearTimeout(Stato.cassaTimer); Stato.cassaTimer = setTimeout(() => { Stato.cassaConferma = null; if (Stato.schermo() === "cassa") disegna(); }, 4000); return disegna(); }
+    const F = Cassa.leggi(), [tolta] = F.righe.splice(i, 1);
+    (tolta.allegati || []).forEach(a => Allegati.elimina(a.id));
+    Cassa.salva(F); Stato.cassaConferma = null; Stato.cassaTentato = false; return disegna();
+  }
+  if (b.dataset.cassaInvio) return inviaCassa(b.dataset.cassaInvio);
+  if (b.dataset.cassaTogli && Stato.bozzaCassa) {
+    Allegati.elimina(b.dataset.cassaTogli);
+    Stato.bozzaCassa.allegati = Stato.bozzaCassa.allegati.filter(a => a.id !== b.dataset.cassaTogli);
+    return vistaRigaCassa(Stato.bozzaCassa._indice);
+  }
+  if (b.dataset.cassa === "inviato") {
+    Cassa.svuota(); Stato.cassaTentato = false;
+    Stato.messaggio = "Foglio cassa inviato e svuotato. Prima di consegnare documenti al cliente verifica la copertura su Omniaweb.";
+    Stato.pila.length = 1; return disegna();
+  }
+  if (b.dataset.cc && b.dataset.v !== undefined && Stato.bozzaCassa) {
+    const r = Stato.bozzaCassa;
+    r[b.dataset.cc] = b.dataset.v;
+    if (b.dataset.cc === "ramo" && r.ramo === "VITA" && !["AB", "AC", "BO"].includes(r.pagamento)) delete r.pagamento;
+    if (Stato.erroriCassa) delete Stato.erroriCassa[b.dataset.cc];
+    const y = window.scrollY; vistaRigaCassa(r._indice); window.scrollTo(0, y);
+  }
+});
+document.addEventListener("input", e => {
+  const t = e.target; if (!t.dataset || !t.dataset.cc || !Stato.bozzaCassa) return;
+  Stato.bozzaCassa[t.dataset.cc] = t.dataset.importo ? leggiImporto(t.value) : t.value;
+});
+document.addEventListener("change", e => {
+  const t = e.target;
+  if (t.dataset && t.dataset.cassaFile) { const fl = Array.from(t.files || []); t.value = ""; if (fl.length) aggiungiFileCassa(fl); return; }
+  if (!t.dataset || !t.dataset.cc || !Stato.bozzaCassa) return;
+  const r = Stato.bozzaCassa;
+  if (t.dataset.importo) {
+    const n = leggiImporto(t.value); r.premio = isNaN(n) ? "" : n;
+    if (t.value && isNaN(n) && Stato.erroriCassa) Stato.erroriCassa.premio = "Importo non valido: usa la virgola per i centesimi (es. 1.234,56).";
+    else if (Stato.erroriCassa) delete Stato.erroriCassa.premio;
+  } else r[t.dataset.cc] = t.value;
+  /* ridisegno solo se cambia cosa si vede (premio vita sopra soglia) */
+  if (t.dataset.importo || t.dataset.cc === "incasso") { const y = window.scrollY; vistaRigaCassa(r._indice); window.scrollTo(0, y); }
+});
+
 /* ---- 50_avvio.js ---- */
 /* =====================================================================
    AVVIO
    ===================================================================== */
 Pratiche.pulisciVecchie();
+Cassa.pulisci();
 try { localStorage.removeItem("bussola.pogVisto"); } catch (e) {} /* presa visione POG tolta nella 0.16 */
 Stato.pila.push({ schermo: "home", dati: {} });
 try { history.replaceState({ n: 1 }, ""); } catch (e) {}
