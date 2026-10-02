@@ -1,6 +1,6 @@
 # Bussola · Lloyd Varesino
 
-**Versione 0.12** · strumento interno della rete commerciale
+**Versione 0.13** · strumento interno della rete commerciale
 
 Bussola guida il commerciale nella raccolta dei dati per i preventivi, nella denuncia dei sinistri e negli adempimenti di compliance. Alla fine prepara un riepilogo in PDF da inviare al backoffice giusto.
 
@@ -45,7 +45,7 @@ Il percorso è unico per tutti i rami. Per ogni tipo di evento l'app indica i do
 ### Compliance e Guida
 Contengono schede di promemoria (MUP, privacy, adeguatezza, antiriciclaggio), i collegamenti a Omniaweb e al cloud e regole operative per ramo. **Sono una bozza da validare in agenzia.**
 
-La Guida contiene anche le coordinate bancarie dell'agenzia (con i tasti per copiare IBAN, BIC o tutte le coordinate) e i **documenti utili**: la lettera di disdetta del cliente, che si compila e diventa un PDF da firmare (i dati non vengono salvati), e la procedura per la presa visione della documentazione POG con il collegamento al cloud dell'agenzia. Le credenziali di accesso al cloud non sono nell'app, perché il sito è pubblico.
+La Guida contiene anche le coordinate bancarie dell'agenzia (con i tasti per copiare IBAN, BIC o tutte le coordinate) e i **documenti utili**: il modulo privacy in bianco da stampare, la lettera di disdetta del cliente, che si compila e diventa un PDF da firmare (i dati non vengono salvati), e la procedura per la presa visione della documentazione POG con il collegamento al cloud dell'agenzia. Le credenziali di accesso al cloud non sono nell'app, perché il sito è pubblico.
 
 ### Invio al backoffice
 1. Il commerciale controlla il riepilogo e sceglie il destinatario. L'app propone i destinatari a turno per distribuire il lavoro.
@@ -126,6 +126,10 @@ Le prove nel browser richiedono Playwright e un server locale avviato dentro `di
 ---
 
 ## Versioni
+
+### 0.13 — 02/10/2026
+- Privacy firmata nell'app: l'informativa con consensi e firma è **in fondo al PDF della richiesta** per il backoffice (un solo documento). Il PDF separato resta per la copia al cliente.
+- Guida, Documenti utili: **modulo privacy in bianco** da scaricare e stampare (dati del cliente, consensi, data, firma, timbro e firma dell'intermediario). Richiamato anche nella domanda «modulo cartaceo».
 
 ### 0.12 — 02/10/2026
 - **Privacy firmata nell'app** (proposta di default; resta la scelta «modulo cartaceo»): informativa Lloyd Varesino INFO_ASS_Cliente_v5.0 completa, 4 consensi acconsento / non acconsento mai preselezionati, firma del cliente con il dito o il mouse. Se le scelte cambiano dopo la firma, va rifatta. Nasce un PDF separato con dati del cliente, testo, scelte, firma, data e ora e impronta di controllo: va al backoffice con la pratica e, con «Copia al cliente», anche al cliente. È una firma elettronica semplice (non firma grafometrica avanzata).

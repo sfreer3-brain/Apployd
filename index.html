@@ -295,7 +295,7 @@ body.esperto .campo > .aiuto, body.esperto .perche, body.esperto .testo-spunta s
 const AGENZIA = {
   nome: "Lloyd Varesino",
   app: "Bussola",
-  versione: "0.12",       // scritta da ricomponi.py (file VERSIONE)
+  versione: "0.13",       // scritta da ricomponi.py (file VERSIONE)
   dataBuild: "02/10/2026",
   giorniConservazioneBozze: 7   // le bozze non inviate si cancellano da sole dopo N giorni
 };
@@ -700,6 +700,7 @@ const PASSO_CHIUSURA = { id: "chiusura", titolo: "Documenti e compliance", sotto
           opzioni: [{ v: "app", t: "Firma qui, sul dispositivo" }, { v: "carta", t: "Modulo cartaceo" }] },
         { id: "privacy", tipo: "sino", obbl: true, se: r => r.privacyModo === "carta", dom: "Il cliente ha firmato il modulo privacy?",
           avvisoNo: { livello: "ambra", testo: "Senza consenso privacy il backoffice non può trattare i dati." },
+          aiuto: "Il modulo in bianco da stampare è nella Guida, tra i documenti utili.",
           figli: { quando: "si", campi: [{ id: "privacyFoto", tipo: "allegato", dom: "Foto del modulo firmato" }] } },
         { id: "privacyTesto", tipo: "informativa", se: r => r.privacyModo === "app", dom: "Informativa sui dati personali" },
         ...CONSENSI_PRIVACY.map((c, i) => ({ id: c.id, tipo: "consenso", obbl: true, se: r => r.privacyModo === "app", dom: `Consenso ${i + 1}: ${c.testo}`,
@@ -3257,6 +3258,13 @@ function creaPDF(p, commerciale) {
   for (const t of pdfACapo("Documento generato dall'app Bussola per uso interno dell'agenzia. Dopo l'invio la pratica viene cancellata dal dispositivo del commerciale.", LARGH, false, 8))
     { testo(t, M, y, false, 8, GRIGIO); y -= 10; }
 
+  /* in coda: informativa privacy firmata nell'app (stesso documento per il backoffice) */
+  let immagini = {};
+  const rp = p.risposte;
+  if (rp.privacyModo === "app" && rp.firmaPrivacy && rp.firmaPrivacy.dati) {
+    const X = paginePrivacy(rp, commerciale);
+    pagine.push(...X.pagine); immagini = X.immagini;
+  }
   /* piè di pagina con numerazione */
   pagine.forEach((o, i) => {
     o.push(`0.85 0.89 0.94 RG 0.6 w ${M} ${M - 6} m ${W - M} ${M - 6} l S`);
@@ -3265,7 +3273,7 @@ function creaPDF(p, commerciale) {
     o.push(`BT /F1 8 Tf ${GRIGIO} rg ${(W - M - pdfLarghezza(n, false, 8)).toFixed(2)} ${M - 18} Td (${n}) Tj ET`);
   });
 
-  return scriviPDF(pagine, `${R.tipo} - ${R.prodotto} - ${R.cliente}`, W, H);
+  return scriviPDF(pagine, `${R.tipo} - ${R.prodotto} - ${R.cliente}`, W, H, immagini);
 }
 
 /* ---- scrittura del file: oggetti, tabella xref, trailer ---- */
@@ -3331,12 +3339,15 @@ function creaDisdettaPDF(d) {
   return scriviPDF([ops], `Disdetta polizza ${d.polizza}`, W, H);
 }
 
-/* ---- informativa privacy con consensi e firma del cliente (firma elettronica semplice) ---- */
-function creaPrivacyPDF(p, commerciale) {
-  const r = p.risposte, F = r.firmaPrivacy, P = INFORMATIVA_PRIVACY;
+/* ---- informativa privacy con consensi e firma del cliente (firma elettronica semplice) ----
+   Le pagine si usano in tre modi: PDF per il cliente, coda del PDF per il backoffice,
+   modulo in bianco da stampare (Guida). Senza firma escono caselle e righe vuote. */
+function paginePrivacy(r, commerciale) {
+  const F = r && r.firmaPrivacy && r.firmaPrivacy.dati ? r.firmaPrivacy : null, P = INFORMATIVA_PRIVACY;
   const W = 595.28, H = 841.89, M = 48, LARGH = W - 2 * M, BLU = "0.161 0.302 0.584", GRIGIO = "0.36 0.40 0.45", NERO = "0.12 0.12 0.12";
   const pagine = []; let ops = [], y = 0;
   const testo = (t, x, yy, b, corpo, col) => { if (t) ops.push(`BT /${b ? "F2" : "F1"} ${corpo} Tf ${col || NERO} rg ${x.toFixed(2)} ${yy.toFixed(2)} Td (${pdfEsc(t)}) Tj ET`); };
+  const linea = (x1, yy, x2) => ops.push(`0.55 0.58 0.62 RG 0.6 w ${x1} ${yy.toFixed(2)} m ${x2} ${yy.toFixed(2)} l S`);
   const nuova = () => { ops = []; pagine.push(ops); y = H - M; };
   const spazio = h => { if (y - h < M + 24) nuova(); };
   const paragrafo = (t, b, corpo, col, rientro) => { for (const riga of pdfACapo(t, LARGH - (rientro || 0), b, corpo)) { spazio(corpo + 4); testo(riga, M + (rientro || 0), y - corpo, b, corpo, col); y -= corpo + 3.2; } y -= 3; };
@@ -3346,33 +3357,55 @@ function creaPrivacyPDF(p, commerciale) {
   testo(P.titolare, M + 96, y - 34, false, 8.5, GRIGIO);
   testo("Documento " + P.versione, M + 96, y - 46, false, 8.5, GRIGIO);
   y -= 66;
-  const dati = [["Cognome e nome / ragione sociale", r.nome], ["Codice fiscale / partita IVA", [r.cf, r.piva].filter(Boolean).join(" / ")],
-    ["Indirizzo", [r.indirizzo, r.citta].filter(Boolean).join(", ")], ["Telefono", r.tel], ["Email", r.email],
-    ["Documento d'identità", [({ ci: "Carta d'identità", patente: "Patente", passaporto: "Passaporto" })[r.docTipo] || "", r.docNumero].filter(Boolean).join(" n. ")]];
-  for (const [d, v] of dati) { spazio(14); testo(d, M, y - 10, false, 8.5, GRIGIO); testo(String(v || "-"), M + 170, y - 10, true, 9.5); y -= 14; }
+  const v = r || {};
+  const dati = [["Cognome e nome / ragione sociale", v.nome], ["Codice fiscale / partita IVA", [v.cf, v.piva].filter(Boolean).join(" / ")],
+    ["Indirizzo", [v.indirizzo, v.citta].filter(Boolean).join(", ")], ["Telefono", v.tel], ["Email", v.email],
+    ["Documento d'identità", [({ ci: "Carta d'identità", patente: "Patente", passaporto: "Passaporto" })[v.docTipo] || "", v.docNumero].filter(Boolean).join(" n. ")]];
+  for (const [d, x] of dati) {
+    spazio(16); testo(d, M, y - 10, false, 8.5, GRIGIO);
+    if (x) testo(String(x), M + 170, y - 10, true, 9.5); else if (!F) linea(M + 170, y - 12, W - M);
+    else testo("-", M + 170, y - 10, true, 9.5);
+    y -= 16;
+  }
   y -= 8;
   for (const sz of P.sezioni) { spazio(40); y -= 4; paragrafo(sz.titolo, true, 9, BLU); for (const par of sz.par) paragrafo(par, false, 8, NERO, par.startsWith("•") ? 8 : 0); }
   spazio(330); y -= 6; paragrafo("CONSENSO AL TRATTAMENTO DEI DATI PERSONALI", true, 9.5, BLU);   /* consensi e firma sempre sulla stessa pagina */
   paragrafo("Preso atto dell'Informativa sulla tutela dei dati personali, io sottoscritto/a", false, 8.5);
   for (const c of CONSENSI_PRIVACY) {
-    const si = r[c.id] === "si";
-    paragrafo(`[${si ? "X" : " "}] acconsento   [${si ? " " : "X"}] non acconsento   ${c.testo}`, false, 8.5, si ? NERO : "0.45 0.1 0.12");
+    const val = F ? v[c.id] : null;
+    paragrafo(`[${val === "si" ? "X" : " "}] acconsento   [${val === "no" ? "X" : " "}] non acconsento   ${c.testo}`, false, 8.5, val === "no" ? "0.45 0.1 0.12" : NERO);
   }
   spazio(130); y -= 10;
-  const quando = new Date(F.quando);
-  testo("Data " + quando.toLocaleDateString("it-IT") + " ore " + quando.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" }), M, y - 10, false, 9);
-  testo("Firma del cliente", M + 260, y - 10, false, 9, GRIGIO);
-  const larg = 220, alt = larg * F.a / F.l;
-  ops.push(`q ${larg} 0 0 ${alt.toFixed(2)} ${M + 260} ${(y - 16 - alt).toFixed(2)} cm /Firma Do Q`);
-  y -= alt + 26;
-  paragrafo(`Firma elettronica semplice raccolta con l'app ${AGENZIA.app} sul dispositivo del commerciale ${commerciale && commerciale.nome ? commerciale.nome : ""} (${AGENZIA.nome}).` +
-    (F.impronta ? ` Impronta di controllo (SHA-256): ${F.impronta}` : ""), false, 7.5, GRIGIO);
+  if (F) {
+    const quando = new Date(F.quando);
+    testo("Data " + quando.toLocaleDateString("it-IT") + " ore " + quando.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" }), M, y - 10, false, 9);
+    testo("Firma del cliente", M + 260, y - 10, false, 9, GRIGIO);
+    const larg = 220, alt = larg * F.a / F.l;
+    ops.push(`q ${larg} 0 0 ${alt.toFixed(2)} ${M + 260} ${(y - 16 - alt).toFixed(2)} cm /Firma Do Q`);
+    y -= alt + 26;
+    paragrafo(`Firma elettronica semplice raccolta con l'app ${AGENZIA.app} sul dispositivo del commerciale ${commerciale && commerciale.nome ? commerciale.nome : ""} (${AGENZIA.nome}).` +
+      (F.impronta ? ` Impronta di controllo (SHA-256): ${F.impronta}` : ""), false, 7.5, GRIGIO);
+  } else {
+    testo("Data", M, y - 10, false, 9); linea(M + 26, y - 12, M + 150);
+    testo("Firma", M + 170, y - 10, false, 9); linea(M + 200, y - 12, W - M);
+    y -= 44;
+    testo("Timbro e firma dell'intermediario", M + 170, y - 10, false, 9, GRIGIO); linea(M + 170, y - 40, W - M);
+    y -= 50;
+  }
+  return { pagine, immagini: F ? { Firma: F } : {}, W, H, M };
+}
+function piePrivacy(pagine, r, M, W) {
+  const GRIGIO = "0.36 0.40 0.45";
   pagine.forEach((o, i) => {
-    o.push(`BT /F1 7.5 Tf ${GRIGIO} rg ${M} ${M - 16} Td (${pdfEsc(AGENZIA.nome + " · " + P.versione + " · " + (r.nome || ""))}) Tj ET`);
+    o.push(`BT /F1 7.5 Tf ${GRIGIO} rg ${M} ${M - 16} Td (${pdfEsc(AGENZIA.nome + " · " + INFORMATIVA_PRIVACY.versione + (r && r.nome ? " · " + r.nome : ""))}) Tj ET`);
     const n = `Pagina ${i + 1} di ${pagine.length}`;
     o.push(`BT /F1 7.5 Tf ${GRIGIO} rg ${(W - M - pdfLarghezza(n, false, 7.5)).toFixed(2)} ${M - 16} Td (${n}) Tj ET`);
   });
-  return scriviPDF(pagine, `Privacy - ${r.nome || ""}`, W, H, { Firma: F });
+}
+function creaPrivacyPDF(p, commerciale) {
+  const r = p ? p.risposte : {}, X = paginePrivacy(r, commerciale);
+  piePrivacy(X.pagine, r, X.M, X.W);
+  return scriviPDF(X.pagine, r.nome ? `Privacy - ${r.nome}` : "Informativa privacy Lloyd Varesino", X.W, X.H, X.immagini);
 }
 
 /* ---- 40_interfaccia.js ---- */
@@ -3835,7 +3868,7 @@ function vistaRiepilogo() {
     </div>
     ${p.risposte.privacyModo === "app" && p.risposte.firmaPrivacy ? `<div class="campo">
       <div class="dom">Privacy firmata</div>
-      <div class="aiuto">Il PDF con l'informativa, i consensi e la firma va al backoffice insieme alla pratica. Puoi mandarne una copia anche al cliente.</div>
+      <div class="aiuto">L'informativa con i consensi e la firma è in fondo al PDF per il backoffice. Puoi mandarne una copia anche al cliente.</div>
       <div class="bottoni-msg"><button class="btn" data-az="privacyCliente">Copia al cliente</button></div>
       <div class="stato-file" id="statoPrivacy"></div></div>` : ""}
     <div class="campo">
@@ -3894,7 +3927,6 @@ async function azioneInvio(tipo) {
   }
   const pdf = new File([creaPDF(p, pr)], nomeFile(p, "pdf"), { type: "application/pdf" });
   const allegati = await fileAllegati(p);
-  const pPriv = filePrivacy(p, pr); if (pPriv) allegati.unshift(pPriv);
   if (tipo === "scarica") {
     scaricaBlob(pdf, pdf.name);
     allegati.forEach((f, i) => setTimeout(() => scaricaBlob(f, f.name), 400 * (i + 1)));
@@ -3997,6 +4029,9 @@ function htmlAgenzia() {
       <div class="bottoni-msg"><a class="btn link" href="${esc(GESTIONALE.link)}" target="_blank" rel="noopener">${esc(GESTIONALE.nome)}, gestionale</a>
         <a class="btn link" href="${esc(DOC_POG.link)}" target="_blank" rel="noopener">Cloud dell'agenzia</a></div></div>
     <div class="campo"><div class="dom">Documenti utili</div>
+      <details class="doc-utile"><summary>Informativa privacy (modulo da stampare)</summary>
+        <p class="aiuto">Il modulo dell'agenzia (${esc(INFORMATIVA_PRIVACY.versione)}) in bianco, da far firmare su carta. Nelle pratiche la firma si può raccogliere anche nell'app.</p>
+        <button class="btn primario" data-az="privacyBianco">Scarica il PDF</button></details>
       <details class="doc-utile"><summary>Lettera di disdetta del cliente</summary>
         <p class="aiuto">Compila e scarica il PDF: il cliente lo firma e lo invia alla compagnia con raccomandata A/R o PEC, rispettando il preavviso scritto nelle condizioni di polizza. I dati non vengono salvati.</p>
         <div class="dis-griglia">${campo("nome", "Nome e cognome del cliente", "", true)}${campo("cf", "Codice fiscale")}
@@ -4084,6 +4119,7 @@ function collegaEventi() {
     if (b.dataset.salvaFirma) return salvaFirma(b.dataset.salvaFirma);
     if (b.dataset.pulisciFirma || b.dataset.rifaiFirma) { const id = b.dataset.pulisciFirma || b.dataset.rifaiFirma; return rispondi(id, null, true); }
     if (b.dataset.az === "privacyCliente") return copiaPrivacyCliente();
+    if (b.dataset.az === "privacyBianco") return scaricaBlob(creaPrivacyPDF(null), "Informativa privacy Lloyd Varesino.pdf");
     if (b.dataset.az === "esperto") { Memoria.scrivi("bussola.esperto", !(Memoria.leggi("bussola.esperto", false) === true)); return disegna(); }
     if (b.dataset.az === "nuovaEsigenza") { const seg = Stato.clienteRiuso && Stato.clienteRiuso._segmento; return vai("albero", seg ? { nodo: seg } : {}); }
     if (b.dataset.condividiTesto !== undefined) {
