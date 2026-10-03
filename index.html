@@ -303,23 +303,22 @@ body.esperto .campo > .aiuto, body.esperto .perche, body.esperto .testo-spunta s
 const AGENZIA = {
   nome: "Lloyd Varesino",
   app: "Bussola",
-  versione: "0.19",       // scritta da ricomponi.py (file VERSIONE)
+  versione: "0.21",       // scritta da ricomponi.py (file VERSIONE)
   dataBuild: "02/10/2026",
   giorniConservazioneBozze: 7   // le bozze non inviate si cancellano da sole dopo N giorni
 };
 
-/* Gruppi di destinatari. "modo":
-   - "scegli": il commerciale sceglie uno dei nomi (l'app propone quello a rotazione)
-   - "tutti":  la pratica va a tutti gli indirizzi                                    */
+/* Destinatari fissi: sinistri a pzanzi, vita e Protection a mcastoldi, incassi a spassoni (vedi CASSA).
+   Per auto e rami elementari il destinatario lo sceglie il commerciale nella sua email. */
 /* Logo per il PDF (JPEG, inserito in fase di composizione) */
 const LOGO_JPG = { l: 320, a: 201, dati: "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" };
 
 const DESTINATARI = {
-  danni:    { modo: "scegli", indirizzi: ["gscopacasa@lloydvaresino.it", "ctominovi@lloydvaresino.it", "bdelgrande@lloydvaresino.it"] },
-  auto:     { modo: "scegli", indirizzi: ["sbreglia@lloydvaresino.it", "apalmieri@lloydvaresino.it", "sbellini@lloydvaresino.it"] },
-  vita:     { modo: "tutti",  indirizzi: ["mcastoldi@lloydvaresino.it"] },
-  sinistri: { modo: "tutti",  indirizzi: ["pzanzi@lloydvaresino.it"] }
+  sinistri: { indirizzi: ["pzanzi@lloydvaresino.it"] },
+  vita:     { indirizzi: ["mcastoldi@lloydvaresino.it"] }   /* vita, investimenti e Protection */
 };
+/* Più prodotti per lo stesso cliente: un PDF per ciascun gruppo */
+const PACCHETTI = { auto: "Auto", danni: "Rami elementari", vita: "Vita e Protection" };
 
 /* Albero dei preventivi. Ogni nodo può avere "figli" oppure un "questionario".
    "invio" (gruppo di destinatari) si eredita dal nodo padre se non indicato.
@@ -2937,6 +2936,9 @@ const Pratiche = {
   salva(p) {
     p.aggiornata = Date.now();
     const elenco = this.tutte().filter(x => x.id !== p.id);
+    /* stessa anagrafica per tutti i prodotti dello stesso cliente */
+    if (p.gruppo) for (const x of elenco) if (x.gruppo === p.gruppo)
+      for (const k of CAMPI_CLIENTE) if (!vuoto(p.risposte[k])) x.risposte[k] = p.risposte[k];
     elenco.unshift(p);
     Memoria.scrivi("bussola.pratiche", elenco);
   },
@@ -3087,21 +3089,19 @@ function segnalazioni(q, r) {
   return out;
 }
 
-/* ---------- smistamento: rotazione semplice per gruppo di destinatari ---------- */
-function destinatarioProposto(gruppo) {
-  const d = DESTINATARI[gruppo];
-  if (!d || d.modo === "tutti") return d ? d.indirizzi.slice() : [];
-  const giri = Memoria.leggi("bussola.rotazione", {});
-  const i = (giri[gruppo] || 0) % d.indirizzi.length;
-  return [d.indirizzi[i]];
+/* destinatari: sinistri a pzanzi, vita e Protection a mcastoldi; auto e rami elementari li sceglie il commerciale */
+function destinatariPratica(p) {
+  return p.tipo === "sinistro" ? DESTINATARI.sinistri.indirizzi.slice() : pacchettoDi(p) === "vita" ? DESTINATARI.vita.indirizzi.slice() : [];
 }
-function avanzaRotazione(gruppo) {
-  const giri = Memoria.leggi("bussola.rotazione", {});
-  giri[gruppo] = (giri[gruppo] || 0) + 1;
-  Memoria.scrivi("bussola.rotazione", giri);
-}
+/* ---------- più prodotti per lo stesso cliente (stessa anagrafica, campo «gruppo») ---------- */
+function pacchettoDi(p) { return p.tipo === "sinistro" ? "sinistro" : invioPer(p.prodotto); }
+function praticheGruppo(p) { return p.gruppo ? [p].concat(Pratiche.tutte().filter(x => x.gruppo === p.gruppo && x.id !== p.id)) : [p]; }
+/* cosa parte insieme alla pratica aperta: le altre pratiche complete dello stesso cliente e dello stesso gruppo */
+function praticheInvio(p) { const k = pacchettoDi(p); return [p].concat(praticheGruppo(p).slice(1).filter(x => pacchettoDi(x) === k && x.completa)); }
+function titoloPacchetto(L) { L = [].concat(L); return L.length > 1 ? `${PACCHETTI[pacchettoDi(L[0])]}: ${L.map(titoloPratica).join(", ")}` : titoloPratica(L[0]); }
+/* campi copiati in un nuovo prodotto per lo stesso cliente: anagrafica e privacy (si firma una volta) */
+const CAMPI_PRIVACY = ["privacyModo", "privacy", "firmaPrivacy"].concat(CONSENSI_PRIVACY.map(c => c.id));
 
-/* IBAN: controllo internazionale (ISO 13616, resto della divisione per 97) */
 function ibanValido(v) {
   const x = String(v || "").replace(/\s/g, "").toUpperCase();
   if (!/^[A-Z]{2}\d{2}[A-Z0-9]{10,30}$/.test(x)) return false;
@@ -3201,11 +3201,6 @@ const CASSA_MODELLO = {"[Content_Types].xml": "<?xml version=\"1.0\" encoding=\"
    ===================================================================== */
 const CASSA = {
   destinatario: "spassoni@lloydvaresino.it",
-  pec: "postmaster@pec.lvsrl.eu",
-  copiaFuoriOrario: ["spassoni@lloydvaresino.it", "sbreglia@lloydvaresino.it"],
-  /* orari dell'agenzia: lun-gio 8:45-13 e 14:45-18, ven 8:45-13 (minuti dalla mezzanotte) */
-  orari: { 1: [[525, 780], [885, 1080]], 2: [[525, 780], [885, 1080]], 3: [[525, 780], [885, 1080]], 4: [[525, 780], [885, 1080]], 5: [[525, 780]] },
-  orariTesto: "lunedì-giovedì 8:45-13 e 14:45-18, venerdì 8:45-13",
   maxRighe: 21,
   rami: [{ v: "R.E", t: "Rami elementari" }, { v: "AUTO", t: "Auto" }, { v: "VITA", t: "Vita" }],
   compagnie: ["AXA", "HELVETIA", "UNIPOL", "ARAG", "DUAL", "ACCORDO A CON A"],
@@ -3215,23 +3210,10 @@ const CASSA = {
 };
 const etichettaCassa = (lista, v) => (lista.find(x => x.v === v) || { t: v }).t;
 
-/* fuori dall'orario d'ufficio la comunicazione va alla PEC (procedura 5) */
-function cassaFuoriOrario(d) {
-  const fasce = CASSA.orari[d.getDay()] || [], m = d.getHours() * 60 + d.getMinutes();
-  return !fasce.some(([a, b]) => m >= a && m < b);
-}
-function cassaIndirizzi(d) {
-  return cassaFuoriOrario(d) ? { a: [CASSA.pec], cc: CASSA.copiaFuoriOrario, pec: true } : { a: [CASSA.destinatario], cc: [], pec: false };
-}
+/* gli incassi vanno sempre a spassoni (indicazione di Andrea, 02/10/2026) */
+function cassaIndirizzi() { return { a: [CASSA.destinatario], cc: [] }; }
 
-/* IBAN: struttura e cifra di controllo (mod 97) */
-function ibanValido(s) {
-  const x = String(s || "").replace(/\s+/g, "").toUpperCase();
-  if (!/^[A-Z]{2}\d{2}[A-Z0-9]{11,30}$/.test(x) || (x.startsWith("IT") && x.length !== 27)) return false;
-  const n = (x.slice(4) + x.slice(0, 4)).replace(/[A-Z]/g, c => String(c.charCodeAt(0) - 55));
-  let r = 0; for (const c of n) r = (r * 10 + Number(c)) % 97;
-  return r === 1;
-}
+/* ibanValido(): in 30_logica.js */
 /* importi con i centesimi: «1.234,56», «1234.5», «80» */
 function leggiImporto(s) {
   let t = String(s == null ? "" : s).replace(/[€\s]/g, "");
@@ -3294,7 +3276,7 @@ function cassaOggetto(pr, quando) {
   return `[Foglio cassa] ${pr.nome || "Commerciale"}${pr.sub ? " (Sub " + pr.sub + ")" : ""} - ${quando.toLocaleDateString("it-IT")}`;
 }
 function cassaTestoEmail(righe, pr, quando, contabili) {
-  const T = cassaTotali(righe), fuori = cassaFuoriOrario(quando);
+  const T = cassaTotali(righe);
   const out = ["Buongiorno,", `comunico gli incassi da registrare a cassa (foglio cassa Excel in allegato).`, "",
     `Sub: ${pr.sub || "-"} · Codice: ${(pr.nome || "").toUpperCase()}`, ""];
   righe.forEach((r, i) => {
@@ -3305,7 +3287,6 @@ function cassaTestoEmail(righe, pr, quando, contabili) {
   });
   out.push("", `Totale: ${euroCassa(T.totale)}`, `Anticipi + bonifici: ${euroCassa(T.anticipiBonifici)}`, `Totale - bonifici: ${euroCassa(T.resto)}`);
   if (contabili) out.push("", `Contabili allegate: ${contabili}`);
-  if (fuori) out.push("", "Comunicazione inviata fuori dall'orario d'ufficio.");
   out.push("", "Grazie", [pr.nome, pr.tel].filter(Boolean).join(" · "), AGENZIA.nome);
   return out.join("\n");
 }
@@ -3460,8 +3441,9 @@ function costruisciRiepilogo(p) {
 
 function nomeFile(p, est) {
   const pul = s => String(s).normalize("NFD").replace(/[^\w\s-]/g, "").trim().replace(/\s+/g, "-");
-  const oggi = new Date().toISOString().slice(0, 10);
-  return `${p.tipo === "sinistro" ? "Sinistro" : "Preventivo"}_${pul(titoloPratica(p))}_${pul(p.risposte.nome || "cliente")}_${oggi}.${est}`;
+  const oggi = new Date().toISOString().slice(0, 10), L = [].concat(p); p = L[0];
+  const titolo = L.length > 1 ? PACCHETTI[pacchettoDi(p)] : titoloPratica(p);
+  return `${p.tipo === "sinistro" ? "Sinistro" : "Preventivo"}_${pul(titolo)}_${pul(p.risposte.nome || "cliente")}_${oggi}.${est}`;
 }
 
 /* ---------- testo per l'email (versione compatta del riepilogo) ---------- */
@@ -3530,9 +3512,12 @@ function pdfACapo(testo, larghezza, grassetto, corpo) {
 const pdfEsc = s => pdfCodifica(s).replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)");
 
 /* Crea il PDF del riepilogo. Restituisce un Blob "application/pdf". */
+/* p può essere una pratica o un elenco di pratiche dello stesso cliente (un PDF per Auto,
+   uno per i rami elementari, uno per vita e Protection): anagrafica una volta sola, poi i prodotti. */
 function creaPDF(p, commerciale, foto) {
   foto = foto || [];
-  const R = costruisciRiepilogo(p);
+  const L = [].concat(p); p = L[0];
+  const RR = L.map(costruisciRiepilogo), R = Object.assign({}, RR[0], { prodotto: L.length > 1 ? titoloPacchetto(L) : RR[0].prodotto, strada: L.length > 1 ? L.map(titoloPratica).join(" · ") : RR[0].strada });
   const W = 595.28, H = 841.89, M = 42, LARGH = W - 2 * M;
   const BLU = "0.161 0.302 0.584", GRIGIO = "0.36 0.40 0.45", NERO = "0.16 0.16 0.16";
   const pagine = []; let ops = [], y = 0;
@@ -3575,9 +3560,10 @@ function creaPDF(p, commerciale, foto) {
   }
 
   nuovaPagina();
-  if (R.segnalazioni.length) {
+  const tutteSegn = [].concat(...RR.map((X, i) => X.segnalazioni.map(s => L.length > 1 ? Object.assign({}, s, { testo: `${X.prodotto}: ${s.testo}` }) : s)));
+  if (tutteSegn.length) {
     titoloSezione("Da verificare");
-    for (const s of R.segnalazioni) {
+    for (const s of tutteSegn) {
       const righe = pdfACapo(s.testo, LARGH - 16, false, 9.5), h = righe.length * 12.5 + 6;
       spazio(h);
       const col = s.livello === "rosso" ? "0.64 0.15 0.17" : s.livello === "ambra" ? "0.60 0.36 0" : BLU;
@@ -3586,14 +3572,28 @@ function creaPDF(p, commerciale, foto) {
       y -= h;
     }
   }
-  for (const s of R.sezioni) {
-    titoloSezione(s.titolo);
-    for (const x of s.righe) coppia(x.dom, x.risp, x.grave);
+  const cliente0 = L.length > 1 && RR[0].sezioni.find(s => s.titolo === "Cliente");
+  if (cliente0) {   /* più prodotti: l'anagrafica comune una volta sola, in testa */
+    titoloSezione("Cliente");
+    for (const x of cliente0.righe) coppia(x.dom, x.risp, x.grave);
   }
-  if (R.allegati.length) {
-    titoloSezione(`Allegati (${R.allegati.length})`);
+  RR.forEach((X, i) => {
+    if (L.length > 1) {   /* fascia con il nome del prodotto */
+      spazio(110); y -= 14;
+      rett(M, y - 26, LARGH, 26, BLU);
+      testo(`${i + 1}. ${X.prodotto}`, M + 10, y - 18, true, 13, "1 1 1"); y -= 34;
+    }
+    for (const s of X.sezioni) {
+      if (L.length > 1 && s.titolo === "Cliente") continue;
+      titoloSezione(s.titolo);
+      for (const x of s.righe) coppia(x.dom, x.risp, x.grave);
+    }
+  });
+  const tuttiAll = allegatiUnici([].concat(...RR.map(X => X.allegati)));
+  if (tuttiAll.length) {
+    titoloSezione(`Allegati (${tuttiAll.length})`);
     const dentro = new Set(foto.map(f => f.id));
-    for (const a of R.allegati) coppia(a.voce, `${a.nome} · ${dentro.has(a.id) ? "in fondo a questo documento" : "file separato nell'email"}`);
+    for (const a of tuttiAll) coppia(a.voce, `${a.nome} · ${dentro.has(a.id) ? "in fondo a questo documento" : "file separato nell'email"}`);
   }
   /* nota finale solo se c'è posto: non apre una pagina quasi vuota */
   if (y - 34 > M + 20) {
@@ -3614,13 +3614,13 @@ function creaPDF(p, commerciale, foto) {
     immagini["Foto" + i] = f;
   });
   /* in coda: informativa privacy firmata nell'app (stesso documento per il backoffice) */
-  const rp = p.risposte;
-  if (rp.privacyModo === "app" && rp.firmaPrivacy && rp.firmaPrivacy.dati) {
-    const X = paginePrivacy(rp, commerciale);
+  const conPrivacy = L.find(x => x.risposte.privacyModo === "app" && x.risposte.firmaPrivacy && x.risposte.firmaPrivacy.dati);
+  if (conPrivacy) {   /* una sola informativa per cliente */
+    const X = paginePrivacy(conPrivacy.risposte, commerciale);
     pagine.push(...X.pagine); Object.assign(immagini, X.immagini);
   }
-  if (p.questionario === "dichiarazione") {
-    const X = pagineDichiarazione(rp, commerciale);
+  for (const d of L.filter(x => x.questionario === "dichiarazione")) {
+    const X = pagineDichiarazione(d.risposte, commerciale);
     pagine.push(...X.pagine); Object.assign(immagini, X.immagini);
   }
   /* piè di pagina con numerazione */
@@ -3638,7 +3638,7 @@ function creaPDF(p, commerciale, foto) {
    inserire (PDF, HEIC sul computer, file illeggibili) resta come file separato. */
 async function fotoPerPDF(p) {
   const foto = [], separati = [];
-  for (const a of costruisciRiepilogo(p).allegati) {
+  for (const a of allegatiUnici([].concat(...[].concat(p).map(x => costruisciRiepilogo(x).allegati)))) {
     const blob = await Allegati.leggi(a.id);
     if (!blob) continue;
     if (/^image\//.test(blob.type || a.tipo)) {
@@ -3657,11 +3657,18 @@ async function fotoPerPDF(p) {
   return { foto, separati };
 }
 
+/* lo stesso file copiato in più prodotti dello stesso cliente (es. documento d'identità) compare una volta */
+function allegatiUnici(lista) { const visti = new Set(); return lista.filter(a => { const k = a.voce + "|" + a.nome + "|" + a.dim; if (visti.has(k)) return false; visti.add(k); return true; }); }
+
 /* Testo breve dell'email: i dati sono nel PDF */
 function testoEmailBreve(p, commerciale) {
-  const R = costruisciRiepilogo(p);
-  const righe = ["Buongiorno,", `in allegato ${p.tipo === "sinistro" ? "la denuncia di sinistro" : "la richiesta di preventivo"} ${R.prodotto} per ${R.cliente}.`];
-  if (R.segnalazioni.length) { righe.push("", "Da verificare:"); R.segnalazioni.forEach(x => righe.push("- " + x.testo)); }
+  const L = [].concat(p); p = L[0];
+  const RR = L.map(costruisciRiepilogo), R = RR[0];
+  const righe = ["Buongiorno,", L.length > 1
+    ? `in allegato la richiesta di preventivo per ${R.cliente}, ${PACCHETTI[pacchettoDi(p)].toLowerCase()}: ${L.map(titoloPratica).join(", ")}.`
+    : `in allegato ${p.tipo === "sinistro" ? "la denuncia di sinistro" : "la richiesta di preventivo"} ${R.prodotto} per ${R.cliente}.`];
+  const segn = [].concat(...RR.map(X => X.segnalazioni.map(s => (L.length > 1 ? X.prodotto + ": " : "") + s.testo)));
+  if (segn.length) { righe.push("", "Da verificare:"); segn.forEach(x => righe.push("- " + x)); }
   righe.push("", "Grazie", [commerciale.nome, commerciale.tel].filter(Boolean).join(" · "), AGENZIA.nome);
   return righe.join("\n");
 }
@@ -3672,7 +3679,7 @@ async function creaEml(a, oggetto, testo, files, cc) {
   const intest = s => /^[\x20-\x7e]*$/.test(s) ? s : `=?UTF-8?B?${b64(s)}?=`;
   const righe76 = s => s.replace(/.{1,76}/g, "$&\r\n");
   const conf = "----=_Bussola_" + Math.random().toString(36).slice(2);
-  let out = [`To: ${a}`].concat(cc && cc.length ? [`Cc: ${cc.join(", ")}`] : []).concat([`Subject: ${intest(oggetto)}`, "X-Unsent: 1", "MIME-Version: 1.0", `Date: ${new Date().toUTCString().replace("GMT", "+0000")}`,
+  let out = (a ? [`To: ${a}`] : []).concat(cc && cc.length ? [`Cc: ${cc.join(", ")}`] : []).concat([`Subject: ${intest(oggetto)}`, "X-Unsent: 1", "MIME-Version: 1.0", `Date: ${new Date().toUTCString().replace("GMT", "+0000")}`,
     `Content-Type: multipart/mixed; boundary="${conf}"`, "", "This is a multi-part message in MIME format.", "",
     `--${conf}`, "Content-Type: text/plain; charset=UTF-8", "Content-Transfer-Encoding: base64", "", righe76(b64(testo.replace(/\n/g, "\r\n")))]).join("\r\n");
   for (const f of files) {
@@ -3941,6 +3948,7 @@ function disegna() {
 
 /* ================= HOME ================= */
 function vistaHome() {
+  Stato.aggiungiA = null;
   impostaBarra(AGENZIA.app, "", false, null);
   impostaAzioni(null);
   Pratiche.tutte().filter(praticaVuota).forEach(p => Pratiche.elimina(p.id));   /* aperte e lasciate vuote: non servono */
@@ -4009,6 +4017,7 @@ function vistaAlbero() {
   impostaAzioni(null);
   const domanda = !nodo ? "Per chi è il preventivo?" : strada.length === 1 ? "Quale area?" : "Quale prodotto?";
   $("#vista").innerHTML = `
+    ${Stato.aggiungiA ? `<div class="avviso blu" style="margin-bottom:12px">${ICONE.attenzione}<span>Nuovo prodotto per <b>${esc(Stato.aggiungiA.nome || "lo stesso cliente")}</b>: anagrafica e privacy sono già compilate. <button class="btn piccolo" data-az="annullaAggiungi">Annulla</button></span></div>` : ""}
     ${strada.length ? `<div class="briciole">${strada.map(n => esc(n.nome)).join(" › ")}</div>` : ""}
     <div class="passo-titolo">${domanda}</div>
     <p class="passo-sotto">${!nodo ? "Da qui dipendono le domande sui dati del cliente." : "I prodotti con l'etichetta «presto» arriveranno nelle prossime versioni."}</p>
@@ -4285,25 +4294,27 @@ function avanti() {
     return;
   }
   if (p.passo < passi.length - 1) { p.passo++; Pratiche.salva(p); try { history.pushState({}, ""); } catch (e) {} disegna(); window.scrollTo(0, 0); }
-  else vai("riepilogo");
+  else { p.completa = true; Pratiche.salva(p); vai("riepilogo"); }
 }
 
 /* ================= RIEPILOGO (bozza) ================= */
 function vistaRiepilogo() {
   const p = Stato.pratica, q = QUESTIONARI[p.questionario], r = p.risposte;
   const R = costruisciRiepilogo(p);
-  const gruppo = p.tipo === "sinistro" ? "sinistri" : invioPer(p.prodotto);
-  const D = DESTINATARI[gruppo];
-  if (!p.destinatari) p.destinatari = destinatarioProposto(gruppo);
+  p.destinatari = destinatariPratica(p);
+  const dest = p.destinatari.join(", ");
+  /* più prodotti per lo stesso cliente: cosa parte con questo invio e cosa resta */
+  const L = praticheInvio(p), G = praticheGruppo(p), tuttiAll = allegatiUnici([].concat(...L.map(x => costruisciRiepilogo(x).allegati)));
+  const incompleti = G.slice(1).filter(x => pacchettoDi(x) === pacchettoDi(p) && !x.completa);
   const prof = Memoria.leggi("bussola.profilo", {});
   const condivisione = puoCondividereFile();
   /* foto dentro il PDF (HEIC sul computer e PDF restano separati: stima, il conteggio esatto arriva all'invio) */
   const heicPC = a => /heic|heif/i.test(a.tipo || "") && !suTelefono();
-  const nFoto = R.allegati.filter(a => /^image\//.test(a.tipo || "") && !heicPC(a)).length, nSep = R.allegati.length - nFoto;
-  fotoPronte(p);
+  const nFoto = tuttiAll.filter(a => /^image\//.test(a.tipo || "") && !heicPC(a)).length, nSep = tuttiAll.length - nFoto;
+  fotoPronte(L);
   impostaBarra("Riepilogo e invio", titoloPratica(p), true, null);
   impostaAzioni(`<button class="btn secondario-largo" data-az="anteprima">Anteprima PDF</button>
-    <button class="btn primario" data-az="inviato" ${p.invioTentato ? "" : "disabled"}>Ho inviato: chiudi la pratica</button>`);
+    <button class="btn primario" data-az="inviato" ${p.invioTentato ? "" : "disabled"}>Ho inviato: chiudi ${L.length > 1 ? `le ${L.length} pratiche` : "la pratica"}</button>`);
   const passi = passiVisibili(q, r);
   const indicePasso = titolo => passi.findIndex(x => x.titolo === titolo);
   $("#vista").innerHTML = `
@@ -4321,14 +4332,10 @@ function vistaRiepilogo() {
       <dl>${R.allegati.map(a => `<dt>${esc(a.voce)}</dt><dd>${esc(a.nome)}</dd>`).join("")}</dl></div>` : ""}
     </div>
 
-    <div class="sezione-titolo">Invio</div>
-    <div class="campo">
-      <div class="dom">Destinatario</div>
-      ${D.modo === "scegli"
-        ? `<div class="aiuto">Proposto a turno per distribuire il lavoro; puoi cambiarlo.</div><div class="scelte">${D.indirizzi.map(x =>
-            `<button class="pill" data-dest="${esc(x)}" aria-pressed="${p.destinatari.includes(x)}">${esc(x.split("@")[0])}</button>`).join("")}</div>`
-        : `<div>${D.indirizzi.map(esc).join(", ")}</div>`}
-    </div>
+    ${p.tipo === "preventivo" ? htmlProdottiCliente(p, G) : ""}
+    <div class="sezione-titolo">Invio${L.length > 1 ? `: ${esc(PACCHETTI[pacchettoDi(p)])}` : ""}</div>
+    ${L.length > 1 ? `<div class="avviso blu" style="margin-bottom:12px">${ICONE.attenzione}<span>Un unico PDF con ${esc(L.map(titoloPratica).join(", "))}: anagrafica una volta sola, poi un capitolo per prodotto.</span></div>` : ""}
+    ${incompleti.length ? `<div class="avviso ambra" style="margin-bottom:12px">${ICONE.attenzione}<span>${esc(incompleti.map(titoloPratica).join(", "))} ${incompleti.length === 1 ? "non è completa" : "non sono complete"}: se invii adesso ${incompleti.length === 1 ? "resta" : "restano"} fuori dal PDF. Completala dall'elenco qui sopra per mandare tutto insieme.</span></div>` : ""}
     <div class="campo">
       <div class="dom">I tuoi dati (commerciale)</div>
       <div class="aiuto">Restano salvati su questo dispositivo e compaiono nel PDF.</div>
@@ -4352,12 +4359,12 @@ function vistaRiepilogo() {
     <div class="campo">
       <div class="dom">Come inviare</div>
       ${condivisione
-        ? `<ol class="passi-invio"><li><b>Condividi</b> il PDF${nSep ? ` e ${nSep === 1 ? "l'allegato" : "gli allegati"}` : ""} e scegli la tua app di posta: l'indirizzo del backoffice viene copiato, incollalo nel destinatario.</li>
+        ? `<ol class="passi-invio"><li><b>Condividi</b> il PDF${nSep ? ` e ${nSep === 1 ? "l'allegato" : "gli allegati"}` : ""} e scegli la tua app di posta: ${dest ? `l'indirizzo (${esc(dest)}) viene copiato, incollalo nel destinatario` : "scegli tu il destinatario"}.</li>
              <li>Poi torna qui e tocca <b>Ho inviato</b>: la pratica si cancella dal dispositivo.</li></ol>
            ${nFoto ? `<p class="aiuto">${nFoto === 1 ? "La foto allegata è" : `Le ${nFoto} foto allegate sono`} dentro il PDF.</p>` : ""}
            <div class="bottoni-invio"><button class="btn primario" data-az="condividi">Condividi PDF${nSep ? ` e ${nSep} allegat${nSep === 1 ? "o" : "i"}` : ""}</button>
              <button class="btn" data-az="email">Solo email con il testo</button></div>`
-        : `<ol class="passi-invio"><li><b>Scarica l'email pronta</b>: è un file con destinatario, oggetto, testo e PDF già allegato.</li>
+        : `<ol class="passi-invio"><li><b>Scarica l'email pronta</b>: è un file con ${dest ? `destinatario (${esc(dest)}), ` : ""}oggetto, testo e PDF già allegato${dest ? "" : "; il destinatario lo scegli tu"}.</li>
              <li><b>Aprila</b> dal riquadro dei download del browser: si apre il messaggio in Outlook o eM Client. Controlla e invia.</li>
              <li>Torna qui: <b>Ho inviato</b> cancella la pratica dal dispositivo.</li></ol>
            ${nFoto ? `<p class="aiuto">${nFoto === 1 ? "La foto allegata è" : `Le ${nFoto} foto allegate sono`} dentro il PDF.</p>` : ""}
@@ -4367,8 +4374,8 @@ function vistaRiepilogo() {
              <div class="bottoni-msg"><button class="btn piccolo" data-az="scarica">Scarica PDF${nSep ? ` e ${nSep} allegat${nSep === 1 ? "o" : "i"}` : ""}</button>
                <button class="btn piccolo" data-az="email">Apri email (senza allegati)</button></div>
              <p class="aiuto" style="margin-top:10px">Posta usata dal browser: copia questi dati nel nuovo messaggio.</p>
-             <div class="bottoni-msg"><button class="btn piccolo" data-copia="${esc(p.destinatari.join(", "))}" data-copia-nome="indirizzo del backoffice">Copia destinatario</button>
-               <button class="btn piccolo" data-copia="${esc(oggettoEmail(p))}" data-copia-nome="oggetto">Copia oggetto</button>
+             <div class="bottoni-msg">${dest ? `<button class="btn piccolo" data-copia="${esc(dest)}" data-copia-nome="indirizzo">Copia destinatario</button>` : ""}
+               <button class="btn piccolo" data-copia="${esc(oggettoEmail(L))}" data-copia-nome="oggetto">Copia oggetto</button>
                <button class="btn piccolo" data-az="copiaTestoEmail">Copia testo</button></div>
              <div data-esito-copia class="aiuto" style="min-height:1.2em;margin:6px 0 0"></div></details>`}
       <div class="stato-file" id="statoInvio"></div>
@@ -4401,7 +4408,19 @@ function profiloValido() {
   if (err) { const el = document.querySelector('[data-profilo="' + (!pr.nome ? "nome" : "email") + '"]'); if (el) { el.focus(); el.scrollIntoView({ block: "center" }); } }
   return err ? null : pr;
 }
-function oggettoEmail(p) { return `[${p.tipo === "sinistro" ? "Sinistro" : "Preventivo"}] ${titoloPratica(p)} - ${p.risposte.nome || "cliente"}`; }
+function oggettoEmail(x) { const L = [].concat(x), p = L[0]; return `[${p.tipo === "sinistro" ? "Sinistro" : "Preventivo"}] ${titoloPacchetto(L)} - ${p.risposte.nome || "cliente"}`; }
+
+/* Riepilogo: prodotti dello stesso cliente divisi per invio (Auto, Rami elementari, Vita e Protection) */
+function htmlProdottiCliente(p, G) {
+  const gruppi = {};
+  for (const x of G) (gruppi[pacchettoDi(x)] = gruppi[pacchettoDi(x)] || []).push(x);
+  return `<div class="campo"><div class="dom">Prodotti per ${esc(p.risposte.nome || "questo cliente")}</div>
+    ${G.length > 1 ? `<div class="aiuto">Stessa anagrafica per tutti. Parte un PDF per gruppo: Auto, Rami elementari, Vita e Protection.</div>
+      ${Object.keys(PACCHETTI).filter(k => gruppi[k]).map(k => `<div class="riga-dato"><span>${esc(PACCHETTI[k])}</span><b>${gruppi[k].map(x =>
+        x.id === p.id ? `${esc(titoloPratica(x))} (questa)` : `<button class="btn piccolo" data-apri-gruppo="${esc(x.id)}">${esc(titoloPratica(x))}${x.completa ? "" : " · da completare"}</button>`).join(" ")}</b></div>`).join("")}` 
+      : `<div class="aiuto">Al cliente serve anche un altro preventivo? Aggiungilo senza riscrivere anagrafica e privacy.</div>`}
+    <div class="bottoni-msg"><button class="btn piccolo" data-az="aggiungiProdotto">+ Aggiungi un prodotto per questo cliente</button></div></div>`;
+}
 function segnaInviato(msg) {
   Stato.pratica.invioTentato = true; Pratiche.salva(Stato.pratica);
   const b = document.querySelector('[data-az="inviato"]'); if (b) b.disabled = false;
@@ -4414,7 +4433,7 @@ function scaricaBlob(blob, nome) {
 /* Foto e PDF preparati in anticipo (all'apertura del riepilogo): al tocco di «Condividi» il telefono
    deve aprire subito il pannello, altrimenti il browser blocca la condivisione. */
 function fotoPronte(p) {
-  const chiave = p.id + ":" + costruisciRiepilogo(p).allegati.map(a => a.id).join(",");
+  const L = [].concat(p), chiave = L.map(x => x.id + ":" + costruisciRiepilogo(x).allegati.map(a => a.id).join(",")).join("|");
   if (!Stato.fotoPDF || Stato.fotoPDF.chiave !== chiave) Stato.fotoPDF = { chiave, prom: fotoPerPDF(p) };
   return Stato.fotoPDF.prom;
 }
@@ -4424,22 +4443,23 @@ async function fileInvio(p, pr) {
 }
 async function azioneInvio(tipo) {
   const p = Stato.pratica, pr = profiloValido(); if (!pr) return;
-  const to = p.destinatari.join(",");
+  const L = praticheInvio(p);
+  const to = destinatariPratica(p).join(",");
   if (tipo === "email") {
-    location.href = `mailto:${to}?subject=${encodeURIComponent(oggettoEmail(p))}&body=${encodeURIComponent(testoEmailBreve(p, pr))}`;
+    location.href = `mailto:${to}?subject=${encodeURIComponent(oggettoEmail(L))}&body=${encodeURIComponent(testoEmailBreve(L, pr))}`;
     return segnaInviato("L'email si apre senza allegati: trascina dentro il PDF scaricato. Se non si apre nessun programma, usa «Il programma di posta non si apre?».");
   }
-  const { pdf, separati } = await fileInvio(p, pr);
+  const { pdf, separati } = await fileInvio(L, pr);
   const tutti = [pdf].concat(separati);
   if (tipo === "eml") {
-    const eml = await creaEml(to, oggettoEmail(p), testoEmailBreve(p, pr), tutti);
-    const nome = nomeFile(p, "eml");
+    const eml = await creaEml(to, oggettoEmail(L), testoEmailBreve(L, pr), tutti);
+    const nome = nomeFile(L, "eml");
     Stato.scaricati = [new File([eml], nome, { type: "message/rfc822" })];
     scaricaBlob(eml, nome);
     segnaInviato("");
     const st = $("#statoInvio");
     if (st) st.innerHTML = `<p>Scaricata <b>${esc(nome)}</b> nella cartella Download.</p>
-      <p><b>Aprila</b> (clic sul file nel riquadro dei download del browser, o doppio clic nella cartella): si apre il messaggio già pronto, con destinatario e ${tutti.length === 1 ? "PDF allegato" : tutti.length + " file allegati"}. Controlla e invia, poi torna qui.</p>
+      <p><b>Aprila</b> (clic sul file nel riquadro dei download del browser, o doppio clic nella cartella): si apre il messaggio già pronto, con ${tutti.length === 1 ? "il PDF allegato" : tutti.length + " file allegati"}${to ? "" : ": scegli il destinatario"}. Controlla e invia, poi torna qui.</p>
       <p><button class="btn piccolo" data-riscarica="0">Scarica di nuovo</button></p>`;
     return;
   }
@@ -4451,10 +4471,10 @@ async function azioneInvio(tipo) {
     return;
   }
   if (tipo === "condividi") {
-    try { await navigator.clipboard.writeText(to); } catch (e) {}
+    if (to) try { await navigator.clipboard.writeText(to); } catch (e) {}
     try {
-      await navigator.share({ files: tutti, title: oggettoEmail(p), text: testoEmailBreve(p, pr) });
-      segnaInviato(`Condiviso. Indirizzo del backoffice copiato: incollalo nel destinatario (${to}).`);
+      await navigator.share({ files: tutti, title: oggettoEmail(L), text: testoEmailBreve(L, pr) });
+      segnaInviato(to ? `Condiviso. Indirizzo copiato: incollalo nel destinatario (${to}).` : "Condiviso.");
     } catch (e) {
       if (e && e.name === "AbortError") return;
       const st = $("#statoInvio"); if (st) st.textContent = e && e.name === "NotAllowedError" ? "File pronti: tocca di nuovo «Condividi PDF»." : "Condivisione non riuscita: usa «Solo email con il testo» e allega il PDF a mano.";
@@ -4486,17 +4506,41 @@ async function copiaPrivacyCliente() {
   if (out) out.textContent = `Scaricato ${f.name} nella cartella Download: allegalo all'email per il cliente.`;
 }
 function chiudiPratica() {
-  const p = Stato.pratica, gruppo = p.tipo === "sinistro" ? "sinistri" : invioPer(p.prodotto);
-  if (DESTINATARI[gruppo] && DESTINATARI[gruppo].modo === "scegli") avanzaRotazione(gruppo);
-  const r = p.risposte;
+  const p = Stato.pratica;
+  const r = p.risposte, L = praticheInvio(p);
   if (p.tipo === "sinistro" && r.ibanImpegno === true && !ibanValido(r.iban)) PromemoriaIban.aggiungi(r);
   /* dati anagrafici tenuti solo in memoria, per una nuova esigenza dello stesso cliente */
   Stato.clienteRiuso = p.tipo === "preventivo" && r.nome ? CAMPI_CLIENTE.reduce((o, k) => (vuoto(r[k]) ? o : Object.assign(o, { [k]: r[k] })), { _segmento: r._segmento }) : null;
-  Pratiche.elimina(p.id);
-  Stato.pratica = null; Stato.messaggio = `Pratica di ${p.risposte.nome || "cliente"} chiusa e cancellata da questo dispositivo.`;
+  L.forEach(x => Pratiche.elimina(x.id));
+  const restano = praticheGruppo(p).slice(1).filter(x => !L.some(y => y.id === x.id));
+  Stato.pratica = null;
+  Stato.messaggio = (L.length > 1 ? `${L.length} pratiche di ${r.nome || "cliente"} chiuse e cancellate` : `Pratica di ${r.nome || "cliente"} chiusa e cancellata`) + " da questo dispositivo."
+    + (restano.length ? ` Restano da inviare: ${restano.map(titoloPratica).join(", ")}.` : "");
   Stato.pila = [{ schermo: "home", dati: {} }];
   try { history.replaceState({ n: 1 }, ""); } catch (e) {}
   disegna(); window.scrollTo(0, 0);
+}
+
+/* Nuovo prodotto per lo stesso cliente: anagrafica e privacy copiate, si riparte dalle domande del prodotto */
+function nuovoProdottoStessoCliente(n) {
+  const A = Stato.aggiungiA, fonte = Pratiche.tutte().find(x => x.id === A.fonte);
+  Stato.aggiungiA = null;
+  if (!fonte) return;
+  n.gruppo = A.gruppo;
+  for (const k of CAMPI_CLIENTE.concat(CAMPI_PRIVACY)) if (!vuoto(fonte.risposte[k])) n.risposte[k] = JSON.parse(JSON.stringify(fonte.risposte[k]));
+  /* foto del documento e del modulo privacy: copiate, così ogni PDF le ha (nello stesso PDF compaiono una volta) */
+  for (const k of ["docFile", "privacyFoto"]) {
+    const lista = fonte.risposte[k];
+    if (!Array.isArray(lista) || !lista.length) continue;
+    n.risposte[k] = [];
+    (async () => {
+      for (const f of lista) { const b = await Allegati.leggi(f.id); if (b) n.risposte[k].push(await Allegati.salva(n.id, b, f.nome)); }
+      Pratiche.salva(n);
+    })();
+  }
+  const passi = passiVisibili(QUESTIONARI[n.questionario], n.risposte);
+  if (passi.length > 1 && !Object.keys(controllaPasso(passi[0], n.risposte)).length) { n.passo = 1; n.massimo = 1; }
+  Pratiche.salva(n);
 }
 
 /* ================= HOME ED ELIMINAZIONE ================= */
@@ -4661,19 +4705,18 @@ function collegaEventi() {
     if (b.dataset.az === "guida") return vai("schede", { tipo: "guida" });
     if (b.dataset.az === "anteprima") {
       const pr = Memoria.leggi("bussola.profilo", {}), w = window.open("", "_blank");
-      fileInvio(Stato.pratica, pr).then(({ pdf }) => { const u = URL.createObjectURL(pdf); if (w) w.location.href = u; else scaricaBlob(pdf, pdf.name); });
+      fileInvio(praticheInvio(Stato.pratica), pr).then(({ pdf }) => { const u = URL.createObjectURL(pdf); if (w) w.location.href = u; else scaricaBlob(pdf, pdf.name); });
       return;
     }
     if (["condividi", "scarica", "email", "eml"].includes(b.dataset.az)) return azioneInvio(b.dataset.az);
     if (b.dataset.riscarica !== undefined) { const f = (Stato.scaricati || [])[+b.dataset.riscarica]; if (f) scaricaBlob(f, f.name); return; }
     if (b.dataset.az === "copiaTestoEmail") {
       const pr = Memoria.leggi("bussola.profilo", {}), out = b.closest("details").querySelector("[data-esito-copia]");
-      (navigator.clipboard ? navigator.clipboard.writeText(testoEmailBreve(Stato.pratica, pr)) : Promise.reject()).then(
+      (navigator.clipboard ? navigator.clipboard.writeText(testoEmailBreve(praticheInvio(Stato.pratica), pr)) : Promise.reject()).then(
         () => { out.textContent = "Copiato il testo dell'email."; segnaInviato(""); }, () => { out.textContent = "Copia non riuscita."; });
       return;
     }
     if (b.dataset.az === "inviato") return chiudiPratica();
-    if (b.dataset.dest) { Stato.pratica.destinatari = [b.dataset.dest]; Pratiche.salva(Stato.pratica); document.querySelectorAll("[data-dest]").forEach(x => x.setAttribute("aria-pressed", x === b)); return; }
     if (b.dataset.vaiPasso !== undefined) { Stato.pratica.passo = Number(b.dataset.vaiPasso); Stato.errori = {}; Pratiche.salva(Stato.pratica); history.back(); window.scrollTo(0, 0); return; }
     if (b.id === "btnHome") return vaiHome();
     if (b.dataset.elimina) return chiediElimina(b);
@@ -4718,9 +4761,20 @@ function collegaEventi() {
       Stato.pratica.risposte._segmento = strada[0].id;      // "pf" persona fisica, "az" azienda
       Stato.pratica.risposte._prodotto = prod.id;
       Object.assign(Stato.pratica.risposte, prod.preset || {});   /* es. CAR o Postuma già scelte dal nodo */
-      if (Stato.clienteRiuso) { const { _segmento, ...dati } = Stato.clienteRiuso; Object.assign(Stato.pratica.risposte, dati); Stato.clienteRiuso = null; }
+      if (Stato.aggiungiA) nuovoProdottoStessoCliente(Stato.pratica);
+      else if (Stato.clienteRiuso) { const { _segmento, ...dati } = Stato.clienteRiuso; Object.assign(Stato.pratica.risposte, dati); Stato.clienteRiuso = null; }
       Stato.errori = {};
       return vai("questionario");
+    }
+    if (b.dataset.az === "aggiungiProdotto") {
+      const p = Stato.pratica; p.gruppo = p.gruppo || "g" + p.id; Pratiche.salva(p);
+      Stato.aggiungiA = { gruppo: p.gruppo, fonte: p.id, nome: p.risposte.nome || "", segmento: p.risposte._segmento };
+      return vai("albero", { nodo: p.risposte._segmento });
+    }
+    if (b.dataset.az === "annullaAggiungi") { Stato.aggiungiA = null; return disegna(); }
+    if (b.dataset.apriGruppo) {
+      Stato.pratica = Pratiche.tutte().find(x => x.id === b.dataset.apriGruppo); Stato.errori = {};
+      return vai(Stato.pratica.completa ? "riepilogo" : "questionario");
     }
     if (b.dataset.apri) {
       Stato.pratica = Pratiche.tutte().find(x => x.id === b.dataset.apri); Stato.errori = {};
@@ -4767,7 +4821,7 @@ function collegaEventi() {
 /* ---- 45_cassa.js ---- */
 /* ================= FOGLIO CASSA (interfaccia) =================
    Il commerciale aggiunge gli incassi durante la giornata; l'app compila il foglio cassa Excel
-   dell'agenzia e prepara l'email per spassoni (o la PEC fuori orario). */
+   dell'agenzia e prepara l'email per spassoni. */
 const Cassa = {
   leggi() { const f = Memoria.leggi("bussola.cassa", null); return f && Array.isArray(f.righe) ? f : { righe: [] }; },
   salva(f) { f.aggiornato = Date.now(); Memoria.scrivi("bussola.cassa", f); },
@@ -4818,15 +4872,13 @@ function vistaCassa() {
       <div class="riga-dato"><span>Anticipi + bonifici</span><b>${esc(euroCassa(T.anticipiBonifici))}</b></div>
       <div class="riga-dato"><span>Totale − bonifici (contanti e assegni)</span><b>${esc(euroCassa(T.resto))}</b></div></div>
     <div class="campo"><div class="dom">Invio</div>
-      ${ind.pec ? `<div class="avviso ambra">${ICONE.attenzione}<span>L'agenzia ora è chiusa (${esc(CASSA.orariTesto)}). Fuori orario la comunicazione va inviata <b>dalla tua casella PEC</b> a ${esc(CASSA.pec)}, con ${esc(CASSA.copiaFuoriOrario.join(" e "))} in copia. L'email è già indirizzata così.</span></div>`
-        : `<p class="aiuto">Destinatario: <b>${esc(CASSA.destinatario)}</b>. Fuori orario (${esc(CASSA.orariTesto)}) l'app indirizza alla PEC.</p>`}
       ${condividi
-        ? `<ol class="passi-invio"><li><b>Condividi</b> il foglio cassa${righe.some(r => (r.allegati || []).length) ? " e le contabili" : ""} con la tua app di posta: gli indirizzi vengono copiati, incollali nel destinatario.</li><li>Torna qui e tocca <b>Ho inviato</b>.</li></ol>
+        ? `<ol class="passi-invio"><li><b>Condividi</b> il foglio cassa${righe.some(r => (r.allegati || []).length) ? " e le contabili" : ""} con la tua app di posta: l'indirizzo ${esc(CASSA.destinatario)} viene copiato, incollalo nel destinatario.</li><li>Torna qui e tocca <b>Ho inviato</b>.</li></ol>
            <div class="bottoni-invio"><button class="btn primario" data-cassa-invio="condividi">Condividi foglio cassa</button></div>`
         : suTelefono()
-        ? `<ol class="passi-invio"><li><b>Scarica</b> il foglio cassa (va nei Download).</li><li><b>Apri l'email</b> già compilata e allega il file dai Download.</li><li>Torna qui e tocca <b>Ho inviato</b>.</li></ol>
+        ? `<ol class="passi-invio"><li><b>Scarica</b> il foglio cassa (va nei Download).</li><li><b>Apri l'email</b> già compilata per ${esc(CASSA.destinatario)} e allega il file dai Download.</li><li>Torna qui e tocca <b>Ho inviato</b>.</li></ol>
            <div class="bottoni-invio"><button class="btn primario" data-cassa-invio="scarica">Scarica foglio cassa</button><button class="btn" data-cassa-invio="email">Apri email già compilata</button></div>`
-        : `<ol class="passi-invio"><li><b>Scarica l'email pronta</b>: destinatario, oggetto, elenco degli incassi e foglio cassa Excel già allegato.</li><li><b>Aprila</b> dal riquadro dei download: si apre il messaggio in Outlook o eM Client. Controlla e invia.</li><li>Torna qui e tocca <b>Ho inviato</b>.</li></ol>
+        : `<ol class="passi-invio"><li><b>Scarica l'email pronta</b>: indirizzata a ${esc(CASSA.destinatario)}, con oggetto, elenco degli incassi e foglio cassa Excel già allegato.</li><li><b>Aprila</b> dal riquadro dei download: si apre il messaggio in Outlook o eM Client. Controlla e invia.</li><li>Torna qui e tocca <b>Ho inviato</b>.</li></ol>
            <div class="bottoni-invio"><button class="btn primario" data-cassa-invio="eml">Scarica email pronta</button></div>
            <details class="doc-utile" style="margin-top:10px"><summary>L'email pronta non si apre come messaggio da inviare?</summary>
              <div class="bottoni-msg"><button class="btn piccolo" data-cassa-invio="scarica">Scarica foglio cassa</button><button class="btn piccolo" data-cassa-invio="email">Apri email (senza allegati)</button></div>
@@ -4940,7 +4992,7 @@ async function inviaCassa(tipo) {
     const eml = await creaEml(ind.a.join(", "), oggetto, testo, tutti, ind.cc);
     Stato.scaricati = [new File([eml], nome, { type: "message/rfc822" })];
     scaricaBlob(eml, nome);
-    return fatto(`<p>Scaricata <b>${esc(nome)}</b>. Aprila dal riquadro dei download: si apre il messaggio con il foglio cassa allegato${ind.pec ? ", indirizzato alla PEC: invialo dalla tua casella PEC" : ""}. Controlla e invia.</p><p><button class="btn piccolo" data-riscarica="0">Scarica di nuovo</button></p>`);
+    return fatto(`<p>Scaricata <b>${esc(nome)}</b>. Aprila dal riquadro dei download: si apre il messaggio con il foglio cassa allegato. Controlla e invia.</p><p><button class="btn piccolo" data-riscarica="0">Scarica di nuovo</button></p>`);
   }
   if (tipo === "scarica") {
     scaricaBlob(xlsx, xlsx.name);
@@ -4960,7 +5012,7 @@ async function inviaCassa(tipo) {
     try { await navigator.clipboard.writeText(ind.a.concat(ind.cc).join(", ")); } catch (e) {}
     try {
       await navigator.share({ files: tutti, title: oggetto, text: testo });
-      fatto(`<p>Condiviso. Indirizzi copiati: ${esc(ind.a.concat(ind.cc).join(", "))}${ind.pec ? " (invia dalla casella PEC)" : ""}.</p>`);
+      fatto(`<p>Condiviso. Indirizzi copiati: ${esc(ind.a.concat(ind.cc).join(", "))}.</p>`);
     } catch (e) {
       if (e && e.name === "AbortError") return;
       if (st) st.textContent = e && e.name === "NotAllowedError" ? "File pronti: tocca di nuovo «Condividi foglio cassa»." : "Condivisione non riuscita: scarica il foglio e allegalo a mano.";
@@ -5035,6 +5087,7 @@ document.addEventListener("change", e => {
    AVVIO
    ===================================================================== */
 Pratiche.pulisciVecchie();
+try { localStorage.removeItem("bussola.rotazione"); } catch (e) {} /* turno dei destinatari tolto nella 0.20 */
 Cassa.pulisci();
 try { localStorage.removeItem("bussola.pogVisto"); } catch (e) {} /* presa visione POG tolta nella 0.16 */
 Stato.pila.push({ schermo: "home", dati: {} });

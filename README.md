@@ -1,6 +1,6 @@
 # Bussola · Lloyd Varesino
 
-**Versione 0.19** · strumento interno della rete commerciale
+**Versione 0.21** · strumento interno della rete commerciale
 
 Bussola guida il commerciale nella raccolta dei dati per i preventivi, nella denuncia dei sinistri e negli adempimenti di compliance. Alla fine prepara un riepilogo in PDF da inviare al backoffice giusto.
 
@@ -56,14 +56,15 @@ Dalla home, **Foglio cassa**: il commerciale aggiunge gli incassi della giornata
 - contanti: rami danni fino a 750 € (escluse RC auto e garanzie dello stesso veicolo), mai da 5.000 € in su;
 - POS e carte si incassano in agenzia.
 
-All'invio compila il **foglio cassa Excel dell'agenzia** (stesse colonne, sigle, convalide e totali, con Sub e Codice) e prepara l'email per spassoni@lloydvaresino.it con l'elenco degli incassi nel testo e le contabili allegate. Fuori orario (lunedì-giovedì 8:45-13 e 14:45-18, venerdì 8:45-13) l'email va alla PEC postmaster@pec.lvsrl.eu con spassoni e sbreglia in copia, da spedire dalla casella PEC. Dopo l'invio, «Ho inviato» svuota il foglio; un foglio non inviato si cancella dopo 7 giorni. Il modello Excel si rigenera con `strumenti/prepara_cassa.py`.
+All'invio compila il **foglio cassa Excel dell'agenzia** (stesse colonne, sigle, convalide e totali, con Sub e Codice) e prepara l'email per spassoni@lloydvaresino.it con l'elenco degli incassi nel testo e le contabili allegate. Dopo l'invio, «Ho inviato» svuota il foglio; un foglio non inviato si cancella dopo 7 giorni. Il modello Excel si rigenera con `strumenti/prepara_cassa.py`.
 
 ### Invio al backoffice
-1. Il commerciale controlla il riepilogo e sceglie il destinatario. L'app propone i destinatari a turno per distribuire il lavoro.
+1. Il commerciale controlla il riepilogo. Destinatari: i **sinistri** vanno sempre a pzanzi@lloydvaresino.it, **vita, investimenti e Protection** a mcastoldi@lloydvaresino.it, gli **incassi** a spassoni@lloydvaresino.it; per **auto e rami elementari** il destinatario lo sceglie il commerciale nella sua email (l'app lo lascia vuoto).
+   **Più prodotti per lo stesso cliente:** dal riepilogo, «Aggiungi un prodotto per questo cliente» apre un altro questionario con anagrafica e privacy già compilate (si riparte dalle domande del prodotto). L'anagrafica resta unica: se cambia in un prodotto, cambia in tutti. All'invio parte **un PDF per gruppo**: uno per l'auto, uno per tutti i rami elementari, uno per vita, investimenti e Protection; ogni PDF ha l'anagrafica una volta e un capitolo per prodotto. I prodotti non completati restano fuori, con un avviso. «Ho inviato» chiude tutte le pratiche del PDF inviato; le altre restano in home.
 2. L'app crea il PDF con logo, dati, segnalazioni e allegati.
 3. L'invio cambia in base al dispositivo:
-   - **telefono e tablet (Android, iPhone):** si condivide il PDF con l'app di posta (Outlook, Gmail, Mail, eM Client); l'indirizzo del backoffice viene copiato da incollare nel destinatario;
-   - **computer:** si scarica l'**email pronta** (file .eml) con destinatario, oggetto, testo breve e PDF già allegato; aperta dal riquadro dei download, Outlook classico (Office 365, 2021 e successivi) ed eM Client mostrano il messaggio da inviare. Come riserva: scarico del PDF ed email già compilata in cui trascinarlo, oppure copia di destinatario, oggetto e testo per la posta via browser.
+   - **telefono e tablet (Android, iPhone):** si condivide il PDF con l'app di posta (Outlook, Gmail, Mail, eM Client); per i sinistri l'indirizzo viene copiato da incollare nel destinatario;
+   - **computer:** si scarica l'**email pronta** (file .eml) con oggetto, testo breve e PDF già allegato (e il destinatario per i sinistri); aperta dal riquadro dei download, Outlook classico (Office 365, 2021 e successivi) ed eM Client mostrano il messaggio da inviare. Come riserva: scarico del PDF ed email già compilata in cui trascinarlo, oppure copia di destinatario, oggetto e testo per la posta via browser.
    Le foto allegate (documenti, libretto, foto del danno) finiscono dentro il PDF, una per pagina e compresse; i PDF allegati restano file separati.
 4. Si tocca **Ho inviato**: la pratica e gli allegati vengono cancellati dal dispositivo.
 
@@ -138,6 +139,14 @@ Le prove nel browser richiedono Playwright e un server locale avviato dentro `di
 ---
 
 ## Versioni
+
+### 0.21 — 02/10/2026
+- **Più prodotti per lo stesso cliente** con anagrafica e privacy uniche: un PDF per l'auto, uno per i rami elementari, uno per vita e Protection.
+- Vita, investimenti e Protection di nuovo indirizzati a mcastoldi.
+
+### 0.20 — 02/10/2026
+- Tolto il riquadro **Destinatario** (con il turno tra i colleghi) dal riepilogo: per i preventivi il destinatario lo sceglie il commerciale nella sua email; i sinistri vanno sempre a pzanzi.
+- Foglio cassa: sempre a spassoni, anche fuori orario (niente più indirizzo PEC automatico).
 
 ### 0.19 — 02/10/2026
 - **Foglio cassa** in home: comunicazione d'incasso con il file Excel dell'agenzia compilato, controlli antiriciclaggio e contanti, totali, email pronta a spassoni o alla PEC fuori orario, contabili allegate. Procedura riassunta nella scheda e richiamata nella Compliance.
@@ -240,5 +249,5 @@ Prima versione funzionante:
 - preventivi Casa, Ufficio, RC professionale, Commercio/Azienda/Industria, D&O, Cyber risk, Piano di accumulo e Fondo pensione con analisi patrimoniale;
 - sinistri per tutti i rami;
 - schede di Compliance e Guida (bozza);
-- riepilogo in PDF, invio al backoffice con destinatari a turno, cancellazione dopo l'invio;
+- riepilogo in PDF, invio al backoffice, cancellazione dopo l'invio;
 - installabile e utilizzabile offline.
