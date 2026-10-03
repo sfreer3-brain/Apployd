@@ -1,6 +1,6 @@
 # Bussola · Lloyd Varesino
 
-**Versione 0.21** · strumento interno della rete commerciale
+**Versione 0.22** · strumento interno della rete commerciale
 
 Bussola guida il commerciale nella raccolta dei dati per i preventivi, nella denuncia dei sinistri e negli adempimenti di compliance. Alla fine prepara un riepilogo in PDF da inviare al backoffice giusto.
 
@@ -132,6 +132,12 @@ node strumenti/prova_completa.js 390   # percorsi completi, telefono
 node strumenti/prova_property.js 390   # percorso azienda completo
 node strumenti/prova_casa.js 390       # percorso casa
 node strumenti/prova_home.js 390       # home ed eliminazione delle pratiche
+node strumenti/prova_tutti.js 1366     # collaudo di TUTTI i prodotti e del sinistro dall'interfaccia (anche 390; SCELTA=no per le risposte alternative)
+node strumenti/prova_scenari.js 1366   # firma, più prodotti per lo stesso cliente, invii successivi, nuova esigenza
+node strumenti/prova_gruppo.js         # PDF unico per gruppo di prodotti
+node strumenti/prova_invio.js          # foto nel PDF ed email pronta
+node strumenti/prova_condividi.js      # condivisione dal telefono
+node strumenti/prova_cassa.js 1366     # foglio cassa (anche 390)
 node strumenti/prova_aggiornamento.js "python3 ricomponi.py --rilascio"   # una nuova versione si vede alla prima apertura
 ```
 Le prove nel browser richiedono Playwright e un server locale avviato dentro `dist/` (`python3 -m http.server 8765`).
@@ -139,6 +145,12 @@ Le prove nel browser richiedono Playwright e un server locale avviato dentro `di
 ---
 
 ## Versioni
+
+### 0.22 — 03/10/2026 (collaudo prima del rilascio)
+- **Firma del cliente:** non si perde più se, dopo aver firmato, si tocca un'altra risposta (succedeva sulla Protection con «antiriciclaggio» e «urgenza» sotto la firma). «Avanti» conferma da solo una firma tracciata; privacy e firma sono ora in fondo al passo.
+- **Più prodotti per lo stesso cliente:** la completezza di ogni prodotto si calcola dalle risposte (vale anche per pratiche salvate con versioni precedenti); dopo «Ho inviato» si apre subito il riepilogo dell'invio successivo dello stesso cliente (es. Vita e Protection dopo i rami elementari); nel riquadro prodotti è indicato cosa parte in un PDF a parte.
+- **Nuovo preventivo** non riprende più i dati del cliente appena inviato: li riprende solo «Nuova esigenza per …».
+- Nuovi collaudi automatici: tutti i 24 percorsi (23 prodotti + sinistro) su PC e telefono, con due serie di risposte, firma, PDF, email pronta e chiusura.
 
 ### 0.21 — 02/10/2026
 - **Più prodotti per lo stesso cliente** con anagrafica e privacy uniche: un PDF per l'auto, uno per i rami elementari, uno per vita e Protection.

@@ -303,8 +303,8 @@ body.esperto .campo > .aiuto, body.esperto .perche, body.esperto .testo-spunta s
 const AGENZIA = {
   nome: "Lloyd Varesino",
   app: "Bussola",
-  versione: "0.21",       // scritta da ricomponi.py (file VERSIONE)
-  dataBuild: "02/10/2026",
+  versione: "0.22",       // scritta da ricomponi.py (file VERSIONE)
+  dataBuild: "03/10/2026",
   giorniConservazioneBozze: 7   // le bozze non inviate si cancellano da sole dopo N giorni
 };
 
@@ -707,6 +707,14 @@ const PASSO_CHIUSURA = { id: "chiusura", titolo: "Documenti e compliance", sotto
             : { livello: "blu", testo: "Nessun documento allegato. Se ne hai, aggiungili: il backoffice risparmia una richiesta al cliente." } },
         { id: "mup", tipo: "sino", obbl: true, dom: "MUP consegnato al cliente?",
           avvisoNo: { livello: "ambra", testo: "Il MUP va consegnato prima della sottoscrizione. Puoi inviare la richiesta, ma ricordalo." } },
+        { id: "adeguatezza", tipo: "sino", obbl: true, se: r => invioPer(r._prodotto) === "vita" && r._prodotto !== "protection", dom: "Questionario di adeguatezza (IBIP) compilato con il cliente?",
+          aiuto: "L'analisi patrimoniale è uno strumento orientativo: non sostituisce la valutazione di adeguatezza prevista per i prodotti d'investimento assicurativi.",
+          avvisoNo: { livello: "ambra", testo: "Senza valutazione di adeguatezza il prodotto non può essere proposto: va completata prima della sottoscrizione." } },
+        { id: "antiriciclaggio", tipo: "sino", obbl: true, se: r => invioPer(r._prodotto) === "vita", dom: "Adeguata verifica antiriciclaggio fatta?",
+          avvisoNo: { livello: "ambra", testo: "L'adeguata verifica (D.Lgs. 231/2007) è obbligatoria per i contratti vita: va completata prima dell'emissione." } },
+        { id: "urgenza", tipo: "scelta", dom: "Urgenza", opzioni: [{ v: "normale", t: "Normale" }, { v: "alta", t: "Entro 48 ore" }] },
+        { id: "note", tipo: "nota", dom: "Note per il backoffice" },
+        /* privacy e firma per ultime: dopo la firma non resta niente da toccare nel passo */
         { id: "privacyModo", tipo: "scelta", obbl: true, dom: "Informativa privacy e consensi", suggerito: () => "app",
           opzioni: [{ v: "app", t: "Firma qui, sul dispositivo" }, { v: "carta", t: "Modulo cartaceo" }] },
         { id: "privacy", tipo: "sino", obbl: true, se: r => r.privacyModo === "carta", dom: "Il cliente ha firmato il modulo privacy?",
@@ -718,14 +726,7 @@ const PASSO_CHIUSURA = { id: "chiusura", titolo: "Documenti e compliance", sotto
           avvisoSe: c.necessario ? (v => v === "no" ? { livello: "rosso", testo: "Senza questo consenso l'agenzia non può gestire la pratica." } : null) : undefined })),
         { id: "firmaPrivacy", tipo: "firma", obbl: true, se: r => r.privacyModo === "app", dom: "Firma del cliente",
           msgObbl: "Fai firmare il cliente nel riquadro", legame: sceltePrivacy, documento: INFORMATIVA_PRIVACY.versione,
-          verifica: (v, r) => v && v.scelte !== sceltePrivacy(r) ? "Le scelte sono cambiate dopo la firma: fai firmare di nuovo" : null },
-        { id: "adeguatezza", tipo: "sino", obbl: true, se: r => invioPer(r._prodotto) === "vita" && r._prodotto !== "protection", dom: "Questionario di adeguatezza (IBIP) compilato con il cliente?",
-          aiuto: "L'analisi patrimoniale è uno strumento orientativo: non sostituisce la valutazione di adeguatezza prevista per i prodotti d'investimento assicurativi.",
-          avvisoNo: { livello: "ambra", testo: "Senza valutazione di adeguatezza il prodotto non può essere proposto: va completata prima della sottoscrizione." } },
-        { id: "antiriciclaggio", tipo: "sino", obbl: true, se: r => invioPer(r._prodotto) === "vita", dom: "Adeguata verifica antiriciclaggio fatta?",
-          avvisoNo: { livello: "ambra", testo: "L'adeguata verifica (D.Lgs. 231/2007) è obbligatoria per i contratti vita: va completata prima dell'emissione." } },
-        { id: "urgenza", tipo: "scelta", dom: "Urgenza", opzioni: [{ v: "normale", t: "Normale" }, { v: "alta", t: "Entro 48 ore" }] },
-        { id: "note", tipo: "nota", dom: "Note per il backoffice" }
+          verifica: (v, r) => v && v.scelte !== sceltePrivacy(r) ? "Le scelte sono cambiate dopo la firma: fai firmare di nuovo" : null }
       ]};
 
 const QUESTIONARI = {};   /* RC professionale e altre RC: 21_dati_rc.js */
@@ -3097,7 +3098,12 @@ function destinatariPratica(p) {
 function pacchettoDi(p) { return p.tipo === "sinistro" ? "sinistro" : invioPer(p.prodotto); }
 function praticheGruppo(p) { return p.gruppo ? [p].concat(Pratiche.tutte().filter(x => x.gruppo === p.gruppo && x.id !== p.id)) : [p]; }
 /* cosa parte insieme alla pratica aperta: le altre pratiche complete dello stesso cliente e dello stesso gruppo */
-function praticheInvio(p) { const k = pacchettoDi(p); return [p].concat(praticheGruppo(p).slice(1).filter(x => pacchettoDi(x) === k && x.completa)); }
+function praticheInvio(p) { const k = pacchettoDi(p); return [p].concat(praticheGruppo(p).slice(1).filter(x => pacchettoDi(x) === k && praticaCompleta(x))); }
+/* completa = tutti i passi visibili senza errori (non basta esserci passati: conta lo stato delle risposte) */
+function praticaCompleta(p) {
+  const q = QUESTIONARI[p.questionario], r = p.risposte;
+  return !!q && passiVisibili(q, r).every(ps => !Object.keys(controllaPasso(ps, r)).length);
+}
 function titoloPacchetto(L) { L = [].concat(L); return L.length > 1 ? `${PACCHETTI[pacchettoDi(L[0])]}: ${L.map(titoloPratica).join(", ")}` : titoloPratica(L[0]); }
 /* campi copiati in un nuovo prodotto per lo stesso cliente: anagrafica e privacy (si firma una volta) */
 const CAMPI_PRIVACY = ["privacyModo", "privacy", "firmaPrivacy"].concat(CONSENSI_PRIVACY.map(c => c.id));
@@ -4087,23 +4093,37 @@ function vistaQuestionario() {
 }
 
 /* ---------- firma su schermo: tratto con dito, penna o mouse; salvata come JPEG ---------- */
+/* I tratti restano in memoria finché la firma non è confermata: se il passo si ridisegna
+   (per esempio toccando un'altra risposta) la firma non si perde. */
+function chiaveTratti(id) { return (Stato.pratica ? Stato.pratica.id : "") + ":" + id; }
 function attivaFirme() {
+  Stato.tratti = Stato.tratti || {};
   document.querySelectorAll("canvas[data-firma]").forEach(cv => {
     const dpr = window.devicePixelRatio || 1, w = cv.clientWidth, h = cv.clientHeight;
     cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
     const ctx = cv.getContext("2d");
     ctx.scale(dpr, dpr); ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, w, h);
     ctx.lineWidth = 2.4; ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.strokeStyle = "#14213d";
+    const k = chiaveTratti(cv.dataset.firma), tratti = Stato.tratti[k] || (Stato.tratti[k] = []);
+    const segmento = (a, b) => { ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); };
+    for (const t of tratti) for (let i = 1; i < t.length; i++) segmento(t[i - 1], t[i]);
+    if (tratti.length) { cv.dataset.tracciata = "1"; cv.parentNode.classList.add("in-corso"); }
     let attivo = false, ultimo = null;
     const punto = e => { const b = cv.getBoundingClientRect(); return [e.clientX - b.left, e.clientY - b.top]; };
-    cv.addEventListener("pointerdown", e => { attivo = true; ultimo = punto(e); cv.setPointerCapture(e.pointerId); cv.dataset.tracciata = "1"; cv.parentNode.classList.add("in-corso");
+    cv.addEventListener("pointerdown", e => { attivo = true; ultimo = punto(e); tratti.push([ultimo]); try { cv.setPointerCapture(e.pointerId); } catch (x) {}
+      cv.dataset.tracciata = "1"; cv.parentNode.classList.add("in-corso");
       delete Stato.errori[cv.dataset.firma]; const err = cv.closest(".campo").querySelector(":scope > .errore"); if (err) err.remove(); e.preventDefault(); });
-    cv.addEventListener("pointermove", e => { if (!attivo) return; const p = punto(e); ctx.beginPath(); ctx.moveTo(ultimo[0], ultimo[1]); ctx.lineTo(p[0], p[1]); ctx.stroke(); ultimo = p; e.preventDefault(); });
+    cv.addEventListener("pointermove", e => { if (!attivo) return; const p = punto(e); segmento(ultimo, p); tratti[tratti.length - 1].push(p); ultimo = p; e.preventDefault(); });
     const fine = () => { attivo = false; };
     cv.addEventListener("pointerup", fine); cv.addEventListener("pointercancel", fine);
   });
 }
-async function salvaFirma(id) {
+/* Firme tracciate ma non confermate: «Avanti» le conferma da solo invece di dare errore */
+async function confermaFirmeInSospeso() {
+  for (const cv of document.querySelectorAll("canvas[data-firma]"))
+    if (cv.dataset.tracciata === "1" && !(Stato.pratica.risposte[cv.dataset.firma] || {}).dati) await salvaFirma(cv.dataset.firma, true);
+}
+async function salvaFirma(id, senzaRidisegno) {
   const cv = document.querySelector(`canvas[data-firma="${id}"]`), r = Stato.pratica.risposte;
   if (!cv || cv.dataset.tracciata !== "1") { Stato.errori[id] = "Il riquadro è vuoto: fai firmare il cliente"; return vistaQuestionario(); }
   const dati = cv.toDataURL("image/jpeg", 0.85).split(",")[1];
@@ -4114,7 +4134,10 @@ async function salvaFirma(id) {
     const h = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(testo));
     impronta = Array.from(new Uint8Array(h)).map(b => b.toString(16).padStart(2, "0")).join("");
   } catch (e) {}
-  rispondi(id, { dati, l: cv.width, a: cv.height, quando, scelte, impronta }, true);
+  const firma = { dati, l: cv.width, a: cv.height, quando, scelte, impronta };
+  delete Stato.tratti[chiaveTratti(id)];
+  if (senzaRidisegno) { r[id] = firma; delete Stato.errori[id]; Pratiche.salva(Stato.pratica); return; }
+  rispondi(id, firma, true);
 }
 
 function disegnaCampi(lista, r) { return lista.filter(c => campoVisibile(c, r)).map(c => disegnaCampo(c, r)).join(""); }
@@ -4282,7 +4305,8 @@ function trovaCampo(id) {
   return trovato;
 }
 
-function avanti() {
+async function avanti() {
+  await confermaFirmeInSospeso();
   const p = Stato.pratica, q = QUESTIONARI[p.questionario];
   const passi = passiVisibili(q, p.risposte);
   const err = controllaPasso(passi[p.passo], p.risposte);
@@ -4303,9 +4327,10 @@ function vistaRiepilogo() {
   const R = costruisciRiepilogo(p);
   p.destinatari = destinatariPratica(p);
   const dest = p.destinatari.join(", ");
+  setTimeout(() => { Stato.messaggioRiep = null; }, 0);
   /* più prodotti per lo stesso cliente: cosa parte con questo invio e cosa resta */
   const L = praticheInvio(p), G = praticheGruppo(p), tuttiAll = allegatiUnici([].concat(...L.map(x => costruisciRiepilogo(x).allegati)));
-  const incompleti = G.slice(1).filter(x => pacchettoDi(x) === pacchettoDi(p) && !x.completa);
+  const incompleti = G.slice(1).filter(x => pacchettoDi(x) === pacchettoDi(p) && !praticaCompleta(x));
   const prof = Memoria.leggi("bussola.profilo", {});
   const condivisione = puoCondividereFile();
   /* foto dentro il PDF (HEIC sul computer e PDF restano separati: stima, il conteggio esatto arriva all'invio) */
@@ -4318,6 +4343,7 @@ function vistaRiepilogo() {
   const passi = passiVisibili(q, r);
   const indicePasso = titolo => passi.findIndex(x => x.titolo === titolo);
   $("#vista").innerHTML = `
+    ${Stato.messaggioRiep ? `<div class="avviso verde" style="margin-bottom:14px">✓ <span>${esc(Stato.messaggioRiep)}</span></div>` : ""}
     <div class="briciole">${esc(R.tipo)}${R.strada ? " · " + esc(R.strada) : ""}</div>
     <div class="passo-titolo">${esc(R.cliente)}</div>
     <p class="passo-sotto">Controlla i dati, poi invia al backoffice.</p>
@@ -4417,7 +4443,7 @@ function htmlProdottiCliente(p, G) {
   return `<div class="campo"><div class="dom">Prodotti per ${esc(p.risposte.nome || "questo cliente")}</div>
     ${G.length > 1 ? `<div class="aiuto">Stessa anagrafica per tutti. Parte un PDF per gruppo: Auto, Rami elementari, Vita e Protection.</div>
       ${Object.keys(PACCHETTI).filter(k => gruppi[k]).map(k => `<div class="riga-dato"><span>${esc(PACCHETTI[k])}</span><b>${gruppi[k].map(x =>
-        x.id === p.id ? `${esc(titoloPratica(x))} (questa)` : `<button class="btn piccolo" data-apri-gruppo="${esc(x.id)}">${esc(titoloPratica(x))}${x.completa ? "" : " · da completare"}</button>`).join(" ")}</b></div>`).join("")}` 
+        x.id === p.id ? `${esc(titoloPratica(x))} (questa)` : `<button class="btn piccolo" data-apri-gruppo="${esc(x.id)}">${esc(titoloPratica(x))}${praticaCompleta(x) ? (pacchettoDi(x) === pacchettoDi(p) ? "" : " · pronta, PDF a parte") : " · da completare"}</button>`).join(" ")}</b></div>`).join("")}` 
       : `<div class="aiuto">Al cliente serve anche un altro preventivo? Aggiungilo senza riscrivere anagrafica e privacy.</div>`}
     <div class="bottoni-msg"><button class="btn piccolo" data-az="aggiungiProdotto">+ Aggiungi un prodotto per questo cliente</button></div></div>`;
 }
@@ -4518,6 +4544,13 @@ function chiudiPratica() {
     + (restano.length ? ` Restano da inviare: ${restano.map(titoloPratica).join(", ")}.` : "");
   Stato.pila = [{ schermo: "home", dati: {} }];
   try { history.replaceState({ n: 1 }, ""); } catch (e) {}
+  /* stesso cliente: se c'è un altro invio pronto (es. Vita dopo i rami elementari) si apre subito il suo riepilogo */
+  const prossima = restano.find(praticaCompleta);
+  if (prossima) {
+    Stato.messaggioRiep = Stato.messaggio + ` Ora puoi inviare ${PACCHETTI[pacchettoDi(prossima)] || titoloPratica(prossima)}.`;
+    Stato.messaggio = null; Stato.pratica = prossima; Stato.errori = {};
+    Stato.pila.push({ schermo: "riepilogo", dati: {} });
+  }
   disegna(); window.scrollTo(0, 0);
 }
 
@@ -4699,7 +4732,7 @@ function collegaEventi() {
 
   document.addEventListener("click", e => {
     const b = e.target.closest("button"); if (!b) return;
-    if (b.dataset.az === "preventivo") return vai("albero", {});
+    if (b.dataset.az === "preventivo") { Stato.riusoAttivo = false; return vai("albero", {}); }
     if (b.dataset.az === "sinistro") { Stato.pratica = Pratiche.nuova("sinistro", "sinistro"); Stato.errori = {}; return vai("questionario"); }
     if (b.dataset.az === "compliance") return vai("schede", { tipo: "compliance" });
     if (b.dataset.az === "guida") return vai("schede", { tipo: "guida" });
@@ -4722,7 +4755,7 @@ function collegaEventi() {
     if (b.dataset.elimina) return chiediElimina(b);
     if (b.dataset.az === "disdettaPDF") return creaDisdetta();
     if (b.dataset.salvaFirma) return salvaFirma(b.dataset.salvaFirma);
-    if (b.dataset.pulisciFirma || b.dataset.rifaiFirma) { const id = b.dataset.pulisciFirma || b.dataset.rifaiFirma; return rispondi(id, null, true); }
+    if (b.dataset.pulisciFirma || b.dataset.rifaiFirma) { const id = b.dataset.pulisciFirma || b.dataset.rifaiFirma; if (Stato.tratti) delete Stato.tratti[chiaveTratti(id)]; return rispondi(id, null, true); }
     if (b.dataset.az === "privacyCliente") return copiaPrivacyCliente();
     if (b.dataset.az === "dichiarazioneBianco") return scaricaBlob(creaDichiarazionePDF(null), "Dichiarazione proposta personalizzata.pdf");
     if (b.dataset.az === "segnalaPog") {
@@ -4734,7 +4767,7 @@ function collegaEventi() {
     }
     if (b.dataset.az === "privacyBianco") return scaricaBlob(creaPrivacyPDF(null), "Informativa privacy Lloyd Varesino.pdf");
     if (b.dataset.az === "esperto") { Memoria.scrivi("bussola.esperto", !(Memoria.leggi("bussola.esperto", false) === true)); return disegna(); }
-    if (b.dataset.az === "nuovaEsigenza") { const seg = Stato.clienteRiuso && Stato.clienteRiuso._segmento; return vai("albero", seg ? { nodo: seg } : {}); }
+    if (b.dataset.az === "nuovaEsigenza") { Stato.riusoAttivo = true; const seg = Stato.clienteRiuso && Stato.clienteRiuso._segmento; return vai("albero", seg ? { nodo: seg } : {}); }
     if (b.dataset.condividiTesto !== undefined) {
       const t = b.dataset.condividiTesto, out = document.querySelector("[data-esito-copia]");
       if (navigator.share && suTelefono()) { navigator.share({ text: t }).catch(() => {}); return; }
@@ -4762,7 +4795,8 @@ function collegaEventi() {
       Stato.pratica.risposte._prodotto = prod.id;
       Object.assign(Stato.pratica.risposte, prod.preset || {});   /* es. CAR o Postuma già scelte dal nodo */
       if (Stato.aggiungiA) nuovoProdottoStessoCliente(Stato.pratica);
-      else if (Stato.clienteRiuso) { const { _segmento, ...dati } = Stato.clienteRiuso; Object.assign(Stato.pratica.risposte, dati); Stato.clienteRiuso = null; }
+      /* dati del cliente precedente solo se si è scelto «Nuova esigenza per …», non con «Nuovo preventivo» */
+      else if (Stato.clienteRiuso && Stato.riusoAttivo) { const { _segmento, ...dati } = Stato.clienteRiuso; Object.assign(Stato.pratica.risposte, dati); Stato.clienteRiuso = null; Stato.riusoAttivo = false; }
       Stato.errori = {};
       return vai("questionario");
     }
@@ -4774,7 +4808,7 @@ function collegaEventi() {
     if (b.dataset.az === "annullaAggiungi") { Stato.aggiungiA = null; return disegna(); }
     if (b.dataset.apriGruppo) {
       Stato.pratica = Pratiche.tutte().find(x => x.id === b.dataset.apriGruppo); Stato.errori = {};
-      return vai(Stato.pratica.completa ? "riepilogo" : "questionario");
+      return vai(praticaCompleta(Stato.pratica) ? "riepilogo" : "questionario");
     }
     if (b.dataset.apri) {
       Stato.pratica = Pratiche.tutte().find(x => x.id === b.dataset.apri); Stato.errori = {};
