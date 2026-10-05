@@ -1,6 +1,6 @@
 # Bussola · Lloyd Varesino
 
-**Versione 0.22** · strumento interno della rete commerciale
+**Versione 1.0** (prima versione stabile) · strumento interno della rete commerciale
 
 Bussola guida il commerciale nella raccolta dei dati per i preventivi, nella denuncia dei sinistri e negli adempimenti di compliance. Alla fine prepara un riepilogo in PDF da inviare al backoffice giusto.
 
@@ -145,6 +145,10 @@ Le prove nel browser richiedono Playwright e un server locale avviato dentro `di
 ---
 
 ## Versioni
+
+### 1.0 — 05/10/2026 · prima versione stabile
+- **Contraente e assicurato:** in Viaggio, Infortuni (persona fisica), Vita (piano di accumulo, fondo pensione) e Protection c'è la domanda «Il contraente coincide con l'assicurato?». Con «No» si apre l'anagrafica dell'assicurato: nome, codice fiscale (sesso, data e luogo di nascita ricavati), residenza, telefono e rapporto con il contraente. Negli Infortuni segue «Vanno assicurate anche altre persone della famiglia?».
+- Comprende tutto il lavoro delle versioni 0.x, collaudato su PC e telefono.
 
 ### 0.22 — 03/10/2026 (collaudo prima del rilascio)
 - **Firma del cliente:** non si perde più se, dopo aver firmato, si tocca un'altra risposta (succedeva sulla Protection con «antiriciclaggio» e «urgenza» sotto la firma). «Avanti» conferma da solo una firma tracciata; privacy e firma sono ora in fondo al passo.

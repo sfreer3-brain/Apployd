@@ -303,8 +303,8 @@ body.esperto .campo > .aiuto, body.esperto .perche, body.esperto .testo-spunta s
 const AGENZIA = {
   nome: "Lloyd Varesino",
   app: "Bussola",
-  versione: "0.22",       // scritta da ricomponi.py (file VERSIONE)
-  dataBuild: "03/10/2026",
+  versione: "1.0",       // scritta da ricomponi.py (file VERSIONE)
+  dataBuild: "05/10/2026",
   giorniConservazioneBozze: 7   // le bozze non inviate si cancellano da sole dopo N giorni
 };
 
@@ -901,6 +901,53 @@ QUESTIONARI.casa = questionarioImmobile("casa");
 QUESTIONARI.ufficio = questionarioImmobile("ufficio");
 
 function euro(n) { return "€ " + Number(n).toLocaleString("it-IT"); }
+
+/* ---- 20b_dati_assicurato.js ---- */
+/* =====================================================================
+   CONTRAENTE E ASSICURATO
+   Viaggio, infortuni, vita e Protection: se l'assicurato non è il
+   contraente si apre la sua anagrafica (dati ricavati dal codice fiscale).
+   ===================================================================== */
+const personaDaCFAss = r => { const e = analizzaCF(r.assCf); return e.tipo === "persona" && e.valido; };
+
+/* come derivaDaCF, ma per i campi dell'assicurato */
+function derivaDaCFAss(r) {
+  const esito = analizzaCF(r.assCf), auto = r._autoAss || {};
+  const mappa = { sesso: "assSesso", dataNascita: "assDataNascita", luogoNascita: "assLuogoNascita" };
+  for (const [da, a] of Object.entries(mappa)) {
+    const puoScrivere = r[a] == null || r[a] === "" || auto[a] === r[a];
+    if (esito.valido && esito.tipo === "persona") { const nuovo = esito.dati[da]; if (puoScrivere && nuovo) { r[a] = nuovo; auto[a] = nuovo; } }
+    else if (puoScrivere && auto[a] !== undefined) { r[a] = ""; delete auto[a]; }
+  }
+  r._autoAss = auto;
+  return esito;
+}
+
+/* anagrafica dell'assicurato, aperta da «Il contraente coincide con l'assicurato? No» */
+const CAMPI_ASSICURATO = [
+  { id: "assNome", tipo: "testo", obbl: true, largo: true, dom: "Assicurato: nome e cognome" },
+  { id: "assCf", tipo: "testo", obbl: true, maiuscolo: true, dom: "Assicurato: codice fiscale", deriva: derivaDaCFAss,
+    verifica: v => { const e = analizzaCF(v); return !e.valido ? e.errore : e.tipo !== "persona" ? "Serve il codice fiscale di una persona" : null; },
+    avviso: (v, r) => {
+      const e = analizzaCF(v);
+      if (!e.valido || e.tipo !== "persona") return null;
+      if (cfCoerenteConNome(v, r.assNome) === false) return { livello: "ambra", testo: "Il codice fiscale dell'assicurato non corrisponde al nome indicato." };
+      if (!e.dati.luogoTrovato) return { livello: "blu", testo: `Luogo di nascita non riconosciuto (codice ${e.dati.codLuogo}): inseriscilo a mano.` };
+      return null;
+    } },
+  { id: "assSesso", tipo: "scelta", corto: true, se: personaDaCFAss, dom: "Assicurato: sesso", opzioni: [{ v: "M", t: "Maschio" }, { v: "F", t: "Femmina" }] },
+  { id: "assDataNascita", tipo: "data", se: personaDaCFAss, dom: "Assicurato: data di nascita" },
+  { id: "assLuogoNascita", tipo: "testo", se: personaDaCFAss, dom: "Assicurato: luogo di nascita" },
+  { id: "assIndirizzo", tipo: "testo", dom: "Assicurato: indirizzo di residenza" },
+  { id: "assCitta", tipo: "testo", dom: "Assicurato: CAP e città" },
+  { id: "assTel", tipo: "tel", dom: "Assicurato: telefono" },
+  { id: "assRapporto", tipo: "scelta", dom: "Rapporto con il contraente",
+    opzioni: [{ v: "coniuge", t: "Coniuge o convivente" }, { v: "figlio", t: "Figlio o figlia" }, { v: "genitore", t: "Genitore" }, { v: "dipendente", t: "Dipendente o socio" }, { v: "altro", t: "Altro" }] }
+];
+const CAMPO_CONTRAENTE_ASSICURATO = { id: "contrAss", tipo: "sino", obbl: true, dom: "Il contraente coincide con l'assicurato?",
+  aiuto: "Il contraente firma e paga la polizza (è il cliente del passo precedente); l'assicurato è la persona coperta.",
+  figli: { quando: "no", campi: CAMPI_ASSICURATO } };
+const PASSO_ASSICURATO = { id: "assicurato", titolo: "Assicurato", sotto: "Contraente e assicurato possono essere persone diverse.", campi: [CAMPO_CONTRAENTE_ASSICURATO] };
 
 /* ---- 21_dati_rc.js ---- */
 /* =====================================================================
@@ -1698,6 +1745,7 @@ QUESTIONARI.vita = {
   titolo: "Vita investimento",
   passi: [
     PASSO_CLIENTE,
+    PASSO_ASSICURATO,
     { id: "analisi", titolo: "Analisi patrimoniale", sotto: "Mini Family Office: completala fino ai risultati.", pieno: true, campi: [
       { id: "mfo", tipo: "mfo", obbl: true, dom: "Analisi patrimoniale" }
     ]},
@@ -1718,6 +1766,7 @@ QUESTIONARI.protection = {
   titolo: "Protection",
   passi: [
     PASSO_CLIENTE,
+    PASSO_ASSICURATO,
     { id: "protezioniScelta", titolo: "Coperture", sotto: "Si possono scegliere anche tutte e tre.", campi: [
       { id: "protezioni", tipo: "multipla", verticale: true, obbl: true, dom: "Cosa vuole proteggere il cliente?",
         opzioni: [{ v: "tcm", t: "Caso morte (TCM)", n: "un capitale ai beneficiari se l'assicurato muore durante il contratto" },
@@ -2340,6 +2389,7 @@ const SUGGERISCI_INF = r => ["ip", "rendita", "spese"]
   .concat(sportRischio(r) ? ["sportRischio"] : [])
   .concat(azInf(r) && (r.assicuratiAz || []).includes("dipendenti") ? ["respContraente"] : []);
 
+function chiInfDa(r) { r.chiInf = r.altriFam === "si" ? "famiglia" : r.contrAss === "no" ? "altro" : "cliente"; }
 const avvisoSalute = v => v === "si" ? { livello: "blu", testo: "I dettagli vanno nel questionario sanitario della compagnia: il backoffice lo manderà al cliente." } : null;
 
 QUESTIONARI.infortuni = {
@@ -2347,15 +2397,17 @@ QUESTIONARI.infortuni = {
   passi: [
     PASSO_CLIENTE,
     { id: "assicurati", titolo: "Chi assicurare", sotto: "Lavoro e tempo libero decidono il rischio e il premio.", campi: [
-      { id: "chiInf", tipo: "scelta", obbl: true, se: r => !azInf(r), dom: "Chi va assicurato?",
-        opzioni: [{ v: "cliente", t: "Il cliente" }, { v: "altro", t: "Un'altra persona" }, { v: "famiglia", t: "Più persone della famiglia" }] },
+      /* persona fisica: contraente = assicurato? se no, anagrafica dell'assicurato; poi eventuali familiari.
+         chiInf (cliente / altro / famiglia) si ricava dalle due risposte e guida le domande seguenti */
+      Object.assign({}, CAMPO_CONTRAENTE_ASSICURATO, { se: r => !azInf(r), deriva: chiInfDa }),
+      { id: "altriFam", tipo: "sino", obbl: true, se: r => !azInf(r), deriva: chiInfDa, dom: "Vanno assicurate anche altre persone della famiglia?" },
       { id: "assicuratiAz", tipo: "multipla", obbl: true, se: azInf, dom: "Chi va assicurato?",
         opzioni: [{ v: "titolari", t: "Titolari e soci" }, { v: "amministratori", t: "Amministratori" }, { v: "dirigenti", t: "Dirigenti" }, { v: "dipendenti", t: "Dipendenti" }, { v: "collaboratori", t: "Collaboratori" }] },
       { id: "numAssicurati", tipo: "testo", obbl: true, tastiera: "numeric", se: r => azInf(r) || r.chiInf === "famiglia", dom: "Quante persone" },
-      { id: "elencoAssicurati", tipo: "nota", obbl: true, se: r => azInf(r) || ["altro", "famiglia"].includes(r.chiInf),
-        dom: "Per ogni assicurato: nome, data di nascita, professione o mansione",
+      { id: "elencoAssicurati", tipo: "nota", obbl: true, se: r => azInf(r) || r.chiInf === "famiglia",
+        dom: r => azInf(r) ? "Per ogni assicurato: nome, data di nascita, professione o mansione" : "Altri familiari: per ognuno nome, data di nascita, professione",
         aiuto: r => azInf(r) ? "Se sono tanti, scrivi le categorie e il numero, e allega l'elenco nell'ultimo passo." : "" },
-      { id: "professione", tipo: "testo", obbl: true, largo: true, se: r => !azInf(r) && r.chiInf === "cliente", dom: "Professione, descritta con precisione",
+      { id: "professione", tipo: "testo", obbl: true, largo: true, se: r => !azInf(r) && r.chiInf !== "famiglia", dom: r => (r.contrAss === "no" ? "Professione dell'assicurato" : "Professione") + ", descritta con precisione",
         aiuto: "Decide la classe di rischio: per esempio «impiegato amministrativo» o «idraulico, lavora anche su tetti»." },
       { id: "lavoro", tipo: "scelta", obbl: true, se: r => !azInf(r) && r.chiInf !== "famiglia", dom: "Tipo di lavoro",
         opzioni: [{ v: "dipendente", t: "Dipendente" }, { v: "autonomo", t: "Autonomo o libero professionista" }, { v: "nonlavora", t: "Non lavora (studente, pensionato, casalinga)" }] },
@@ -2862,6 +2914,7 @@ QUESTIONARI.viaggio = {
   titolo: "Viaggio",
   passi: [
     PASSO_CLIENTE,
+    PASSO_ASSICURATO,
     { id: "viaggioDati", titolo: "Viaggio", sotto: "Dove, quando e chi parte.", campi: [
       { id: "destinazione", tipo: "testo", obbl: true, largo: true, dom: "Destinazione", aiuto: "Paese o paesi; per i viaggi itineranti indicali tutti." },
       { id: "dataPartenza", tipo: "data", obbl: true, dom: "Data di partenza",
