@@ -1,7 +1,7 @@
 /* Service worker di Bussola: rende l'app disponibile offline.
    Il nome della cache è scritto da ricomponi.py (versione + impronta del contenuto):
    a ogni nuova pubblicazione cambia da solo e i telefoni scaricano la versione nuova. */
-const VERSIONE = "bussola-1.4-829615e1";
+const VERSIONE = "bussola-1.5-07185a50";
 /* motore di lettura dei documenti (qualche MB): cache a parte, resta tra una versione e l'altra */
 const CACHE_OCR = "bussola-ocr-5.1.1";
 const FILE = ["./", "./index.html", "./manifest.webmanifest", "./icona-192.png", "./icona-512.png", "./icona-maskable-512.png"];
