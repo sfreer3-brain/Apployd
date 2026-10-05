@@ -1,7 +1,7 @@
 /* Service worker di Bussola: rende l'app disponibile offline.
    Il nome della cache è scritto da ricomponi.py (versione + impronta del contenuto):
    a ogni nuova pubblicazione cambia da solo e i telefoni scaricano la versione nuova. */
-const VERSIONE = "bussola-1.1-b77c3ef8";
+const VERSIONE = "bussola-1.2-bf83cfbd";
 /* motore di lettura dei documenti (qualche MB): cache a parte, resta tra una versione e l'altra */
 const CACHE_OCR = "bussola-ocr-5.1.1";
 const FILE = ["./", "./index.html", "./manifest.webmanifest", "./icona-192.png", "./icona-512.png", "./icona-maskable-512.png"];
@@ -22,7 +22,7 @@ self.addEventListener("fetch", e => {
     return;
   }
   if (url.origin !== location.origin) return;
-  if (url.pathname.includes("/ocr/")) {
+  if (/\/(tesseract[\w.-]*\.js|worker\.min\.js|eng\.traineddata\.gz)$/.test(url.pathname)) {
     e.respondWith(caches.open(CACHE_OCR).then(c => c.match(req).then(r => r || fetch(req).then(res => { if (res.ok) c.put(req, res.clone()); return res; }))));
     return;
   }
