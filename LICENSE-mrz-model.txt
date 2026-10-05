@@ -1,0 +1,2 @@
+mrz.traineddata.gz: modello Tesseract addestrato sul carattere OCR-B delle zone MRZ,
+dal pacchetto npm "web-mrz-reader" 2.0.3 (licenza ISC). Tesseract.js: licenza Apache-2.0.
