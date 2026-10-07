@@ -1,12 +1,12 @@
 /* Service worker di Bussola: rende l'app disponibile offline.
    Il nome della cache è scritto da ricomponi.py (versione + impronta del contenuto):
    a ogni nuova pubblicazione cambia da solo e i telefoni scaricano la versione nuova. */
-const VERSIONE = "bussola-1.8-7ef7b8f6";
+const VERSIONE = "bussola-1.9-0ce79829";
 /* motore di lettura dei documenti (qualche MB): cache a parte, resta tra una versione e l'altra */
 const CACHE_OCR = "bussola-ocr-5.1.1";
 /* documenti utili (doc-<impronta>.bin): il nome cambia se cambia il contenuto, quindi la copia salvata vale sempre */
 const CACHE_DOC = "bussola-documenti";
-const FILE = ["./", "./index.html", "./manifest.webmanifest", "./icona-192.png", "./icona-512.png", "./icona-maskable-512.png"];
+const FILE = ["./", "./index.html", "./manifest.webmanifest", "./icona-v2-192.png", "./icona-v2-512.png", "./icona-v2-maskable-512.png"];
 
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(VERSIONE).then(c => c.addAll(FILE)).then(() => self.skipWaiting()));
